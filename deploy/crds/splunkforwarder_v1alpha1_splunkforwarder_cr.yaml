@@ -1,0 +1,15 @@
+apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+kind: SplunkForwarder
+metadata:
+  name: example-splunkforwarder
+spec:
+  splunkLicenseAccepted: true
+  splunkInputs:
+  - path: /host/var/log/openshift-apiserver/audit.log
+    index: openshift_managed_audit
+    whitelist: \.log$
+    sourcetype: _json
+  - path: /host/var/log/containers/ip-*-*-*-*ec2internal-debug*.log
+    index: openshift_managed_debug_node
+    whitelist: \.log$
+    sourcetype: _json
