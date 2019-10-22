@@ -27,31 +27,31 @@ export = system
 
 	inputsStr := ""
 
-	for input := 0; input < len(inputs); input++ {
+	for _, input := range inputs {
 		// No path passed in, skip it
-		if inputs[input].Path == "" {
+		if input.Path == "" {
 			continue
 		}
 
-		inputsStr += "[monitor://" + inputs[input].Path + "]\n"
-		if inputs[input].SourceType != "" {
-			inputsStr += "sourcetype = " + inputs[input].SourceType + "\n"
+		inputsStr += "[monitor://" + input.Path + "]\n"
+		if input.SourceType != "" {
+			inputsStr += "sourcetype = " + input.SourceType + "\n"
 		} else {
 			inputsStr += "sourcetype = _json\n"
 		}
 
-		if inputs[input].Index != "" {
-			inputsStr += "index = " + inputs[input].Index + "\n"
+		if input.Index != "" {
+			inputsStr += "index = " + input.Index + "\n"
 		} else {
 			inputsStr += "index = main\n"
 		}
 
-		if inputs[input].WhiteList != "" {
-			inputsStr += "whitelist = " + inputs[input].WhiteList + "\n"
+		if input.WhiteList != "" {
+			inputsStr += "whitelist = " + input.WhiteList + "\n"
 		}
 
-		if inputs[input].BlackList != "" {
-			inputsStr += "blacklist = " + inputs[input].BlackList + "\n"
+		if input.BlackList != "" {
+			inputsStr += "blacklist = " + input.BlackList + "\n"
 		}
 
 		inputsStr += "disabled = false\n"
