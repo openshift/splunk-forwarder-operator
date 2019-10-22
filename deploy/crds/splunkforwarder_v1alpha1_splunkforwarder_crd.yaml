@@ -47,7 +47,7 @@ spec:
                   path:
                     description: Path is the file you want to monitor, the host FS is
                       mounted at /host, so if you wanted to monitor /var/log/messages
-                      you would set the path to /host/var/log/messages
+                      you would set the path to /host/var/log/messages (required)
                     type: string
                   index:
                     description: Index is the Splunk Index you want to send the contents

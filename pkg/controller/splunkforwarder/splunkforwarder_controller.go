@@ -4,9 +4,10 @@ import (
 	"context"
 
 	splunkforwarderv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/pkg/kube"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -100,54 +101,58 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Pod object
-	pod := newPodForCR(instance)
+	{ // ConfigMaps
+		// Define a new ConfigMap object
+		configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.Namespace)
 
-	// Set SplunkForwarder instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-		return reconcile.Result{}, err
+		// Define it outside the loop
+		cmFound := &corev1.ConfigMap{}
+
+		for _, configmap := range configMaps {
+			// Set SplunkForwarder instance as the owner and controller
+			if err := controllerutil.SetControllerReference(instance, configmap, r.scheme); err != nil {
+				return reconcile.Result{}, err
+			}
+
+			// Check if this ConfigMap already exists
+			cmFound = &corev1.ConfigMap{} // reset cmFound
+			err = r.client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
+			if err != nil && errors.IsNotFound(err) {
+				reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
+				err = r.client.Create(context.TODO(), configmap)
+				if err != nil {
+					return reconcile.Result{}, err
+				}
+			} else if err != nil {
+				return reconcile.Result{}, err
+			}
+		}
 	}
 
-	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
-		if err != nil {
+	{ // Secrets
+
+	}
+
+	{ // DaemonSet
+		daemonSet := kube.GenerateDaemonSet(request.Namespace, request.Name, instance.Spec.Image+":"+instance.Spec.ImageVersion)
+		// Set SplunkForwarder instance as the owner and controller
+		if err := controllerutil.SetControllerReference(instance, daemonSet, r.scheme); err != nil {
 			return reconcile.Result{}, err
 		}
 
-		// Pod created successfully - don't requeue
-		return reconcile.Result{}, nil
-	} else if err != nil {
-		return reconcile.Result{}, err
+		// Check if this DaemonSet already exists
+		dsFound := &appsv1.DaemonSet{}
+		err = r.client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
+		if err != nil && errors.IsNotFound(err) {
+			reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
+			err = r.client.Create(context.TODO(), daemonSet)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		} else if err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
-}
-
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *splunkforwarderv1alpha1.SplunkForwarder) *corev1.Pod {
-	labels := map[string]string{
-		"app": cr.Name,
-	}
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
-			Namespace: cr.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
-				},
-			},
-		},
-	}
 }

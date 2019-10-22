@@ -3,6 +3,8 @@ kind: SplunkForwarder
 metadata:
   name: example-splunkforwarder
 spec:
+  image: quay.io/whearn/splunk-forwarder
+  imageTag: "7.3.2"
   splunkLicenseAccepted: true
   splunkInputs:
   - path: /host/var/log/openshift-apiserver/audit.log
