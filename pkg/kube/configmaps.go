@@ -65,16 +65,16 @@ export = system
 		},
 		Data: map[string]string{
 			"app.conf": `
-	[install]
-	state = enabled
-	
-	[package]
-	check_for_updates = false
-	
-	[ui]
-	is_visible = false
-	is_manageable = false
-	`,
+[install]
+state = enabled
+
+[package]
+check_for_updates = false
+
+[ui]
+is_visible = false
+is_manageable = false
+`,
 			"inputs.conf": inputsStr,
 		},
 	}
