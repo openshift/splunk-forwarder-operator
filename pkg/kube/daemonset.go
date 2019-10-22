@@ -1,6 +1,7 @@
 package kube
 
 import (
+	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +17,7 @@ var envVars = []corev1.EnvVar{
 var hostPathDirectoryTypeForPtr = corev1.HostPathDirectory
 
 // GenerateDaemonSet returns a daemonset that can be created with the oc client
-func GenerateDaemonSet(namespace string, name string, image string) *appsv1.DaemonSet {
+func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
 	var runAsUID int64 = 0
 	var isPrivContainer bool = true
@@ -24,10 +25,10 @@ func GenerateDaemonSet(namespace string, name string, image string) *appsv1.Daem
 
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name + "-ds",
-			Namespace: namespace,
+			Name:      instance.Name + "-ds",
+			Namespace: instance.Namespace,
 			Labels: map[string]string{
-				"app": name,
+				"app": instance.Name,
 			},
 		},
 		Spec: appsv1.DaemonSetSpec{
@@ -39,7 +40,7 @@ func GenerateDaemonSet(namespace string, name string, image string) *appsv1.Daem
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "splunk-forwarder",
-					Namespace: namespace,
+					Namespace: instance.Namespace,
 					Labels: map[string]string{
 						"name": "splunk-forwarder",
 					},
@@ -61,7 +62,7 @@ func GenerateDaemonSet(namespace string, name string, image string) *appsv1.Daem
 						{
 							Name:            "splunk-uf",
 							ImagePullPolicy: corev1.PullAlways,
-							Image:           image,
+							Image:           instance.Spec.Image + ":" + instance.Spec.ImageVersion,
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8089,

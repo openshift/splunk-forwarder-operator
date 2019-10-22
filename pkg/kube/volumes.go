@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"github.com/openshift/splunk-forwarder-operator/config"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -10,26 +11,10 @@ func GetVolumes() []corev1.Volume {
 	var hostPathDirectoryTypeForPtr = corev1.HostPathDirectory
 	return []corev1.Volume{
 		{
-			Name: "splunk-auth-default",
+			Name: config.SplunkAuthSecretName,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: "splunk-auth-default",
-				},
-			},
-		},
-		{
-			Name: "splunk-auth-local",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: "splunk-auth-local",
-				},
-			},
-		},
-		{
-			Name: "splunk-auth-metadata",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: "splunk-auth-metadata",
+					SecretName: config.SplunkAuthSecretName,
 				},
 			},
 		},

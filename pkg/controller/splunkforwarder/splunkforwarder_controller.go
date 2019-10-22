@@ -3,7 +3,8 @@ package splunkforwarder
 import (
 	"context"
 
-	splunkforwarderv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/config"
+	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/pkg/kube"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -47,7 +48,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource SplunkForwarder
-	err = c.Watch(&source.Kind{Type: &splunkforwarderv1alpha1.SplunkForwarder{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &sfv1alpha1.SplunkForwarder{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -56,7 +57,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner SplunkForwarder
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &splunkforwarderv1alpha1.SplunkForwarder{},
+		OwnerType:    &sfv1alpha1.SplunkForwarder{},
 	})
 	if err != nil {
 		return err
@@ -86,7 +87,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	reqLogger.Info("Reconciling SplunkForwarder")
 
 	// Fetch the SplunkForwarder instance
-	instance := &splunkforwarderv1alpha1.SplunkForwarder{}
+	instance := &sfv1alpha1.SplunkForwarder{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -99,9 +100,17 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
+	{ // See if our Secret exists
+		secFound := &corev1.Secret{}
+		err := r.client.Get(context.TODO(), types.NamespacedName{Name: config.SplunkAuthSecretName, Namespace: request.Namespace}, secFound)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
 	{ // ConfigMaps
 		// Define a new ConfigMap object
-		configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.Namespace)
+		configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.NamespacedName)
 
 		// Define it outside the loop
 		cmFound := &corev1.ConfigMap{}
@@ -128,7 +137,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	}
 
 	{ // DaemonSet
-		daemonSet := kube.GenerateDaemonSet(request.Namespace, request.Name, instance.Spec.Image+":"+instance.Spec.ImageVersion)
+		daemonSet := kube.GenerateDaemonSet(instance)
 		// Set SplunkForwarder instance as the owner and controller
 		if err := controllerutil.SetControllerReference(instance, daemonSet, r.scheme); err != nil {
 			return reconcile.Result{}, err

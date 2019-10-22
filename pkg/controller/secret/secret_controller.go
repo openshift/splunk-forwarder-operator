@@ -3,11 +3,17 @@ package secret
 import (
 	"context"
 
+	"github.com/openshift/splunk-forwarder-operator/config"
+	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/pkg/kube"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -71,15 +77,6 @@ type ReconcileSecret struct {
 	scheme *runtime.Scheme
 }
 
-func requestNameMatches(name string) bool {
-	ourSecretNames := map[string]bool{
-		"splunk-auth-default":  true,
-		"splunk-auth-metadata": true,
-	}
-
-	return ourSecretNames[name]
-}
-
 // Reconcile reads that state of the cluster for a Secret object and makes changes based on the state read
 // and what is in the Secret.Spec
 // TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
@@ -89,7 +86,15 @@ func requestNameMatches(name string) bool {
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// TODO: Fix this namespace, look for our crd and check against the namespace it lives in
-	if request.Namespace != "openshift-security" && !requestNameMatches(request.Name) {
+
+	sfCrds := &sfv1alpha1.SplunkForwarder{}
+	err := r.client.List(context.TODO(), &client.ListOptions{Namespace: request.Namespace}, sfCrds)
+	// Our CRD does not exist in this namespace, just ignore and continue
+	if err != nil {
+		return reconcile.Result{}, nil
+	}
+
+	if request.Name != config.SplunkAuthSecretName {
 		// Not our secret, just ignore
 		return reconcile.Result{}, nil
 	}
@@ -99,19 +104,44 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 
 	// Fetch the Secret instance
 	instance := &corev1.Secret{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
+			reqLogger.Error(err, "Splunk Auth Secret was deleted, recreate it or delete the CRD, not restarting DaemonSet")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
-	// TODO Redeploy DaemonSet/Delete all pods so they roll out with the new secret
+	daemonSet := &appsv1.DaemonSet{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: sfCrds.Name + "-ds", Namespace: instance.Namespace}, daemonSet)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return reconcile.Result{}, err
+		}
+	}
+	r.client.Delete(context.TODO(), daemonSet)
 
+	{ // DaemonSet
+		daemonSet := kube.GenerateDaemonSet(sfCrds)
+		// Set SplunkForwarder instance as the owner and controller
+		if err := controllerutil.SetControllerReference(sfCrds, daemonSet, r.scheme); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		// Check if this DaemonSet already exists
+		dsFound := &appsv1.DaemonSet{}
+		err = r.client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
+		if err != nil && errors.IsNotFound(err) {
+			reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
+			err = r.client.Create(context.TODO(), daemonSet)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		} else if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 	return reconcile.Result{}, nil
 }

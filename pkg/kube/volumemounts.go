@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"github.com/openshift/splunk-forwarder-operator/config"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -10,15 +11,15 @@ func GetVolumeMounts() []corev1.VolumeMount {
 	return []corev1.VolumeMount{
 		// Splunk Forwarder Certificate Mounts
 		{
-			Name:      "splunk-auth-default",
+			Name:      config.SplunkAuthSecretName,
 			MountPath: "/opt/splunkforwarder/etc/splunk/apps/splunkauth/default",
 		},
 		{
-			Name:      "splunk-auth-local",
+			Name:      config.SplunkAuthSecretName,
 			MountPath: "/opt/splunkforwarder/etc/splunk/apps/splunkauth/local",
 		},
 		{
-			Name:      "splunk-auth-metadata",
+			Name:      config.SplunkAuthSecretName,
 			MountPath: "/opt/splunkforwarder/etc/splunk/apps/splunkauth/metadata",
 		},
 

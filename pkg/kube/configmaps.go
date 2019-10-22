@@ -4,16 +4,20 @@ import (
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // GenerateConfigMaps does stuff
-func GenerateConfigMaps(inputs []sfv1alpha1.SplunkForwarderInputs, namespace string) []*corev1.ConfigMap {
+func GenerateConfigMaps(inputs []sfv1alpha1.SplunkForwarderInputs, namespacedName types.NamespacedName) []*corev1.ConfigMap {
 	ret := []*corev1.ConfigMap{}
 
 	metadataCM := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "osd-monitored-logs-metadata",
-			Namespace: namespace,
+			Namespace: namespacedName.Namespace,
+			Labels: map[string]string{
+				"app": namespacedName.Name,
+			},
 		},
 		Data: map[string]string{
 			"local.meta": `
@@ -61,7 +65,10 @@ export = system
 	localCM := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "osd-monitored-logs-local",
-			Namespace: namespace,
+			Namespace: namespacedName.Namespace,
+			Labels: map[string]string{
+				"app": namespacedName.Name,
+			},
 		},
 		Data: map[string]string{
 			"app.conf": `
