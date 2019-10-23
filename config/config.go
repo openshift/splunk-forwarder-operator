@@ -1,7 +1,8 @@
 package config
 
 const (
-	OperatorName string = "splunk-forwarder-operator"
+	OperatorName      string = "splunk-forwarder-operator"
+	OperatorNamespace string = "splunk-forwarder-operator"
 
 	SplunkAuthSecretName string = "splunk-auth"
 )
