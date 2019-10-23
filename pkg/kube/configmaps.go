@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// GenerateConfigMaps does stuff
+// GenerateConfigMaps generates config maps based on the values in our CRD
 func GenerateConfigMaps(inputs []sfv1alpha1.SplunkForwarderInputs, namespacedName types.NamespacedName) []*corev1.ConfigMap {
 	ret := []*corev1.ConfigMap{}
 
