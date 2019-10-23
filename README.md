@@ -32,4 +32,5 @@ spec:
     sourcetype: _json
 ```
 
-The image and imageTag are for the image in /forwarder
+The image and imageTag are for the image in /forwarder (currently version 
+7.3.2-c60db69f8e32)
