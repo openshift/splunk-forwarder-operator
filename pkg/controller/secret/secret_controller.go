@@ -100,7 +100,6 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Secret")
 
 	// Fetch the Secret instance
 	instance := &corev1.Secret{}
@@ -121,7 +120,16 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 			return reconcile.Result{}, err
 		}
 	}
-	r.client.Delete(context.TODO(), daemonSet)
+
+	// We don't need to do anyhting if the DaemonSet was Created after the Secret
+	if daemonSet.CreationTimestamp.After(instance.CreationTimestamp.Time) {
+		return reconcile.Result{}, nil
+	}
+
+	err = r.client.Delete(context.TODO(), daemonSet)
+	if !errors.IsGone(err) || !errors.IsNotFound(err) {
+		return reconcile.Result{}, err
+	}
 
 	{ // DaemonSet
 		daemonSet := kube.GenerateDaemonSet(sfCrds)
