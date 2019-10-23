@@ -9,22 +9,22 @@ GIT_HASH=$(git rev-parse --short=7 HEAD)
 GIT_COMMIT_COUNT=$(git rev-list $(git rev-list --max-parents=0 HEAD)..HEAD --count)
 
 # clone bundle repo
-SAAS_OPERATOR_DIR="saas-aws-account-operator-bundle"
-BUNDLE_DIR="$SAAS_OPERATOR_DIR/aws-account-operator/"
+SAAS_OPERATOR_DIR="saas-splunk-forwarder-operator-bundle"
+BUNDLE_DIR="$SAAS_OPERATOR_DIR/splunk-forwarder-operator/"
 
 rm -rf "$SAAS_OPERATOR_DIR"
 
 git clone \
     --branch "$BRANCH_CHANNEL" \
-    https://app:"${APP_SRE_BOT_PUSH_TOKEN}"@gitlab.cee.redhat.com/service/saas-aws-account-operator-bundle.git \
+    https://app:"${APP_SRE_BOT_PUSH_TOKEN}"@gitlab.cee.redhat.com/service/saas-splunk-forwarder-operator-bundle.git \
     "$SAAS_OPERATOR_DIR"
 
 # remove any versions more recent than deployed hash
 REMOVED_VERSIONS=""
 if [[ "$REMOVE_UNDEPLOYED" == true ]]; then
     DEPLOYED_HASH=$(
-        curl -s 'https://gitlab.cee.redhat.com/service/saas-osd-operators/raw/master/aws-account-operator-services/aws-account-operator.yaml' | \
-            docker run --rm -i evns/yq -r '.services[]|select(.name="aws-account-operator").hash'
+        curl -s 'https://gitlab.cee.redhat.com/service/saas-osd-operators/raw/master/splunk-forwarder-operator-services/splunk-forwarder-operator.yaml' | \
+            docker run --rm -i evns/yq -r '.services[]|select(.name="splunk-forwarder-operator").hash'
     )
 
     delete=false
@@ -64,11 +64,11 @@ if [ "$NEW_VERSION" = "$PREV_VERSION" ]; then
 fi
 
 # create package yaml
-cat <<EOF > $BUNDLE_DIR/aws-account-operator.package.yaml
-packageName: aws-account-operator
+cat <<EOF > $BUNDLE_DIR/splunk-forwarder-operator.package.yaml
+packageName: splunk-forwarder-operator
 channels:
 - name: $BRANCH_CHANNEL
-  currentCSV: aws-account-operator.v${NEW_VERSION}
+  currentCSV: splunk-forwarder-operator.v${NEW_VERSION}
 EOF
 
 # add, commit & push
@@ -87,7 +87,7 @@ git push origin "$BRANCH_CHANNEL"
 popd
 
 # build the registry image
-REGISTRY_IMG="quay.io/app-sre/aws-account-operator-registry"
+REGISTRY_IMG="quay.io/app-sre/splunk-forwarder-operator-registry"
 DOCKERFILE_REGISTRY="Dockerfile.olm-registry"
 
 cat <<EOF > $DOCKERFILE_REGISTRY

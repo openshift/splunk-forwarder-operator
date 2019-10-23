@@ -28,7 +28,7 @@ outdir = sys.argv[1]
 prev_version = sys.argv[2]
 git_num_commits = sys.argv[3]
 git_hash = sys.argv[4]
-aws_account_operator_image = sys.argv[5]
+splunk_forwarder_operator_image = sys.argv[5]
 
 full_version = "%s.%s-%s" % (VERSION_BASE, git_num_commits, git_hash)
 print("Generating CSV for version: %s" % full_version)
@@ -56,27 +56,27 @@ for file_name in prom_files:
         shutil.copy(full_path, os.path.join(version_dir, file_name))
 
 
-with open('config/templates/aws-account-operator-csv-template.yaml', 'r') as stream:
+with open('config/templates/splunk-forwarder-operator-csv-template.yaml', 'r') as stream:
     csv = yaml.load(stream)
 
 csv['spec']['install']['spec']['clusterPermissions'] = []
 
-# Add aws-account-operator role to the CSV:
+# Add splunk-forwarder-operator role to the CSV:
 with open('deploy/cluster_role.yaml', 'r') as stream:
     operator_role = yaml.load(stream)
     csv['spec']['install']['spec']['clusterPermissions'].append(
         {
             'rules': operator_role['rules'],
-            'serviceAccountName': 'aws-account-operator',
+            'serviceAccountName': 'splunk-forwarder-operator',
         })
 
-# Add aws-account-operator-client role to the CSV:
+# Add splunk-forwarder-operator-client role to the CSV:
 with open('deploy/uhc_cluster_role.yaml', 'r') as stream:
     operator_role = yaml.load(stream)
     csv['spec']['install']['spec']['clusterPermissions'].append(
         {
             'rules': operator_role['rules'],
-            'serviceAccountName': 'aws-account-operator-client',
+            'serviceAccountName': 'splunk-forwarder-operator-client',
         })
 
 # Add our deployment spec for the hive operator:
@@ -90,19 +90,19 @@ with open('deploy/operator.yaml', 'r') as stream:
     csv['spec']['install']['spec']['deployments'][0]['spec'] = operator_deployment['spec']
 
 # Update the deployment to use the defined image:
-csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = aws_account_operator_image
+csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = splunk_forwarder_operator_image
 
 # Update the versions to include git hash:
-csv['metadata']['name'] = "aws-account-operator.v%s" % full_version
+csv['metadata']['name'] = "splunk-forwarder-operator.v%s" % full_version
 csv['spec']['version'] = full_version
-csv['spec']['replaces'] = "aws-account-operator.v%s" % prev_version
+csv['spec']['replaces'] = "splunk-forwarder-operator.v%s" % prev_version
 
 # Set the CSV createdAt annotation:
 now = datetime.datetime.now()
 csv['metadata']['annotations']['createdAt'] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 # Write the CSV to disk:
-csv_filename = "aws-account-operator.v%s.clusterserviceversion.yaml" % full_version
+csv_filename = "splunk-forwarder-operator.v%s.clusterserviceversion.yaml" % full_version
 csv_file = os.path.join(version_dir, csv_filename)
 with open(csv_file, 'w') as outfile:
     yaml.dump(csv, outfile, default_flow_style=False)

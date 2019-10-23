@@ -15,27 +15,27 @@ objects:
 - apiVersion: operators.coreos.com/v1alpha1
   kind: CatalogSource
   metadata:
-    name: aws-account-operator-catalog
+    name: splunk-forwarder-operator-catalog
   spec:
     sourceType: grpc
     image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
-    displayName: aws-account-operator Registry
+    displayName: splunk-forwarder-operator Registry
     publisher: SRE 
 
 - apiVersion: operators.coreos.com/v1alpha2
   kind: OperatorGroup
   metadata:
-    name: aws-account-operator-og
+    name: splunk-forwarder-operator-og
   spec:
     targetNamespaces:
-    - aws-account-operator
+    - splunk-forwarder-operator
 
 - apiVersion: operators.coreos.com/v1alpha1
   kind: Subscription
   metadata:
-    name: aws-account-operator
+    name: splunk-forwarder-operator
   spec:
     channel: ${CHANNEL}
-    name: aws-account-operator
-    source: aws-account-operator-catalog
-    sourceNamespace: aws-account-operator
+    name: splunk-forwarder-operator
+    source: splunk-forwarder-operator-catalog
+    sourceNamespace: splunk-forwarder-operator
