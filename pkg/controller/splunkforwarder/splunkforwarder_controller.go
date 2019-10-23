@@ -108,6 +108,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		}
 	}
 
+	var updateDaemonSet bool = false
 	{ // ConfigMaps
 		// Define a new ConfigMap object
 		configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.NamespacedName)
@@ -132,6 +133,12 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 				}
 			} else if err != nil {
 				return reconcile.Result{}, err
+			} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) {
+				updateDaemonSet = true // Recreate the DaemonSet whenever we update the ConfigMaps
+				err = r.client.Update(context.TODO(), configmap)
+				if err != nil {
+					return reconcile.Result{}, err
+				}
 			}
 		}
 	}
@@ -154,6 +161,11 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 			}
 		} else if err != nil {
 			return reconcile.Result{}, err
+		} else if instance.CreationTimestamp.After(dsFound.CreationTimestamp.Time) || updateDaemonSet {
+			err = r.client.Update(context.TODO(), daemonSet)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
 		}
 	}
 
