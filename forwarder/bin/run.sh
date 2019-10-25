@@ -13,5 +13,7 @@ fi
 # The above command still forks to the background even with --nodaemon so 
 # we do the tried and true while true sleep
 while true; do
+    SPLUNK_PID=$(head -1 /opt/splunkforwarder/var/run/splunk/splunkd.pid)
+    ps -p $SPLUNK_PID > /dev/null || exit -1
     sleep 5;
 done
