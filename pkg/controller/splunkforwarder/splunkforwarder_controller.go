@@ -90,72 +90,69 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	{ // See if our Secret exists
-		secFound := &corev1.Secret{}
-		err := r.client.Get(context.TODO(), types.NamespacedName{Name: config.SplunkAuthSecretName, Namespace: request.Namespace}, secFound)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
+	// See if our Secret exists
+	secFound := &corev1.Secret{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: config.SplunkAuthSecretName, Namespace: request.Namespace}, secFound)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 
 	var updateDaemonSet bool = false
-	{ // ConfigMaps
-		// Define a new ConfigMap object
-		configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.NamespacedName)
+	// ConfigMaps
+	// Define a new ConfigMap object
+	configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.NamespacedName)
 
-		// Define it outside the loop
-		cmFound := &corev1.ConfigMap{}
+	// Define it outside the loop
+	cmFound := &corev1.ConfigMap{}
 
-		for _, configmap := range configMaps {
-			// Set SplunkForwarder instance as the owner and controller
-			if err := controllerutil.SetControllerReference(instance, configmap, r.scheme); err != nil {
-				return reconcile.Result{}, err
-			}
-
-			// Check if this ConfigMap already exists
-			cmFound = &corev1.ConfigMap{} // reset cmFound
-			err = r.client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
-			if err != nil && errors.IsNotFound(err) {
-				reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
-				err = r.client.Create(context.TODO(), configmap)
-				if err != nil {
-					return reconcile.Result{}, err
-				}
-			} else if err != nil {
-				return reconcile.Result{}, err
-			} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) {
-				updateDaemonSet = true // Recreate the DaemonSet whenever we update the ConfigMaps
-				err = r.client.Update(context.TODO(), configmap)
-				if err != nil {
-					return reconcile.Result{}, err
-				}
-			}
-		}
-	}
-
-	{ // DaemonSet
-		daemonSet := kube.GenerateDaemonSet(instance)
+	for _, configmap := range configMaps {
 		// Set SplunkForwarder instance as the owner and controller
-		if err := controllerutil.SetControllerReference(instance, daemonSet, r.scheme); err != nil {
+		if err := controllerutil.SetControllerReference(instance, configmap, r.scheme); err != nil {
 			return reconcile.Result{}, err
 		}
 
-		// Check if this DaemonSet already exists
-		dsFound := &appsv1.DaemonSet{}
-		err = r.client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
+		// Check if this ConfigMap already exists
+		cmFound = &corev1.ConfigMap{} // reset cmFound
+		err = r.client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
 		if err != nil && errors.IsNotFound(err) {
-			reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
-			err = r.client.Create(context.TODO(), daemonSet)
+			reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
+			err = r.client.Create(context.TODO(), configmap)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
 		} else if err != nil {
 			return reconcile.Result{}, err
-		} else if instance.CreationTimestamp.After(dsFound.CreationTimestamp.Time) || updateDaemonSet {
-			err = r.client.Update(context.TODO(), daemonSet)
+		} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) {
+			updateDaemonSet = true // Recreate the DaemonSet whenever we update the ConfigMaps
+			err = r.client.Update(context.TODO(), configmap)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
+		}
+	}
+
+	// DaemonSet
+	daemonSet := kube.GenerateDaemonSet(instance)
+	// Set SplunkForwarder instance as the owner and controller
+	if err := controllerutil.SetControllerReference(instance, daemonSet, r.scheme); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	// Check if this DaemonSet already exists
+	dsFound := &appsv1.DaemonSet{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
+	if err != nil && errors.IsNotFound(err) {
+		reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
+		err = r.client.Create(context.TODO(), daemonSet)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	} else if err != nil {
+		return reconcile.Result{}, err
+	} else if instance.CreationTimestamp.After(dsFound.CreationTimestamp.Time) || updateDaemonSet {
+		err = r.client.Update(context.TODO(), daemonSet)
+		if err != nil {
+			return reconcile.Result{}, err
 		}
 	}
 

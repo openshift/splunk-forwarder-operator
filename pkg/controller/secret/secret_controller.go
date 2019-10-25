@@ -121,25 +121,25 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	{ // DaemonSet
-		daemonSet := kube.GenerateDaemonSet(sfCrds)
-		// Set SplunkForwarder instance as the owner and controller
-		if err := controllerutil.SetControllerReference(sfCrds, daemonSet, r.scheme); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		// Check if this DaemonSet already exists
-		dsFound := &appsv1.DaemonSet{}
-		err = r.client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
-		if err != nil && errors.IsNotFound(err) {
-			reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
-			err = r.client.Create(context.TODO(), daemonSet)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-		} else if err != nil {
-			return reconcile.Result{}, err
-		}
+	// DaemonSet
+	daemonSet = kube.GenerateDaemonSet(sfCrds)
+	// Set SplunkForwarder instance as the owner and controller
+	if err := controllerutil.SetControllerReference(sfCrds, daemonSet, r.scheme); err != nil {
+		return reconcile.Result{}, err
 	}
+
+	// Check if this DaemonSet already exists
+	dsFound := &appsv1.DaemonSet{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
+	if err != nil && errors.IsNotFound(err) {
+		reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
+		err = r.client.Create(context.TODO(), daemonSet)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	} else if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
