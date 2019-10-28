@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: olm-artifacts-template
+
+parameters:
+- name: REGISTRY_IMG
+  required: true
+- name: CHANNEL
+  value: staging
+- name: IMAGE_TAG
+  value: latest
+
+objects:
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: CatalogSource
+  metadata:
+    name: splunk-forwarder-operator-catalog
+  spec:
+    sourceType: grpc
+    image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
+    displayName: splunk-forwarder-operator Registry
+    publisher: SRE 
+
+- apiVersion: operators.coreos.com/v1alpha2
+  kind: OperatorGroup
+  metadata:
+    name: splunk-forwarder-operator-og
+  spec:
+    targetNamespaces:
+    - splunk-forwarder-operator
+
+- apiVersion: operators.coreos.com/v1alpha1
+  kind: Subscription
+  metadata:
+    name: splunk-forwarder-operator
+  spec:
+    channel: ${CHANNEL}
+    name: splunk-forwarder-operator
+    source: splunk-forwarder-operator-catalog
+    sourceNamespace: splunk-forwarder-operator

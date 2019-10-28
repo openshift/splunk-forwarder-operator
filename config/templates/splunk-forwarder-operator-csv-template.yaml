@@ -1,0 +1,49 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: splunk-forwarder-operator-0.0.1
+  namespace: placeholder
+  annotations:
+    categories: A list of comma separated categories that your operator falls under.
+    certified: "false"
+    description: Splunk Forwarder Operator for OpenShift. 
+    containerImage: quay.io/app-sre/splunk-forwarder-operator:latest
+    createdAt: "2019-10-23T17:34:33Z"
+    support: Wesley Hearn
+spec:
+  displayName: splunk-forwarder-operator
+  description: Splunk Forwarder Operator for OpenShift.
+  keywords:
+  - kubernetes
+  - openshift
+  - multi-cluster
+  - cluster
+  version: 0.0.1
+  provider:
+    name: Red Hat, Inc
+  maturity: alpha
+  installModes:
+  - type: OwnNamespace
+    supported: true
+  - type: SingleNamespace
+    supported: true
+  - type: MultiNamespace
+    supported: false
+  - type: AllNamespaces
+    supported: false
+  install:
+    strategy: deployment
+    spec:
+      clusterPermissions:
+      - serviceAccountName: splunk-forwarder-operator
+        # Rules will be added here by the generate-csv.py script.
+      deployments:
+      - name: splunk-forwarder-operator
+        # Deployment spec will be added here by the generate-csv.py script.
+  customresourcedefinitions:
+    owned:
+    - description: Reconcile SplunkForwarder.
+      displayName: SplunkForwarder
+      kind: SplunkForwarder
+      name: splunkforwarder.managed.openshift.io
+      version: v1alpha1
