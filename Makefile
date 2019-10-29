@@ -1,6 +1,7 @@
 SHELL := /usr/bin/env bash
 
 OPERATOR_DOCKERFILE = ./build/Dockerfile
+FORWARDER_DOCKERFILE = ./forwarder/Dockerfile
 
 # Include shared Makefiles
 include project.mk
