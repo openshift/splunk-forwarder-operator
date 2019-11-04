@@ -13,6 +13,7 @@ type SplunkForwarderSpec struct {
 	SplunkLicenseAccepted bool                    `json:"splunkLicenseAccepted,omitempty"`
 	Image                 string                  `json:"image"`
 	ImageVersion          string                  `json:"imageTag"`
+	ClusterID             string                  `json:"clusterID,omitempty"`
 	SplunkInputs          []SplunkForwarderInputs `json:"splunkInputs"`
 }
 

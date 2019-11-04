@@ -1,15 +1,12 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
 
-ARG BASE_VERSION=7.3.2
-ARG VERSION_HASH=c60db69f8e32
-
-ENV VERSION=$BASE_VERSION
-ENV VERSION_FULL=$BASE_VERSION-$VERSION_HASH
+ARG VERSION
+ARG VERSION_HASH
 
 ADD forwarder/bin/run.sh /
 RUN microdnf install -y libsemanage shadow-utils findutils procps wget && \
     microdnf clean all && \
-    wget -O /tmp/splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=universalforwarder&filename=splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm&wget=true" && \
+    wget -O /tmp/splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=universalforwarder&filename=splunkforwarder-${VERSION}-${VERSION_HASH}-linux-2.6-x86_64.rpm&wget=true" && \
     rpm -ivh /tmp/splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm && \
     rm -f /tmp/splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm && \
     mkdir -p /host && chown splunk:splunk /host && \
