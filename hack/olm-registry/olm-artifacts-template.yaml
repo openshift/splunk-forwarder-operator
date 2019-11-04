@@ -39,3 +39,18 @@ objects:
     name: splunk-forwarder-operator
     source: splunk-forwarder-operator-catalog
     sourceNamespace: splunk-forwarder-operator
+
+- apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+  kind: SplunkForwarder
+  metadata:
+    name: splunkforwarder-hive
+  spec:
+    image: quay.io/app-sre/splunk-forwarder
+    imageTag: 8.0.0-1357bef0a7f6
+    splunkLicenseAccepted: true
+    clusterID: hive
+    splunkInputs:
+    - path: /var/lib/origin/openshift_audit/audit.log
+      index: openshift_managed_audit
+      whitelist: \.log$
+      sourcetype: _json

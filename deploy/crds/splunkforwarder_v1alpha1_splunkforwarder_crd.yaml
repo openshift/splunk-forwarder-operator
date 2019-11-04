@@ -40,6 +40,9 @@ spec:
             imageTag:
               description: The Docker compatible image tag you want to run
               type: string
+            clusterID:
+              description: The cluster id is appened to every log message with the _meta. It is useful if you have multiple clusters
+              type: string
             splunkInputs:
               description: Configure the inputs of files you want to monitor
               items:

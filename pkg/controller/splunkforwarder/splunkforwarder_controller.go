@@ -100,7 +100,8 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	var updateDaemonSet bool = false
 	// ConfigMaps
 	// Define a new ConfigMap object
-	configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.NamespacedName)
+	// TODO(wshearn) - check instance.Spec.ClusterID, if it is empty look it up on the cluster.
+	configMaps := kube.GenerateConfigMaps(instance.Spec, request.NamespacedName)
 
 	// Define it outside the loop
 	cmFound := &corev1.ConfigMap{}
