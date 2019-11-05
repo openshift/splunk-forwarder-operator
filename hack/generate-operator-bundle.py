@@ -48,35 +48,18 @@ for file_name in crd_files:
     if (os.path.isfile(os.path.join('deploy/crds', file_name))):
         shutil.copy(full_path, os.path.join(version_dir, file_name))
 
-# Copy all prometheus yaml files over to the bundle output dir:
-prom_files = [ f for f in os.listdir('deploy/prometheus') if f.endswith('.yaml') ]
-for file_name in prom_files:
-    full_path = os.path.join('deploy/prometheus', file_name)
-    if (os.path.isfile(os.path.join('deploy/prometheus', file_name))):
-        shutil.copy(full_path, os.path.join(version_dir, file_name))
-
-
 with open('config/templates/splunk-forwarder-operator-csv-template.yaml', 'r') as stream:
     csv = yaml.load(stream)
 
 csv['spec']['install']['spec']['clusterPermissions'] = []
 
 # Add splunk-forwarder-operator role to the CSV:
-with open('deploy/cluster_role.yaml', 'r') as stream:
+with open('deploy/role.yaml', 'r') as stream:
     operator_role = yaml.load(stream)
     csv['spec']['install']['spec']['clusterPermissions'].append(
         {
             'rules': operator_role['rules'],
             'serviceAccountName': 'splunk-forwarder-operator',
-        })
-
-# Add splunk-forwarder-operator-client role to the CSV:
-with open('deploy/uhc_cluster_role.yaml', 'r') as stream:
-    operator_role = yaml.load(stream)
-    csv['spec']['install']['spec']['clusterPermissions'].append(
-        {
-            'rules': operator_role['rules'],
-            'serviceAccountName': 'splunk-forwarder-operator-client',
         })
 
 # Add our deployment spec for the hive operator:
