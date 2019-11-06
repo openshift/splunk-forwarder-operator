@@ -12,45 +12,147 @@ parameters:
   value: latest
 
 objects:
-- apiVersion: operators.coreos.com/v1alpha1
-  kind: CatalogSource
+- apiVersion: hive.openshift.io/v1alpha1
+  kind: SelectorSyncSet
   metadata:
-    name: splunk-forwarder-operator-catalog
+    name: splunk-forwarder-cr-sss
+    namespace: splunk-forwarder-operator
   spec:
-    sourceType: grpc
-    image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
-    displayName: splunk-forwarder-operator Registry
-    publisher: SRE 
+    clusterDeploymentSelector:
+      matchLabels:
+        managed.openshift.io/splunk: "true"
+    resourceApplyMode: sync
+    resources:
+    - apiVersion: operators.coreos.com/v1alpha1
+      kind: CatalogSource
+      metadata:
+        name: splunk-forwarder-operator-catalog
+      spec:
+        sourceType: grpc
+        image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
+        displayName: splunk-forwarder-operator Registry
+        publisher: SRE
 
-- apiVersion: operators.coreos.com/v1alpha2
-  kind: OperatorGroup
-  metadata:
-    name: splunk-forwarder-operator-og
-  spec:
-    targetNamespaces:
-    - splunk-forwarder-operator
+    - apiVersion: operators.coreos.com/v1alpha2
+      kind: OperatorGroup
+      metadata:
+        name: splunk-forwarder-operator-og
+      spec:
+        targetNamespaces:
+        - openshift-splunk-forwarder-operator
 
-- apiVersion: operators.coreos.com/v1alpha1
-  kind: Subscription
-  metadata:
-    name: splunk-forwarder-operator
-  spec:
-    channel: ${CHANNEL}
-    name: splunk-forwarder-operator
-    source: splunk-forwarder-operator-catalog
-    sourceNamespace: splunk-forwarder-operator
+    - apiVersion: operators.coreos.com/v1alpha1
+      kind: Subscription
+      metadata:
+        name: openshift-splunk-forwarder-operator
+      spec:
+        channel: ${CHANNEL}
+        name: splunk-forwarder-operator
+        source: splunk-forwarder-operator-catalog
+        sourceNamespace: splunk-forwarder-operator
 
-- apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
-  kind: SplunkForwarder
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        creationTimestamp: null
+        name: splunk-forwarder-operator
+      rules:
+      - apiGroups:
+        - ""
+        resources:
+        - secrets
+        verbs:
+        - list
+        - get
+      - apiGroups:
+        - ""
+        resources:
+        - configmaps
+        verbs:
+        - list
+        - get
+        - update
+        - create
+        - delete
+      - apiGroups:
+        - apps
+        resources:
+        - daemonsets
+        verbs:
+        - get
+        - create
+        - list
+        - update
+        - delete
+
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: splunk-forwarder-operator-clusterrolebinding
+      subjects:
+      - kind: ServiceAccount
+        name: default
+        namespace: openshift-splunk-forwarder-operator
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: splunk-forwarder-operator
+
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: openshift-security
+        annotations:
+          openshift.io/node-selector: ''
+
+# Needed because the splunk-forwarder is a privilaged container that mounts in the host filesystem
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: openshift-security-admin
+      subjects:
+      - kind: ServiceAccount
+        name: default
+        namespace: openshift-security
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: admin
+
+    secretReferences:
+    - source:
+        name: splunk-auth
+        namespace: splunk-forwarder-operator
+      target:
+        name: splunk-auth
+        namespace: openshift-security
+
+- apiVersion: hive.openshift.io/v1alpha1
+  kind: SelectorSyncSet
   metadata:
-    name: splunkforwarder-hive
+    name: splunk-forwarder-cr-sss
+    namespace: splunk-forwarder-operator
   spec:
-    image: quay.io/app-sre/splunk-forwarder
-    imageTag: 8.0.0-1357bef0a7f6
-    splunkLicenseAccepted: true
-    clusterID: hive
-    splunkInputs:
-    - path: /var/lib/origin/openshift_audit/audit.log
-      index: openshift_managed_audit
-      whitelist: \.log$
-      sourcetype: _json
+    clusterDeploymentSelector:
+      matchLabels:
+        managed.openshift.io/splunk: "true"
+    resourceApplyMode: sync
+    resources:
+    - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+      kind: SplunkForwarder
+      metadata:
+        name: splunkforwarder
+        namespace: openshift-security
+      spec:
+        image: quay.io/app-sre/splunk-forwarder
+        imageTag: 8.0.0-1357bef0a7f6
+        splunkLicenseAccepted: true
+        splunkInputs:
+        - path: /host/var/log/openshift-apiserver/audit.log
+          index: openshift_managed_audit
+          whitelist: \.log$
+          sourcetype: _json
+        - path: /host/var/log/containers/ip-*-*-*-*ec2internal-debug*.log
+          index: openshift_managed_debug_node
+          whitelist: \.log$
+          sourcetype: _json
