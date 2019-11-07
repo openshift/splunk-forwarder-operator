@@ -27,6 +27,7 @@ objects:
       kind: CatalogSource
       metadata:
         name: splunk-forwarder-operator-catalog
+        namespace: openshift-splunk-forwarder-operator
       spec:
         sourceType: grpc
         image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
@@ -37,6 +38,7 @@ objects:
       kind: OperatorGroup
       metadata:
         name: splunk-forwarder-operator-og
+        namespace: openshift-splunk-forwarder-operator
       spec:
         targetNamespaces:
         - openshift-splunk-forwarder-operator
@@ -45,11 +47,12 @@ objects:
       kind: Subscription
       metadata:
         name: openshift-splunk-forwarder-operator
+        namespace: openshift-splunk-forwarder-operator
       spec:
         channel: ${CHANNEL}
         name: splunk-forwarder-operator
         source: splunk-forwarder-operator-catalog
-        sourceNamespace: splunk-forwarder-operator
+        sourceNamespace: openshift-splunk-forwarder-operator
 
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRole
