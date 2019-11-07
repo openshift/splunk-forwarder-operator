@@ -23,6 +23,72 @@ objects:
         managed.openshift.io/splunk: "true"
     resourceApplyMode: sync
     resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: openshift-splunk-forwarder-operator
+        annotations:
+          openshift.io/node-selector: ''
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        creationTimestamp: null
+        name: openshift-splunk-forwarder-operator
+      rules:
+      - apiGroups:
+        - ""
+        resources:
+        - pods
+        - services
+        - endpoints
+        - persistentvolumeclaims
+        - events
+        - configmaps
+        - secrets
+        verbs:
+        - '*'
+      - apiGroups:
+        - apps
+        resources:
+        - deployments
+        - daemonsets
+        - replicasets
+        - statefulsets
+        verbs:
+        - '*'
+      - apiGroups:
+        - monitoring.coreos.com
+        resources:
+        - servicemonitors
+        verbs:
+        - get
+        - create
+      - apiGroups:
+        - apps
+        resourceNames:
+        - splunk-forwarder-operator
+        resources:
+        - deployments/finalizers
+        verbs:
+        - update
+      - apiGroups:
+        - splunkforwarder.managed.openshift.io
+        resources:
+        - '*'
+        verbs:
+        - '*'
+    - kind: ClusterRoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: splunk-forwarder-operator
+      subjects:
+      - kind: ServiceAccount
+        name: default
+        namespace: openshift-splunk-forwarder-operator
+      roleRef:
+        kind: ClusterRole
+        name: openshift-splunk-forwarder-operator
+        apiGroup: rbac.authorization.k8s.io
     - apiVersion: operators.coreos.com/v1alpha1
       kind: CatalogSource
       metadata:
