@@ -15,7 +15,7 @@ objects:
 - apiVersion: hive.openshift.io/v1alpha1
   kind: SelectorSyncSet
   metadata:
-    name: splunk-forwarder-cr-sss
+    name: splunk-forwarder-operator-sss
     namespace: splunk-forwarder-operator
   spec:
     clusterDeploymentSelector:
@@ -130,7 +130,7 @@ objects:
 - apiVersion: hive.openshift.io/v1alpha1
   kind: SelectorSyncSet
   metadata:
-    name: splunk-forwarder-cr-sss
+    name: splunk-forwarder-operator-cr-sss
     namespace: splunk-forwarder-operator
   spec:
     clusterDeploymentSelector:
