@@ -160,11 +160,11 @@ objects:
         verbs:
         - '*'
 
-      - apiVersion: v1
-       kind: ServiceAccount
-       metadata:
-         name: splunk-forwarder-operator
-         namespace: openshift-splunk-forwarder-operator
+    - apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: splunk-forwarder-operator
+        namespace: openshift-splunk-forwarder-operator
 
 
     - apiVersion: rbac.authorization.k8s.io/v1
