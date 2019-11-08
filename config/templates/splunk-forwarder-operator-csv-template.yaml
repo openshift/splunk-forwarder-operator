@@ -45,5 +45,5 @@ spec:
     - description: Reconcile SplunkForwarder.
       displayName: SplunkForwarder
       kind: SplunkForwarder
-      name: splunkforwarder.managed.openshift.io
+      name: splunkforwarders.splunkforwarder.managed.openshift.io
       version: v1alpha1
