@@ -154,7 +154,7 @@ objects:
         - update
         - delete
       - apiGroups:
-        - splunkforwarder.managed.openshift.io
+        - splunkforwarders.splunkforwarder.managed.openshift.io
         resources:
         - '*'
         verbs:
