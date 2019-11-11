@@ -103,6 +103,8 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		err = r.client.Get(context.TODO(), types.NamespacedName{Name: "config"}, configFound)
 		if err == nil {
 			instance.Spec.ClusterID = configFound.ClusterName
+		} else {
+			reqLogger.Info(err.Error())
 		}
 	}
 
