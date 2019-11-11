@@ -15,8 +15,8 @@ RUN microdnf install -y libsemanage shadow-utils findutils procps wget && \
     mkdir -p /opt/splunkforwarder/var/run/splunk/appserver/{i18n,modules/static/css} && \
     mkdir -p /opt/splunkforwarder/var/run/splunk/{upload,search_telemetry} && \
     mkdir -p /opt/splunkforwarder/var/spool/dirmoncache && \
-    mkdir -p /opt/splunkforwarder/etc/splunk/apps/osd_monitored_logs/{local,metadata} && \
-    mkdir -p /opt/splunkforwarder/etc/splunk/apps/splunkauth/{default,local,metadata} && \
+    mkdir -p /opt/splunkforwarder/etc/apps/osd_monitored_logs/{local,metadata} && \
+    mkdir -p /opt/splunkforwarder/etc/apps/splunkauth/{default,local,metadata} && \
     chown -R splunk:splunk /opt/splunkforwarder && \
     chown -R splunk:splunk /run.sh && \
     chmod +x /run.sh

@@ -29,6 +29,12 @@ objects:
         name: openshift-splunk-forwarder-operator
         annotations:
           openshift.io/node-selector: ''
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: openshift-security
+        annotations:
+          openshift.io/node-selector: ''
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRole
       metadata:
@@ -84,6 +90,40 @@ objects:
         verbs:
         - get
         - list
+
+    - apiVersion: security.openshift.io/v1
+      metadata:
+        name: splunkforwarder
+      allowHostDirVolumePlugin: true
+      allowHostIPC: false
+      allowHostNetwork: false
+      allowHostPID: false
+      allowHostPorts: false
+      allowPrivilegeEscalation: false
+      allowPrivilegedContainer: true
+      allowedCapabilities:
+      - '*'
+      allowedUnsafeSysctls:
+      - '*'
+      defaultAddCapabilities: null
+      fsGroup:
+        type: RunAsAny
+      kind: SecurityContextConstraints
+      priority: null
+      readOnlyRootFilesystem: false
+      requiredDropCapabilities: null
+      runAsUser:
+        type: RunAsAny
+      seLinuxContext:
+        type: RunAsAny
+      seccompProfiles:
+      - '*'
+      supplementalGroups:
+        type: RunAsAny
+      users:
+      - system:serviceaccount:openshift-security:default
+      volumes:
+      - '*'
     - kind: ClusterRoleBinding
       apiVersion: rbac.authorization.k8s.io/v1
       metadata:
@@ -186,27 +226,6 @@ objects:
         apiGroup: rbac.authorization.k8s.io
         kind: ClusterRole
         name: splunk-forwarder-operator
-
-    - apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: openshift-security
-        annotations:
-          openshift.io/node-selector: ''
-
-# Needed because the splunk-forwarder is a privilaged container that mounts in the host filesystem
-    - apiVersion: rbac.authorization.k8s.io/v1
-      kind: ClusterRoleBinding
-      metadata:
-        name: openshift-security-admin
-      subjects:
-      - kind: ServiceAccount
-        name: default
-        namespace: openshift-security
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: ClusterRole
-        name: admin
 
     secretReferences:
     - source:
