@@ -83,13 +83,6 @@ objects:
         - '*'
         verbs:
         - '*'
-      - apiGroups:
-        - config.openshift.io
-        resources:
-        - infrastructure
-        verbs:
-        - get
-        - list
 
     - apiVersion: security.openshift.io/v1
       metadata:
@@ -206,6 +199,13 @@ objects:
         - '*'
         verbs:
         - '*'
+      - apiGroups:
+        - config.openshift.io
+        resources:
+        - infrastructure
+        verbs:
+        - get
+        - list
 
     - apiVersion: v1
       kind: ServiceAccount
