@@ -98,13 +98,17 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	if instance.Spec.ClusterID == "" {
+	var clusterid = ""
+	if instance.Spec.ClusterID != "" {
+		clusterid = instance.Spec.ClusterID
+	} else {
 		configFound := &configv1.Infrastructure{}
 		err = r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, configFound)
 		if err != nil {
 			reqLogger.Info(err.Error())
+			clusterid = "openshift"
 		} else {
-			instance.Spec.ClusterID = configFound.ClusterName
+			clusterid = configFound.ClusterName
 		}
 	}
 
@@ -112,7 +116,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	// ConfigMaps
 	// Define a new ConfigMap object
 	// TODO(wshearn) - check instance.Spec.ClusterID, if it is empty look it up on the cluster.
-	configMaps := kube.GenerateConfigMaps(instance.Spec, request.NamespacedName)
+	configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.NamespacedName, clusterid)
 
 	// Define it outside the loop
 	cmFound := &corev1.ConfigMap{}

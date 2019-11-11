@@ -8,7 +8,7 @@ import (
 )
 
 // GenerateConfigMaps generates config maps based on the values in our CRD
-func GenerateConfigMaps(spec sfv1alpha1.SplunkForwarderSpec, namespacedName types.NamespacedName) []*corev1.ConfigMap {
+func GenerateConfigMaps(inputs []sfv1alpha1.SplunkForwarderInputs, namespacedName types.NamespacedName, clusterid string) []*corev1.ConfigMap {
 	ret := []*corev1.ConfigMap{}
 
 	metadataCM := &corev1.ConfigMap{
@@ -31,7 +31,7 @@ export = system
 
 	inputsStr := ""
 
-	for _, input := range spec.SplunkInputs {
+	for _, input := range inputs {
 		// No path passed in, skip it
 		if input.Path == "" {
 			continue
@@ -58,8 +58,8 @@ export = system
 			inputsStr += "blacklist = " + input.BlackList + "\n"
 		}
 
-		if spec.ClusterID != "" {
-			inputsStr += "_meta = clusterid:" + spec.ClusterID + "\n"
+		if clusterid != "" {
+			inputsStr += "_meta = clusterid:" + clusterid + "\n"
 		}
 
 		inputsStr += "disabled = false\n"
