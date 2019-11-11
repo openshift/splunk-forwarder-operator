@@ -12,25 +12,25 @@ func GetVolumeMounts() []corev1.VolumeMount {
 		// Splunk Forwarder Certificate Mounts
 		{
 			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunkforwarder/etc/splunk/apps/splunkauth/default",
+			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
 		},
 		{
 			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunkforwarder/etc/splunk/apps/splunkauth/local",
+			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
 		},
 		{
 			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunkforwarder/etc/splunk/apps/splunkauth/metadata",
+			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
 		},
 
 		// Inputs Mount
 		{
 			Name:      "osd-monitored-logs-local",
-			MountPath: "/opt/splunkforwarder/etc/splunk/apps/osd_monitored_logs/local",
+			MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/local",
 		},
 		{
 			Name:      "osd-monitored-logs-metadata",
-			MountPath: "/opt/splunkforwarder/etc/splunk/apps/osd_monitored_logs/metadata",
+			MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
 		},
 
 		// Host Mount
