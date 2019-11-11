@@ -100,11 +100,11 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 
 	if instance.Spec.ClusterID == "" {
 		configFound := &configv1.Infrastructure{}
-		err = r.client.Get(context.TODO(), types.NamespacedName{Name: "config"}, configFound)
-		if err == nil {
-			instance.Spec.ClusterID = configFound.ClusterName
-		} else {
+		err = r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, configFound)
+		if err != nil {
 			reqLogger.Info(err.Error())
+		} else {
+			instance.Spec.ClusterID = configFound.ClusterName
 		}
 	}
 
