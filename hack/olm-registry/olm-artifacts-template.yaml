@@ -202,10 +202,11 @@ objects:
       - apiGroups:
         - config.openshift.io
         resources:
-        - infrastructure
+        - infrastructures
         verbs:
         - get
         - list
+        - watch
 
     - apiVersion: v1
       kind: ServiceAccount
