@@ -344,6 +344,14 @@
   version = "1.0.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:42235fc7546597ba3d0647e782165bf2afe57508624fb91b3c5492291a1248f4"
+  name = "github.com/openshift/api"
+  packages = ["config/v1"]
+  pruneopts = "NT"
+  revision = "6feaabc7037a0688eefb36fd9f4618da7d780dda"
+
+[[projects]]
   digest = "1:0087f38751ec1995bafa67afd0ded9519a46297ecf571165c695fb9ba943688d"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
@@ -948,7 +956,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/go-openapi/spec",
-    "github.com/operator-framework/operator-sdk/pkg/k8sutil",
+    "github.com/openshift/api/config/v1",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
     "github.com/operator-framework/operator-sdk/pkg/metrics",
