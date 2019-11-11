@@ -3,6 +3,7 @@ package splunkforwarder
 import (
 	"context"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/splunk-forwarder-operator/config"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/pkg/kube"
@@ -95,6 +96,14 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: config.SplunkAuthSecretName, Namespace: request.Namespace}, secFound)
 	if err != nil {
 		return reconcile.Result{}, err
+	}
+
+	if instance.Spec.ClusterID == "" {
+		configFound := &configv1.Infrastructure{}
+		err = r.client.Get(context.TODO(), types.NamespacedName{Name: "config"}, configFound)
+		if err == nil {
+			instance.Spec.ClusterID = configFound.ClusterName
+		}
 	}
 
 	var updateDaemonSet bool = false
