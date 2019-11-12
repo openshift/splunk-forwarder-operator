@@ -261,7 +261,7 @@ objects:
           index: openshift_managed_audit
           whitelist: \.log$
           sourcetype: _json
-        - path: /host/var/log/containers/ip-*-*-*-*ec2internal-debug*.log
+        - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
           index: openshift_managed_debug_node
           whitelist: \.log$
           sourcetype: _json
