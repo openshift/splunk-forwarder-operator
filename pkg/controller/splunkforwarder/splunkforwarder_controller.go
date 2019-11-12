@@ -108,7 +108,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 			reqLogger.Info(err.Error())
 			clusterid = "openshift"
 		} else {
-			clusterid = configFound.ClusterName
+			clusterid = configFound.Status.InfrastructureName
 		}
 	}
 
