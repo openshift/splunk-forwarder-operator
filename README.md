@@ -6,8 +6,9 @@ for the namespace can deploy privilaged pods. It also needs a secret that holds
 the forwarder auth.
 
 If you are using splunk cloud you can download the spl file, extract it with
-`tar xvf splunkclouduf.spl` and create a secret with the files as is and they
-will be mounted in the correct place.
+`tar xvf splunkclouduf.spl` then edit outputs.conf and change sslCertPath and
+sslRootCAPath to point to the directory `$SPLUNK_HOME/etc/apps/splunkauth/default/`
+create a secret with the files as is and they will be mounted in the correct place. 
 
 The CRD is very to point to the files you want to ship(currently only supports
 monitor://).
@@ -21,6 +22,7 @@ spec:
   image: dockerimageurl
   imageTag: "versiontag"
   splunkLicenseAccepted: true
+  clusterID: optional-cluster-name
   splunkInputs:
   - path: /host/var/log/openshift-apiserver/audit.log
     index: openshift_managed_audit
@@ -33,4 +35,4 @@ spec:
 ```
 
 The image and imageTag are for the image in /forwarder (currently version 
-7.3.2-c60db69f8e32)
+8.0.0-1357bef0a7f6)
