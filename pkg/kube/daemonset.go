@@ -30,6 +30,9 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 			Labels: map[string]string{
 				"app": instance.Name,
 			},
+			Annotations: map[string]string{
+				"genVersion": string(instance.Generation),
+			},
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
