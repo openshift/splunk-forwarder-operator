@@ -8,7 +8,7 @@ import (
 )
 
 // GenerateConfigMaps generates config maps based on the values in our CRD
-func GenerateConfigMaps(inputs []sfv1alpha1.SplunkForwarderInputs, namespacedName types.NamespacedName, clusterid string) []*corev1.ConfigMap {
+func GenerateConfigMaps(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName, clusterid string) []*corev1.ConfigMap {
 	ret := []*corev1.ConfigMap{}
 
 	metadataCM := &corev1.ConfigMap{
@@ -17,6 +17,9 @@ func GenerateConfigMaps(inputs []sfv1alpha1.SplunkForwarderInputs, namespacedNam
 			Namespace: namespacedName.Namespace,
 			Labels: map[string]string{
 				"app": namespacedName.Name,
+			},
+			Annotations: map[string]string{
+				"genVersion": string(instance.Generation),
 			},
 		},
 		Data: map[string]string{
@@ -31,7 +34,7 @@ export = system
 
 	inputsStr := ""
 
-	for _, input := range inputs {
+	for _, input := range instance.Spec.SplunkInputs {
 		// No path passed in, skip it
 		if input.Path == "" {
 			continue
@@ -72,6 +75,9 @@ export = system
 			Namespace: namespacedName.Namespace,
 			Labels: map[string]string{
 				"app": namespacedName.Name,
+			},
+			Annotations: map[string]string{
+				"genVersion": string(instance.Generation),
 			},
 		},
 		Data: map[string]string{

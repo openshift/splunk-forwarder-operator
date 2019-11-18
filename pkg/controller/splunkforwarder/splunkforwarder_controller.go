@@ -2,6 +2,7 @@ package splunkforwarder
 
 import (
 	"context"
+	"strconv"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/splunk-forwarder-operator/config"
@@ -68,6 +69,27 @@ type ReconcileSplunkForwarder struct {
 	scheme *runtime.Scheme
 }
 
+// CheckGenerationVersionOlder is a function that checks against an annontations map with a splunk forwarder instance to compare the saved
+// generation to the CR generation
+func (r *ReconcileSplunkForwarder) CheckGenerationVersionOlder(annontations map[string]string, instance *sfv1alpha1.SplunkForwarder) bool {
+	if annontations["genVersion"] == "" {
+		// If the genVersion is missing just recreate it
+		return true
+	}
+
+	genVersion, err := strconv.ParseInt(annontations["genVersion"], 10, 64)
+	if err != nil {
+		// If there was an error parsing it we want to recreate
+		return true
+	}
+
+	if genVersion < instance.Generation {
+		return true
+	}
+
+	return false
+}
+
 // Reconcile reads that state of the cluster for a SplunkForwarder object and makes changes based on the state read
 // and what is in the SplunkForwarder.Spec
 // Note:
@@ -112,11 +134,10 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		}
 	}
 
-	var updateDaemonSet bool = false
 	// ConfigMaps
 	// Define a new ConfigMap object
 	// TODO(wshearn) - check instance.Spec.ClusterID, if it is empty look it up on the cluster.
-	configMaps := kube.GenerateConfigMaps(instance.Spec.SplunkInputs, request.NamespacedName, clusterid)
+	configMaps := kube.GenerateConfigMaps(instance, request.NamespacedName, clusterid)
 
 	// Define it outside the loop
 	cmFound := &corev1.ConfigMap{}
@@ -138,12 +159,12 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 			}
 		} else if err != nil {
 			return reconcile.Result{}, err
-		} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) {
-			updateDaemonSet = true // Recreate the DaemonSet whenever we update the ConfigMaps
+		} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(cmFound.GetAnnotations(), instance) {
 			err = r.client.Update(context.TODO(), configmap)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
+			return reconcile.Result{Requeue: true}, nil
 		}
 	}
 
@@ -165,11 +186,13 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		}
 	} else if err != nil {
 		return reconcile.Result{}, err
-	} else if instance.CreationTimestamp.After(dsFound.CreationTimestamp.Time) || updateDaemonSet {
-		err = r.client.Update(context.TODO(), daemonSet)
+	} else if instance.CreationTimestamp.After(dsFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(dsFound.GetAnnotations(), instance) {
+		err = r.client.Delete(context.TODO(), daemonSet)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
+		// Requeue to create the daemonset
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	return reconcile.Result{}, nil
