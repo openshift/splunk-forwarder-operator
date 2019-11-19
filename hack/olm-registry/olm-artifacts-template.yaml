@@ -20,7 +20,7 @@ objects:
   spec:
     clusterDeploymentSelector:
       matchLabels:
-        managed.openshift.io/splunk: "true"
+        api.openshift.com/managed: "true"
     resourceApplyMode: sync
     resources:
     - apiVersion: v1
@@ -244,7 +244,7 @@ objects:
   spec:
     clusterDeploymentSelector:
       matchLabels:
-        managed.openshift.io/splunk: "true"
+        api.openshift.com/managed: "true"
     resourceApplyMode: sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
