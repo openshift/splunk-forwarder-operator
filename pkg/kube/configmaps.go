@@ -62,7 +62,7 @@ export = system
 		}
 
 		if clusterid != "" {
-			inputsStr += "_meta = clusterid:" + clusterid + "\n"
+			inputsStr += "_meta = clusterid::" + clusterid + "\n"
 		}
 
 		inputsStr += "disabled = false\n"
