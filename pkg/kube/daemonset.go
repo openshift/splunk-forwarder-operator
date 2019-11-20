@@ -1,6 +1,8 @@
 package kube
 
 import (
+	"strconv"
+
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,7 +33,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 				"app": instance.Name,
 			},
 			Annotations: map[string]string{
-				"genVersion": string(instance.Generation),
+				"genVersion": strconv.FormatInt(instance.Generation, 10),
 			},
 		},
 		Spec: appsv1.DaemonSetSpec{

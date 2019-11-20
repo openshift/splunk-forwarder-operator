@@ -1,6 +1,8 @@
 package kube
 
 import (
+	"strconv"
+
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +21,7 @@ func GenerateConfigMaps(instance *sfv1alpha1.SplunkForwarder, namespacedName typ
 				"app": namespacedName.Name,
 			},
 			Annotations: map[string]string{
-				"genVersion": string(instance.Generation),
+				"genVersion": strconv.FormatInt(instance.Generation, 10),
 			},
 		},
 		Data: map[string]string{
@@ -77,7 +79,7 @@ export = system
 				"app": namespacedName.Name,
 			},
 			Annotations: map[string]string{
-				"genVersion": string(instance.Generation),
+				"genVersion": strconv.FormatInt(instance.Generation, 10),
 			},
 		},
 		Data: map[string]string{
