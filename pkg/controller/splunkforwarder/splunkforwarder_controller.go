@@ -4,6 +4,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/go-logr/logr"
+
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/splunk-forwarder-operator/config"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
@@ -65,21 +67,22 @@ var _ reconcile.Reconciler = &ReconcileSplunkForwarder{}
 type ReconcileSplunkForwarder struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client    client.Client
+	scheme    *runtime.Scheme
+	reqLogger logr.Logger
 }
 
 // CheckGenerationVersionOlder is a function that checks against an annontations map with a splunk forwarder instance to compare the saved
 // generation to the CR generation
 func (r *ReconcileSplunkForwarder) CheckGenerationVersionOlder(annontations map[string]string, instance *sfv1alpha1.SplunkForwarder) bool {
 	if annontations["genVersion"] == "" {
-		// If the genVersion is missing just recreate it
+		r.reqLogger.Info("genVersion missing")
 		return true
 	}
 
 	genVersion, err := strconv.ParseInt(annontations["genVersion"], 10, 64)
 	if err != nil {
-		// If there was an error parsing it we want to recreate
+		r.reqLogger.Info("Error parsing genVersion")
 		return true
 	}
 
@@ -96,8 +99,8 @@ func (r *ReconcileSplunkForwarder) CheckGenerationVersionOlder(annontations map[
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling SplunkForwarder")
+	r.reqLogger = log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	r.reqLogger.Info("Reconciling SplunkForwarder")
 
 	// Fetch the SplunkForwarder instance
 	instance := &sfv1alpha1.SplunkForwarder{}
@@ -127,7 +130,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		configFound := &configv1.Infrastructure{}
 		err = r.client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, configFound)
 		if err != nil {
-			reqLogger.Info(err.Error())
+			r.reqLogger.Info(err.Error())
 			clusterid = "openshift"
 		} else {
 			clusterid = configFound.Status.InfrastructureName
@@ -152,7 +155,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		cmFound = &corev1.ConfigMap{} // reset cmFound
 		err = r.client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
 		if err != nil && errors.IsNotFound(err) {
-			reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
+			r.reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
 			err = r.client.Create(context.TODO(), configmap)
 			if err != nil {
 				return reconcile.Result{}, err
@@ -160,6 +163,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		} else if err != nil {
 			return reconcile.Result{}, err
 		} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(cmFound.GetAnnotations(), instance) {
+			r.reqLogger.Info("Updating ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
 			err = r.client.Update(context.TODO(), configmap)
 			if err != nil {
 				return reconcile.Result{}, err
@@ -179,7 +183,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	dsFound := &appsv1.DaemonSet{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
+		r.reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
 		err = r.client.Create(context.TODO(), daemonSet)
 		if err != nil {
 			return reconcile.Result{}, err
