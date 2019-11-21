@@ -257,14 +257,6 @@ objects:
         imageTag: 8.0.0-1357bef0a7f6
         splunkLicenseAccepted: true
         splunkInputs:
-        - path: /host/var/log/openshift-apiserver/audit.log
-          index: openshift_managed_audit
-          whiteList: \.log$
-          sourceType: _json
-        - path: /host/var/log/kube-apiserver/audit.log
-          index: openshift_managed_audit
-          whiteList: \.log$
-          sourceType: _json
         - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
           index: openshift_managed_debug_node
           whiteList: \.log$
