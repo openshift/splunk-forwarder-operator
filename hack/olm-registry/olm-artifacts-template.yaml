@@ -244,7 +244,8 @@ objects:
   spec:
     clusterDeploymentSelector:
       matchLabels:
-        api.openshift.com/managed: "true"
+      - api.openshift.com/managed: "true"
+      - api.openshift.com/environment: production
     resourceApplyMode: sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -265,6 +266,33 @@ objects:
           index: openshift_managed_audit
           whiteList: \.log$
           sourceType: _json
+        - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+          index: openshift_managed_debug_node
+          whiteList: \.log$
+          sourceType: openshift:debug
+
+- apiVersion: hive.openshift.io/v1alpha1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-forwarder-operator-cr-stg-sss
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchLabels:
+      - api.openshift.com/managed: "true"
+      - api.openshift.com/environment: staging
+    resourceApplyMode: sync
+    resources:
+    - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+      kind: SplunkForwarder
+      metadata:
+        name: splunkforwarder
+        namespace: openshift-security
+      spec:
+        image: quay.io/app-sre/splunk-forwarder
+        imageTag: 8.0.0-1357bef0a7f6
+        splunkLicenseAccepted: true
+        splunkInputs:
         - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
           index: openshift_managed_debug_node
           whiteList: \.log$
