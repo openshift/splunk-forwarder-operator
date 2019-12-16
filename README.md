@@ -1,7 +1,7 @@
 # splunk-forwarder-operator
 
 This operator manages Splunk Universal Forwarder. It deploys a daemonset which 
-deploys a pod on each noed including the masters. It expects the service account
+deploys a pod on each node including the masters. It expects the service account
 for the namespace can deploy privilaged pods. It also needs a secret that holds
 the forwarder auth.
 
