@@ -246,6 +246,8 @@ objects:
       matchLabels:
         api.openshift.com/managed: "true"
         api.openshift.com/environment: production
+      matchExpessions:
+        - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
     resourceApplyMode: sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -281,6 +283,8 @@ objects:
       matchLabels:
         api.openshift.com/managed: "true"
         api.openshift.com/environment: staging
+      matchExpessions:
+        - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
     resourceApplyMode: sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
