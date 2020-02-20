@@ -35,4 +35,4 @@ spec:
 ```
 
 The image and imageTag are for the image in /forwarder (currently version 
-8.0.1-6db836e2fb9e)
+8.0.2-a7f645ddaf91)

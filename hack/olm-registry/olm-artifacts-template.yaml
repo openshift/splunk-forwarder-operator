@@ -257,7 +257,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageTag: 8.0.1-6db836e2fb9e
+        imageTag: 8.0.2-a7f645ddaf91
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/openshift-apiserver/audit.log
@@ -294,7 +294,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageTag: 8.0.1-6db836e2fb9e
+        imageTag: 8.0.2-a7f645ddaf91
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
