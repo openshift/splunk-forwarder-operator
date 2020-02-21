@@ -139,8 +139,14 @@ objects:
         image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
         displayName: splunk-forwarder-operator Registry
         publisher: SRE
-        nodeSelector:
-          node-role.kubernetes.io/infra: ''
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/infra
+                  operator: Exists
+              weight: 1
         tolerations:
           - effect: NoSchedule
             key: node-role.kubernetes.io/infra
