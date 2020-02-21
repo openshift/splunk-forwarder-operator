@@ -13,6 +13,18 @@ spec:
         name: splunk-forwarder-operator
     spec:
       serviceAccountName: splunk-forwarder-operator
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/infra
+                operator: Exists
+            weight: 1
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/infra
+          operator: Exists
       containers:
         - name: splunk-forwarder-operator
           # Replace this with the built image name
