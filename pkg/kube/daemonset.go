@@ -67,7 +67,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 						{
 							Name:            "splunk-uf",
 							ImagePullPolicy: corev1.PullAlways,
-							Image:           instance.Spec.Image + ":" + instance.Spec.ImageVersion,
+							Image:           instance.Spec.Image + ":" + instance.Spec.ImageTag,
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8089,

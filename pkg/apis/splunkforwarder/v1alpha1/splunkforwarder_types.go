@@ -4,17 +4,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // SplunkForwarderSpec defines the desired state of SplunkForwarder
 // +k8s:openapi-gen=true
 type SplunkForwarderSpec struct {
 	SplunkLicenseAccepted bool                    `json:"splunkLicenseAccepted,omitempty"`
 	Image                 string                  `json:"image"`
-	ImageVersion          string                  `json:"imageTag"`
+	ImageTag              string                  `json:"imageTag"`
 	ClusterID             string                  `json:"clusterID,omitempty"`
 	SplunkInputs          []SplunkForwarderInputs `json:"splunkInputs"`
+	UseHeavyForwarder     bool                    `json:"useHeavyForwarder"`
 }
 
 // SplunkForwarderStatus defines the observed state of SplunkForwarder

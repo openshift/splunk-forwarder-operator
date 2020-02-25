@@ -67,10 +67,49 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "SplunkForwarderSpec defines the desired state of SplunkForwarder",
-				Properties:  map[string]spec.Schema{},
+				Properties: map[string]spec.Schema{
+					"splunkLicenseAccepted": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"image": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"imageTag": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"clusterID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"splunkInputs": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkForwarderInputs"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"image", "imageTag", "splunkInputs"},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkForwarderInputs"},
 	}
 }
 
