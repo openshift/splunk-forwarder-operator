@@ -6,9 +6,9 @@ ARG VERSION_HASH
 ADD forwarder/bin/run.sh /
 RUN microdnf install -y libsemanage shadow-utils findutils procps wget && \
     microdnf clean all && \
-    wget -O /tmp/splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=universalforwarder&filename=splunkforwarder-${VERSION}-${VERSION_HASH}-linux-2.6-x86_64.rpm&wget=true" && \
-    rpm -ivh /tmp/splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm && \
-    rm -f /tmp/splunkforwarder-${VERSION_FULL}-linux-2.6-x86_64.rpm && \
+    wget -O /tmp/splunkforwarder.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=universalforwarder&filename=splunkforwarder-${VERSION}-${VERSION_HASH}-linux-2.6-x86_64.rpm&wget=true" && \
+    rpm -ivh /tmp/splunkforwarder.rpm && \
+    rm -f /tmp/splunkforwarder.rpm && \
     mkdir -p /host && chown splunk:splunk /host && \
     mkdir -p /opt/splunkforwarder/var/{lib,run,spool}/splunk && \
     mkdir -p /opt/splunkforwarder/var/lib/splunk/{authDb,hashDb} && \
