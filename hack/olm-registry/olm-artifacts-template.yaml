@@ -21,7 +21,7 @@ objects:
     clusterDeploymentSelector:
       matchLabels:
         api.openshift.com/managed: "true"
-    resourceApplyMode: sync
+    resourceApplyMode: Sync
     resources:
     - apiVersion: v1
       kind: Namespace
@@ -260,7 +260,7 @@ objects:
         api.openshift.com/environment: production
       matchExpessions:
         - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
-    resourceApplyMode: sync
+    resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
@@ -297,7 +297,7 @@ objects:
         api.openshift.com/environment: staging
       matchExpessions:
         - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
-    resourceApplyMode: sync
+    resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
