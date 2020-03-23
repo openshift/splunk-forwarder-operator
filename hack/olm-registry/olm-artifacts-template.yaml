@@ -260,6 +260,7 @@ objects:
         api.openshift.com/environment: production
       matchExpessions:
         - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
+        - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -297,6 +298,7 @@ objects:
         api.openshift.com/environment: staging
       matchExpessions:
         - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
+        - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
