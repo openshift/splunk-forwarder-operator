@@ -12,7 +12,7 @@ parameters:
   value: latest
 
 objects:
-- apiVersion: hive.openshift.io/v1alpha1
+- apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
     name: splunk-forwarder-operator-sss
@@ -248,7 +248,7 @@ objects:
         name: splunk-auth
         namespace: openshift-security
 
-- apiVersion: hive.openshift.io/v1alpha1
+- apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
     name: splunk-forwarder-operator-cr-sss
@@ -294,7 +294,7 @@ objects:
           whiteList: \.log$
           sourceType: _json
 
-- apiVersion: hive.openshift.io/v1alpha1
+- apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
     name: splunk-forwarder-operator-cr-stg-sss
