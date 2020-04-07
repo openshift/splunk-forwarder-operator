@@ -285,6 +285,14 @@ objects:
           index: openshift_managed_debug_node
           whiteList: \.log$
           sourceType: openshift:debug
+        - path: /host/var/log/pods/openshift-scanning-operator_logger*/logger/*.log
+          index: openshift_managed_pod_creation
+          whiteList: \.log$
+          sourceType: _json
+        - path: /host/var/log/openshift_managed_malware_scan.log
+          index: openshift_managed_malware_scan
+          whiteList: \.log$
+          sourceType: _json
 
 - apiVersion: hive.openshift.io/v1alpha1
   kind: SelectorSyncSet
