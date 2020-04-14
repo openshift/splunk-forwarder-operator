@@ -3,7 +3,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal
 ARG VERSION
 ARG VERSION_HASH
 
-ADD forwarder/bin/run.sh /
+ADD containers/heavy_forwarder/bin/run.sh /
 RUN microdnf install -y libsemanage shadow-utils findutils procps wget && \
     microdnf clean all && \
     wget -O /tmp/splunk.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=splunk&filename=splunk-${VERSION}-${VERSION_HASH}-linux-2.6-x86_64.rpm&wget=true" && \

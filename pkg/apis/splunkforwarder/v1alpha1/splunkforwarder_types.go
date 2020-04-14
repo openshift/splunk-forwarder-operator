@@ -7,12 +7,16 @@ import (
 // SplunkForwarderSpec defines the desired state of SplunkForwarder
 // +k8s:openapi-gen=true
 type SplunkForwarderSpec struct {
-	SplunkLicenseAccepted bool                    `json:"splunkLicenseAccepted,omitempty"`
-	Image                 string                  `json:"image"`
-	ImageTag              string                  `json:"imageTag"`
-	ClusterID             string                  `json:"clusterID,omitempty"`
-	SplunkInputs          []SplunkForwarderInputs `json:"splunkInputs"`
-	UseHeavyForwarder     bool                    `json:"useHeavyForwarder"`
+	SplunkLicenseAccepted  bool                    `json:"splunkLicenseAccepted,omitempty"`
+	Image                  string                  `json:"image"`
+	ImageTag               string                  `json:"imageTag"`
+	ClusterID              string                  `json:"clusterID,omitempty"`
+	SplunkInputs           []SplunkForwarderInputs `json:"splunkInputs"`
+	UseHeavyForwarder      bool                    `json:"useHeavyForwarder,omitempty"`
+	HeavyForwarderImage    string                  `json:"heavyForwarderImage,omitempty"`
+	HeavyForwarderReplicas int32                   `json:"heavyForwarderReplicas,omitempty"`
+	HeavyForwarderSelector string                  `json:"heavyForwarderSelector,omitempty"`
+	Filters                []SplunkFilter          `json:"filters,omitempty"`
 }
 
 // SplunkForwarderStatus defines the observed state of SplunkForwarder
@@ -40,6 +44,12 @@ type SplunkForwarderList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []SplunkForwarder `json:"items"`
+}
+
+// SplunkFilter is the stuct for filters
+type SplunkFilter struct {
+	Name   string `json:"name"`
+	Filter string `json:"filter"`
 }
 
 // SplunkForwarderInputs ia the struct that defines all the splunk inputs

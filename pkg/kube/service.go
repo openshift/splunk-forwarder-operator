@@ -1,6 +1,8 @@
 package kube
 
 import (
+	"strconv"
+
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +16,9 @@ func GenerateService(instance *sfv1alpha1.SplunkForwarder) *corev1.Service {
 			Namespace: instance.Namespace,
 			Labels: map[string]string{
 				"app": instance.Name + "-hf",
+			},
+			Annotations: map[string]string{
+				"genVersion": strconv.FormatInt(instance.Generation, 10),
 			},
 		},
 		Spec: corev1.ServiceSpec{
