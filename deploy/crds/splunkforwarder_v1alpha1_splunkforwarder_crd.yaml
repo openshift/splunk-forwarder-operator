@@ -31,6 +31,25 @@ spec:
           properties:
             clusterID:
               type: string
+            filters:
+              items:
+                properties:
+                  filter:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - name
+                - filter
+                type: object
+              type: array
+            heavyForwarderImage:
+              type: string
+            heavyForwarderReplicas:
+              format: int32
+              type: integer
+            heavyForwarderSelector:
+              type: string
             image:
               type: string
             imageTag:
@@ -53,6 +72,8 @@ spec:
                 type: object
               type: array
             splunkLicenseAccepted:
+              type: boolean
+            useHeavyForwarder:
               type: boolean
           required:
           - image

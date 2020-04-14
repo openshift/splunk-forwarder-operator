@@ -104,12 +104,48 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 							},
 						},
 					},
+					"useHeavyForwarder": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"heavyForwarderImage": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"heavyForwarderReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"heavyForwarderSelector": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"filters": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkFilter"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"image", "imageTag", "splunkInputs"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkForwarderInputs"},
+			"github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkFilter", "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkForwarderInputs"},
 	}
 }
 
