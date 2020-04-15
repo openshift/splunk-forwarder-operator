@@ -29,49 +29,57 @@ spec:
           type: object
         spec:
           properties:
-            splunkLicenseAccepted:
-              description: SplunkLicenseAccepted is a boolean on if you
-                accepted the splunk forwarder license. The PODs will not start
-                if this is set to false.
-              type: boolean
-            image:
-              description: Docker compatible image of the splunk forwarder you want to run
-              type: string
-            imageTag:
-              description: The Docker compatible image tag you want to run
-              type: string
             clusterID:
-              description: The cluster id is appened to every log message with the _meta. It is useful if you have multiple clusters
               type: string
-            splunkInputs:
-              description: Configure the inputs of files you want to monitor
+            filters:
               items:
                 properties:
-                  path:
-                    description: Path is the file you want to monitor, the host FS is
-                      mounted at /host, so if you wanted to monitor /var/log/messages
-                      you would set the path to /host/var/log/messages (required)
+                  filter:
+                    type: string
+                  name:
+                    type: string
+                required:
+                - name
+                - filter
+                type: object
+              type: array
+            heavyForwarderImage:
+              type: string
+            heavyForwarderReplicas:
+              format: int32
+              type: integer
+            heavyForwarderSelector:
+              type: string
+            image:
+              type: string
+            imageTag:
+              type: string
+            splunkInputs:
+              items:
+                properties:
+                  blackList:
                     type: string
                   index:
-                    description: Index is the Splunk Index you want to send the contents
-                      of the monitored file to (default is main)
+                    type: string
+                  path:
                     type: string
                   sourceType:
-                    description: Sourcetype is the Splunk Source Type you want to assign
-                      to the log entries. (default is _json)
                     type: string
-                  whitelist:
-                    description: Whitelist is a regex match on a file you want to monitor (default this is excluded)
-                    type: string
-                  blacklist:
-                    description: Blacklist is a regex match on a file you want to exclude (default this is excluded)
+                  whiteList:
                     type: string
                 required:
                 - path
                 type: object
               type: array
-            status:
-              type: object
+            splunkLicenseAccepted:
+              type: boolean
+            useHeavyForwarder:
+              type: boolean
+          required:
+          - image
+          - imageTag
+          - splunkInputs
+          type: object
         status:
           type: object
   version: v1alpha1
