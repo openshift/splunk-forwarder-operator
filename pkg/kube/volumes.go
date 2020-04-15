@@ -7,7 +7,7 @@ import (
 
 // GetVolumes Returns an array of corev1.Volumes we want to attach
 // It contains configmaps, secrets, and the host mount
-func GetVolumes(mountHost bool, mountSecret bool) []corev1.Volume {
+func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.Volume {
 	volumes := []corev1.Volume{
 		{
 			Name: "osd-monitored-logs-local",
@@ -52,6 +52,20 @@ func GetVolumes(mountHost bool, mountSecret bool) []corev1.Volume {
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
 						SecretName: config.SplunkAuthSecretName,
+					},
+				},
+			})
+	} else {
+		// if we aren't mounting the secret, we're fwding to the splunk hf
+		var internalName = instanceName + "-internalsplunk"
+		volumes = append(volumes,
+			corev1.Volume{
+				Name: internalName,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: internalName,
+						},
 					},
 				},
 			})

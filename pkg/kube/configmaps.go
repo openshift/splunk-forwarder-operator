@@ -127,7 +127,7 @@ export = system
 defaultGroup = internal
 
 [tcpout:internal]
-server = <TODO>:9997
+server = ` + instance.Name + `:9997
 `,
 		},
 	}
