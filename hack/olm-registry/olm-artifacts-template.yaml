@@ -21,7 +21,7 @@ objects:
     clusterDeploymentSelector:
       matchLabels:
         api.openshift.com/managed: "true"
-    resourceApplyMode: sync
+    resourceApplyMode: Sync
     resources:
     - apiVersion: v1
       kind: Namespace
@@ -139,6 +139,18 @@ objects:
         image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
         displayName: splunk-forwarder-operator Registry
         publisher: SRE
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/infra
+                  operator: Exists
+              weight: 1
+        tolerations:
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/infra
+            operator: Exists
 
     - apiVersion: operators.coreos.com/v1alpha2
       kind: OperatorGroup
@@ -246,9 +258,10 @@ objects:
       matchLabels:
         api.openshift.com/managed: "true"
         api.openshift.com/environment: production
-      matchExpessions:
+      matchExpressions:
         - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
-    resourceApplyMode: sync
+        - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
+    resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
@@ -257,7 +270,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageTag: 8.0.1-6db836e2fb9e
+        imageTag: 8.0.2-a7f645ddaf91
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/openshift-apiserver/audit.log
@@ -272,6 +285,14 @@ objects:
           index: openshift_managed_debug_node
           whiteList: \.log$
           sourceType: openshift:debug
+        - path: /host/var/log/pods/openshift-scanning-operator_logger*/logger/*.log
+          index: openshift_managed_pod_creation
+          whiteList: \.log$
+          sourceType: _json
+        - path: /host/var/log/openshift_managed_malware_scan.log
+          index: openshift_managed_malware_scan
+          whiteList: \.log$
+          sourceType: _json
 
 - apiVersion: hive.openshift.io/v1alpha1
   kind: SelectorSyncSet
@@ -283,9 +304,10 @@ objects:
       matchLabels:
         api.openshift.com/managed: "true"
         api.openshift.com/environment: staging
-      matchExpessions:
+      matchExpressions:
         - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
-    resourceApplyMode: sync
+        - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
+    resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
@@ -294,7 +316,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageTag: 8.0.1-6db836e2fb9e
+        imageTag: 8.0.2-a7f645ddaf91
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
