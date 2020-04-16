@@ -12,6 +12,7 @@ import (
 // GenerateDeployment returns a deployment that can be created with the oc client
 func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment {
 	var replicas int32 = instance.Spec.HeavyForwarderReplicas
+	var selector string = instance.Spec.HeavyForwarderSelector
 	if replicas == 0 {
 		replicas = 2
 	}
@@ -43,7 +44,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"watdo": "here...",
+					"node-role.kubernetes.io": selector,
 				},
 			},
 			Strategy: appsv1.DeploymentStrategy{
