@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-set -o xtrace
-
-id
-
-ls -la /opt/
-
 cd /opt/splunk
 
 SPLUNK_ARGS="--answer-yes --gen-and-print-passwd"
@@ -21,7 +15,7 @@ fi
 
 # The above command still forks to the background even with --nodaemon so 
 # we do the tried and true while true sleep
-SPLINK_PID_FILE="/opt/splunk/var/run/splunk/splunkd.pid"
+SPLUNK_PID_FILE="/opt/splunk/var/run/splunk/splunkd.pid"
 while true; do
     if [[ ! -f $SPLUNK_PID_FILE ]]; then
         exit 1
@@ -31,7 +25,4 @@ while true; do
     ps -p $SPLUNK_PID > /dev/null || exit 1
     sleep 5;
 done
-
-echo "past the loop: unexpected"
-sleep 120
 
