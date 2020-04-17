@@ -48,7 +48,7 @@ func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.
 		var hfName = instanceName + "-hfconfig"
 		volumes = append(volumes,
 			corev1.Volume{
-				Name: internalName,
+				Name: hfName,
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{
