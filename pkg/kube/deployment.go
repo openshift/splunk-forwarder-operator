@@ -91,7 +91,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 					Volumes: GetVolumes(false, true, instance.Name),
 					SecurityContext: corev1.PodSecurityContext{
 						RunAsUser: 1000,
-					}
+					},
 				},
 			},
 		},
