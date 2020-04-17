@@ -42,11 +42,6 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"node-role.kubernetes.io": selector,
-				},
-			},
 			Strategy: appsv1.DeploymentStrategy{
 				Type: "RollingUpdate",
 			},
@@ -62,7 +57,9 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 					ServiceAccountName: "default",
 					Tolerations: []corev1.Toleration{
 						{
+							Key:      "node-role.kubernetes.io/" + selector,
 							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
 						},
 					},
 					TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
