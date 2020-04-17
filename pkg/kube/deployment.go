@@ -42,6 +42,11 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"name": "splunk-heavy-forwarder",
+				},
+			},
 			Strategy: appsv1.DeploymentStrategy{
 				Type: "RollingUpdate",
 			},
