@@ -27,14 +27,11 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 	}
 
 	var volumes []corev1.Volume
-	var volumeMounts []corev1.VolumeMount
 
 	if instance.Spec.UseHeavyForwarder == true {
 		volumes = GetVolumes(true, false, instance.Name)
-		volumeMounts = GetVolumeMounts(instance, false)
 	} else {
 		volumes = GetVolumes(true, true, instance.Name)
-		volumeMounts = GetVolumeMounts(instance, true)
 	}
 
 	return &appsv1.DaemonSet{
@@ -91,7 +88,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
 							Env: envVars,
 
-							VolumeMounts: volumeMounts,
+							VolumeMounts: GetVolumeMounts(instance),
 
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &isPrivContainer,
