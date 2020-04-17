@@ -15,7 +15,7 @@ func GenerateService(instance *sfv1alpha1.SplunkForwarder) *corev1.Service {
 			Name:      instance.Name,
 			Namespace: instance.Namespace,
 			Labels: map[string]string{
-				"app": instance.Name + "-hf",
+				"name": "splunk-heavy-forwarder-service",
 			},
 			Annotations: map[string]string{
 				"genVersion": strconv.FormatInt(instance.Generation, 10),
@@ -24,7 +24,7 @@ func GenerateService(instance *sfv1alpha1.SplunkForwarder) *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Type: "ClusterIP",
 			Selector: map[string]string{
-				"app": "splunk-hf",
+				"name": "splunk-heavy-forwarder",
 			},
 			Ports: []corev1.ServicePort{
 				{
