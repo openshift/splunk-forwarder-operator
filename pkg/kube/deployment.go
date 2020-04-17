@@ -30,6 +30,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 	}
 
 	var runAsUserId int64 = 1000
+	podSecurityContext := corev1.PodSecurityContext{RunAsUser: &runAsUserId}
 
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -91,9 +92,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 						},
 					},
 					Volumes: GetVolumes(false, true, instance.Name),
-					SecurityContext: corev1.PodSecurityContext{
-						RunAsUser: &runAsUserId,
-					},
+					SecurityContext: &podSecurityContext,
 				},
 			},
 		},
