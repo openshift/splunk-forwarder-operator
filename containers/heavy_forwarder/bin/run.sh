@@ -1,4 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash -x
+
+id
+
+ls -la /opt/
 
 cd /opt/splunk
 
@@ -25,3 +29,7 @@ while true; do
     ps -p $SPLUNK_PID > /dev/null || exit 1
     sleep 5;
 done
+
+echo "past the loop: unexpected"
+sleep 120
+
