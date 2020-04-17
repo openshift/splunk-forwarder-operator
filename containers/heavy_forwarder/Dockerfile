@@ -20,7 +20,7 @@ RUN microdnf install -y libsemanage shadow-utils findutils procps wget && \
     chown -R splunk:splunk /opt/splunk && \
     chown -R splunk:splunk /run.sh && \
     chmod +x /run.sh && \
-    echo -e "\nOPTIMISTIC_ABOUT_FILE_LOCKING = 1" >>  opt/splunk/etc/splunk-launch.conf
+    echo -e "\nOPTIMISTIC_ABOUT_FILE_LOCKING = 1" >>  /opt/splunk/etc/splunk-launch.conf
 
 
 USER splunk
