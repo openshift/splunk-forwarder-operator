@@ -43,6 +43,20 @@ func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.
 					},
 				},
 			})
+	} else {
+		// if we aren't mounting the host dir, we're the hf
+		var hfName = instanceName + "-hfconfig"
+		volumes = append(volumes,
+			corev1.Volume{
+				Name: internalName,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: hfName,
+						},
+					},
+				},
+			})
 	}
 
 	if mountSecret == true {
