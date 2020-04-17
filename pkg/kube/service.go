@@ -28,7 +28,7 @@ func GenerateService(instance *sfv1alpha1.SplunkForwarder) *corev1.Service {
 			},
 			Ports: []corev1.ServicePort{
 				{
-					Protocol: "tcp",
+					Protocol: "TCP",
 					Port:     9997,
 				},
 			},
