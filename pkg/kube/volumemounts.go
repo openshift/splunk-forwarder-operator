@@ -55,25 +55,25 @@ func GetHeavyForwarderVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev
 		// Splunk Forwarder Certificate Mounts
 		{
 			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
+			MountPath: "/opt/splunk/etc/apps/splunkauth/default",
 		},
 		{
 			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
+			MountPath: "/opt/splunk/etc/apps/splunkauth/local",
 		},
 		{
 			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
+			MountPath: "/opt/splunk/etc/apps/splunkauth/metadata",
 		},
 
 		// Inputs and Props Transform Mount
 		{
 			Name:      instance.Name + "-hfconfig",
-			MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/local",
+			MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/local",
 		},
 		{
 			Name:      instance.Name + "-hfconfig",
-			MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
+			MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/metadata",
 		},
 	}
 }
