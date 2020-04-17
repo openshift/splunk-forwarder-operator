@@ -8,9 +8,9 @@ import (
 
 // GetVolumeMounts returns []corev1.VolumeMount that tells where each secret, configmap, and host mount
 // gets mounted in the container
-func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount {
+func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, mountSecret bool) []corev1.VolumeMount {
 	var forwarderConfig string
-	if instance.Spec.UseHeavyForwarder == true {
+	if instance.Spec.UseHeavyForwarder == true && !mountSecret {
 		forwarderConfig = instance.Name + "-internalsplunk"
 	} else {
 		forwarderConfig = config.SplunkAuthSecretName

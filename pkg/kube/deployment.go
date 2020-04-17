@@ -85,7 +85,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 
 							Env: envVars,
 
-							VolumeMounts: GetVolumeMounts(instance),
+							VolumeMounts: GetVolumeMounts(instance, true),
 						},
 					},
 					Volumes: GetVolumes(false, true, instance.Name),
