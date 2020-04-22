@@ -9,12 +9,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GenerateDaemonSet returns a daemonset that can be created with the oc client
-func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
-
-	var runAsUID int64 = 0
-	var isPrivContainer bool = true
+// GenerateDeployment returns a deployment that can be created with the oc client
+func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment {
+	var replicas int32 = instance.Spec.HeavyForwarderReplicas
+	var selector string = instance.Spec.HeavyForwarderSelector
+	if replicas == 0 {
+		replicas = 2
+	}
 	var terminationGracePeriodSeconds int64 = 10
+
 	var licenseAccepted string = "no"
 	if instance.Spec.SplunkLicenseAccepted {
 		licenseAccepted = "yes"
@@ -26,17 +29,12 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 		},
 	}
 
-	var volumes []corev1.Volume
+	var runAsUserId int64 = 1000
+	podSecurityContext := corev1.PodSecurityContext{RunAsUser: &runAsUserId}
 
-	if instance.Spec.UseHeavyForwarder == true {
-		volumes = GetVolumes(true, false, instance.Name)
-	} else {
-		volumes = GetVolumes(true, true, instance.Name)
-	}
-
-	return &appsv1.DaemonSet{
+	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-ds",
+			Name:      instance.Name + "-deployment",
 			Namespace: instance.Namespace,
 			Labels: map[string]string{
 				"app": instance.Name,
@@ -45,38 +43,40 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 				"genVersion": strconv.FormatInt(instance.Generation, 10),
 			},
 		},
-		Spec: appsv1.DaemonSetSpec{
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"name": "splunk-forwarder",
+					"name": "splunk-heavy-forwarder",
 				},
+			},
+			Strategy: appsv1.DeploymentStrategy{
+				Type: "RollingUpdate",
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "splunk-forwarder",
+					Name:      "splunk-heavy-forwarder",
 					Namespace: instance.Namespace,
 					Labels: map[string]string{
-						"name": "splunk-forwarder",
+						"name": "splunk-heavy-forwarder",
 					},
 				},
 				Spec: corev1.PodSpec{
-					NodeSelector: map[string]string{
-						"beta.kubernetes.io/os": "linux",
-					},
-
 					ServiceAccountName: "default",
 					Tolerations: []corev1.Toleration{
 						{
+							Key:      "node-role.kubernetes.io/" + selector,
 							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
 						},
 					},
 					TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
 
 					Containers: []corev1.Container{
 						{
-							Name:            "splunk-uf",
+							Name:            "splunk-hf",
 							ImagePullPolicy: corev1.PullAlways,
-							Image:           instance.Spec.Image + ":" + instance.Spec.ImageTag,
+							Image:           instance.Spec.HeavyForwarderImage + ":" + instance.Spec.ImageTag,
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8089,
@@ -88,15 +88,11 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
 							Env: envVars,
 
-							VolumeMounts: GetVolumeMounts(instance),
-
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: &isPrivContainer,
-								RunAsUser:  &runAsUID,
-							},
+							VolumeMounts: GetHeavyForwarderVolumeMounts(instance),
 						},
 					},
-					Volumes: volumes,
+					Volumes:         GetVolumes(false, true, instance.Name),
+					SecurityContext: &podSecurityContext,
 				},
 			},
 		},

@@ -102,3 +102,80 @@ is_manageable = false
 
 	return ret
 }
+
+// GenerateInternalConfigMap generates a configmap that will be used to setup internal forwarding from the SUF to the SHF
+func GenerateInternalConfigMap(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName) *corev1.ConfigMap {
+	ret := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + "-internalsplunk",
+			Namespace: namespacedName.Namespace,
+			Labels: map[string]string{
+				"app": namespacedName.Name,
+			},
+			Annotations: map[string]string{
+				"genVersion": strconv.FormatInt(instance.Generation, 10),
+			},
+		},
+		Data: map[string]string{
+			"local.meta": `
+[]
+access = read : [ * ], write : [ admin ]
+export = system
+`,
+			"outputs.conf": `
+[tcpout]
+defaultGroup = internal
+
+[tcpout:internal]
+server = ` + instance.Name + `:9997
+`,
+		},
+	}
+
+	return ret
+}
+
+// GenerateFilteringConfigMap generates configmaps for the HF that applies the filtering options
+func GenerateFilteringConfigMap(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName) *corev1.ConfigMap {
+	var data = map[string]string{}
+	data["local.meta"] = `
+[]
+access = read : [ * ], write : [ admin ]
+export = system
+`
+	data["inputs.conf"] = `
+[splunktcp://:9997]
+connection_host = dns
+`
+	if len(instance.Spec.Filters) > 0 {
+		data["transform.conf"] = ""
+
+		data["props.conf"] = `
+[_json]
+TRANSFORMS-null =`
+
+		for _, filter := range instance.Spec.Filters {
+			data["transform.conf"] += "[filter_" + filter.Name + "]\n"
+			data["transform.conf"] += "DEST_KEY = queue\n"
+			data["transform.conf"] += "FORMAT = nullQueue\n"
+			data["transform.conf"] += "REGEX = " + filter.Filter + "\n\n"
+			data["props.conf"] += "filter_" + filter.Name + " "
+		}
+	}
+
+	ret := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + "-hfconfig",
+			Namespace: namespacedName.Namespace,
+			Labels: map[string]string{
+				"app": namespacedName.Name,
+			},
+			Annotations: map[string]string{
+				"genVersion": strconv.FormatInt(instance.Generation, 10),
+			},
+		},
+		Data: data,
+	}
+
+	return ret
+}
