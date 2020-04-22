@@ -148,17 +148,17 @@ export = system
 connection_host = dns
 `
 	if len(instance.Spec.Filters) > 0 {
-		data["transform.conf"] = ""
+		data["transforms.conf"] = ""
 
 		data["props.conf"] = `
 [_json]
 TRANSFORMS-null =`
 
 		for _, filter := range instance.Spec.Filters {
-			data["transform.conf"] += "[filter_" + filter.Name + "]\n"
-			data["transform.conf"] += "DEST_KEY = queue\n"
-			data["transform.conf"] += "FORMAT = nullQueue\n"
-			data["transform.conf"] += "REGEX = " + filter.Filter + "\n\n"
+			data["transforms.conf"] += "[filter_" + filter.Name + "]\n"
+			data["transforms.conf"] += "DEST_KEY = queue\n"
+			data["transforms.conf"] += "FORMAT = nullQueue\n"
+			data["transforms.conf"] += "REGEX = " + filter.Filter + "\n\n"
 			data["props.conf"] += "filter_" + filter.Name + " "
 		}
 	}
