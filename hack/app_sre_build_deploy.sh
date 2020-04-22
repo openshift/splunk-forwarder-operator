@@ -19,7 +19,7 @@ HEAVYFORWARDER_IMG="${HEAVYFORWARDER_BASE_IMG}:latest"
 GIT_HASH=$(git rev-parse --short=7 HEAD)
 
 # build the image
-BUILD_CMD="docker build" IMG="$IMG" FORWARDER_IMG="$FORWARDER_IMG" make docker-build
+BUILD_CMD="docker build" IMG="$IMG" FORWARDER_IMG="$FORWARDER_IMG" HEAVYFORWARDER_IMG="$HEAVYFORWARDER_IMG" make docker-build
 
 # push the image
 skopeo copy --dest-creds "${QUAY_USER}:${QUAY_TOKEN}" \
