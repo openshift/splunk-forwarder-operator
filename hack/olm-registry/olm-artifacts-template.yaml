@@ -271,6 +271,9 @@ objects:
       spec:
         image: quay.io/app-sre/splunk-forwarder
         imageTag: 8.0.2-a7f645ddaf91
+        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
+        heavyForwarderSelector: infra
+        useHeavyForwarder: true
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/openshift-apiserver/audit.log
@@ -317,6 +320,9 @@ objects:
       spec:
         image: quay.io/app-sre/splunk-forwarder
         imageTag: 8.0.2-a7f645ddaf91
+        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
+        heavyForwarderSelector: infra
+        useHeavyForwarder: true
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
