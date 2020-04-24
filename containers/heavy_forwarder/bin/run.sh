@@ -23,6 +23,9 @@ while true; do
 
     SPLUNK_PID=$(head -1 ${SPLUNK_PID_FILE})
     ps -p $SPLUNK_PID > /dev/null || exit 1
+
+    # Clean up old metric logs
+    ls /opt/splunk/var/log/splunk/metrics.log.* && rm -f ls /opt/splunk/var/log/splunk/metrics.log.*
+
     sleep 5;
 done
-
