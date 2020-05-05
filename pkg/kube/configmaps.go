@@ -129,6 +129,10 @@ defaultGroup = internal
 [tcpout:internal]
 server = ` + instance.Name + `:9997
 `,
+			"limits.conf": `
+[thruput]
+maxKBps = 0
+`,
 		},
 	}
 
@@ -144,8 +148,16 @@ access = read : [ * ], write : [ admin ]
 export = system
 `
 	data["inputs.conf"] = `
+[splunktcp]
+route = has_key:_replicationBucketUUID:replicationQueue;has_key:_dstrx:typingQueue;has_key:_linebreaker:typingQueue;absent_key:_linebreaker:parsingQueue
+
 [splunktcp://:9997]
 connection_host = dns
+`
+
+	data["limits.conf"] = `
+[thruput]
+maxKBps = 0
 `
 	if len(instance.Spec.Filters) > 0 {
 		data["transforms.conf"] = ""
