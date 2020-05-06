@@ -277,11 +277,11 @@ objects:
         splunkLicenseAccepted: true
         filters:
         - name: ignore_serviceaccount_users
-          filter: '"user":{"username":"(?:system:serviceaccount:[^"]+)".*"userAgent":"(?:(?![^"]*(Mozilla|oc|Wget|curl)[^"]*/)[^"]+)'
+          filter: '"user":{"username":"(?:system:serviceaccount:[^"]+)".*"userAgent":"(?:(?![^"]*(Mozilla|oc|Wget|curl|kubectl(?:\.exe)?)/)[^"]+)'
         - name: ignore_system_node_users
           filter: '"user":{"username":"system:node:[^"]+"'
         - name: ignore_chatty_system_users
-          filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler)|api-server)"'
+          filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
         splunkInputs:
         - path: /host/var/log/openshift-apiserver/audit.log
           index: openshift_managed_audit
