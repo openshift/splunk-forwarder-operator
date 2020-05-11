@@ -72,6 +72,10 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 					},
 					TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
 
+					NodeSelector: map[string]string{
+						"node-role.kubernetes.io": selector,
+					},
+
 					Containers: []corev1.Container{
 						{
 							Name:            "splunk-hf",
