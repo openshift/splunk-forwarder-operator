@@ -19,7 +19,9 @@ RUN microdnf install -y libsemanage shadow-utils findutils procps wget && \
     mkdir -p /opt/splunkforwarder/etc/apps/splunkauth/{default,local,metadata} && \
     chown -R splunk:splunk /opt/splunkforwarder && \
     chown -R splunk:splunk /run.sh && \
-    chmod +x /run.sh
+    chmod +x /run.sh && \
+    sed -i 's/\.maxBackupIndex=5/\.maxBackupIndex=1/g' /opt/splunkforwarder/etc/log.cfg && \
+    sed -i 's/\.maxFileSize=25000000/\.maxFileSize=250000/g' /opt/splunkforwarder/etc/log.cfg
 
 USER splunk
 CMD [ "/run.sh" ]
