@@ -58,7 +58,7 @@ func TestGenerateConfigMaps(t *testing.T) {
 				clusterid:      "test",
 			},
 			want: []*corev1.ConfigMap{
-				&corev1.ConfigMap{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "osd-monitored-logs-metadata",
 						Namespace: instanceNamespace,
@@ -77,7 +77,7 @@ export = system
 `,
 					},
 				},
-				&corev1.ConfigMap{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "osd-monitored-logs-local",
 						Namespace: testInstance.Namespace,
