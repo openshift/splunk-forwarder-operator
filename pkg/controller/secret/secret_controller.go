@@ -2,6 +2,7 @@ package secret
 
 import (
 	"context"
+	goerr "errors"
 
 	"github.com/openshift/splunk-forwarder-operator/config"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
@@ -77,12 +78,21 @@ type ReconcileSecret struct {
 func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// TODO: Fix this namespace, look for our crd and check against the namespace it lives in
 
-	sfCrds := &sfv1alpha1.SplunkForwarder{}
+	sfCrds := &sfv1alpha1.SplunkForwarderList{}
 	err := r.client.List(context.TODO(), &client.ListOptions{Namespace: request.Namespace}, sfCrds)
-	// Our CRD does not exist in this namespace, just ignore and continue
+	// Error getting CR
 	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if len(sfCrds.Items) > 1 {
+		return reconcile.Result{}, goerr.New("More then one CR in namespace")
+	}
+
+	// Our CR does not exist in this namespace, just ignore and continue
+	if len(sfCrds.Items) != 1 {
 		return reconcile.Result{}, nil
 	}
+	sfCrd := &sfCrds.Items[0]
 
 	if request.Name != config.SplunkAuthSecretName {
 		// Not our secret, just ignore
@@ -104,11 +114,12 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	daemonSet := &appsv1.DaemonSet{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: sfCrds.Name + "-ds", Namespace: instance.Namespace}, daemonSet)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: instance.Namespace}, daemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
 		}
+		return reconcile.Result{}, nil
 	}
 
 	// We don't need to do anyhting if the DaemonSet was Created after the Secret
@@ -117,14 +128,14 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	err = r.client.Delete(context.TODO(), daemonSet)
-	if !errors.IsGone(err) || !errors.IsNotFound(err) {
+	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	// DaemonSet
-	daemonSet = kube.GenerateDaemonSet(sfCrds)
+	daemonSet = kube.GenerateDaemonSet(sfCrd)
 	// Set SplunkForwarder instance as the owner and controller
-	if err := controllerutil.SetControllerReference(sfCrds, daemonSet, r.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(sfCrd, daemonSet, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
