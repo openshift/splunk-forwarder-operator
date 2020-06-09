@@ -29,8 +29,8 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 		},
 	}
 
-	var runAsUserId int64 = 1000
-	podSecurityContext := corev1.PodSecurityContext{RunAsUser: &runAsUserId}
+	var runAsUserID int64 = 1000
+	podSecurityContext := corev1.PodSecurityContext{RunAsUser: &runAsUserID}
 
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
