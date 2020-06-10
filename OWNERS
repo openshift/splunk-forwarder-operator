@@ -1,18 +1,11 @@
-approvers:
-- drewandersonnz
-- c-e-brumm
-- jharrington22
-- rogbas
-- jewzaam
-- mwoodson
-- wshearn
-- wanghaoran1988
-- dofinn
 reviewers:
-- drewandersonnz
+- wshearn
+- jaybeeunix
+- gsleeman
 - c-e-brumm
-- jharrington22
-- rogbas
-- jewzaam
-- mwoodson
+approvers:
+- wshearn
+- jaybeeunix
+maintainers:
+- jaybeeunix
 - wshearn
