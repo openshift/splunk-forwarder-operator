@@ -28,7 +28,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
 	var volumes []corev1.Volume
 
-	if instance.Spec.UseHeavyForwarder == true {
+	if instance.Spec.UseHeavyForwarder {
 		volumes = GetVolumes(true, false, instance.Name)
 	} else {
 		volumes = GetVolumes(true, true, instance.Name)

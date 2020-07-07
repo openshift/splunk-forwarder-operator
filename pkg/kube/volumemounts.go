@@ -10,7 +10,7 @@ import (
 // gets mounted in the container
 func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount {
 	var forwarderConfig string
-	if instance.Spec.UseHeavyForwarder == true {
+	if instance.Spec.UseHeavyForwarder {
 		forwarderConfig = instance.Name + "-internalsplunk"
 	} else {
 		forwarderConfig = config.SplunkAuthSecretName

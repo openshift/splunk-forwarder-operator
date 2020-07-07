@@ -77,8 +77,14 @@ func testSplunkForwarderService() *corev1.Service {
 }
 
 func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
-	apis.AddToScheme(scheme.Scheme)
-	configv1.AddToScheme(scheme.Scheme)
+	if err := apis.AddToScheme(scheme.Scheme); err != nil {
+		t.Errorf("ReconcileSplunkForwarder.Reconcile() error = %v", err)
+		return
+	}
+	if err := configv1.AddToScheme(scheme.Scheme); err != nil {
+		t.Errorf("ReconcileSplunkForwarder.Reconcile() error = %v", err)
+		return
+	}
 	type args struct {
 		request reconcile.Request
 	}

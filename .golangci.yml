@@ -1,0 +1,5 @@
+run:
+  deadline: 30m
+  concurrency: 1
+#  modules-download-mode: readonly
+
