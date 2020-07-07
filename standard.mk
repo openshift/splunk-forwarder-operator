@@ -85,6 +85,10 @@ push:
 .PHONY: gocheck
 gocheck: ## Lint code
 	gofmt -s -l $(shell go list -f '{{ .Dir }}' ./... ) | grep ".*\.go"; if [ "$$?" = "0" ]; then gofmt -s -d $(shell go list -f '{{ .Dir }}' ./... ); exit 1; fi
+	go vet ./cmd/... ./pkg/...
+
+.PHONY: verify
+verify: ## Lint code
 	golangci-lint run
 
 .PHONY: gobuild
