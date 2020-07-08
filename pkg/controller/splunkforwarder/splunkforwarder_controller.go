@@ -154,7 +154,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		}
 
 		// Check if this ConfigMap already exists
-		cmFound := &corev1.ConfigMap{} // reset cmFound
+		cmFound := &corev1.ConfigMap{}
 		err = r.client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
 		if err != nil && errors.IsNotFound(err) {
 			r.reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
