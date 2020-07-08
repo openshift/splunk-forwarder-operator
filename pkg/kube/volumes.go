@@ -31,7 +31,7 @@ func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.
 		},
 	}
 
-	if mountHost == true {
+	if mountHost {
 		var hostPathDirectoryTypeForPtr = corev1.HostPathDirectory
 		volumes = append(volumes,
 			corev1.Volume{
@@ -59,7 +59,7 @@ func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.
 			})
 	}
 
-	if mountSecret == true {
+	if mountSecret {
 		volumes = append(volumes,
 			corev1.Volume{
 				Name: config.SplunkAuthSecretName,

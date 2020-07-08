@@ -76,7 +76,10 @@ func testSplunkForwarderDS() *appsv1.DaemonSet {
 }
 
 func TestReconcileSecret_Reconcile(t *testing.T) {
-	apis.AddToScheme(scheme.Scheme)
+	if err := apis.AddToScheme(scheme.Scheme); err != nil {
+		t.Errorf("ReconcileSecret.Reconcile() error = %v", err)
+		return
+	}
 	type args struct {
 		request reconcile.Request
 	}

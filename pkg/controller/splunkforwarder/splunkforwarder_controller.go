@@ -123,7 +123,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	var clusterid = ""
+	var clusterid string
 	if instance.Spec.ClusterID != "" {
 		clusterid = instance.Spec.ClusterID
 	} else {
@@ -141,14 +141,11 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	// Define a new ConfigMap object
 	// TODO(wshearn) - check instance.Spec.ClusterID, if it is empty look it up on the cluster.
 	configMaps := kube.GenerateConfigMaps(instance, request.NamespacedName, clusterid)
-	if instance.Spec.UseHeavyForwarder == true {
+	if instance.Spec.UseHeavyForwarder {
 		configMaps = append(configMaps, kube.GenerateInternalConfigMap(instance, request.NamespacedName))
 		configMaps = append(configMaps, kube.GenerateFilteringConfigMap(instance, request.NamespacedName))
 
 	}
-
-	// Define it outside the loop
-	cmFound := &corev1.ConfigMap{}
 
 	for _, configmap := range configMaps {
 		// Set SplunkForwarder instance as the owner and controller
@@ -157,7 +154,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 		}
 
 		// Check if this ConfigMap already exists
-		cmFound = &corev1.ConfigMap{} // reset cmFound
+		cmFound := &corev1.ConfigMap{}
 		err = r.client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
 		if err != nil && errors.IsNotFound(err) {
 			r.reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
@@ -213,7 +210,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 
 	deploymentFound := &appsv1.Deployment{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, deploymentFound)
-	if instance.Spec.UseHeavyForwarder == true {
+	if instance.Spec.UseHeavyForwarder {
 		if err != nil && errors.IsNotFound(err) {
 			r.reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
 			err = r.client.Create(context.TODO(), deployment)
@@ -251,7 +248,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 
 	serviceFound := &corev1.Service{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, serviceFound)
-	if instance.Spec.UseHeavyForwarder == true {
+	if instance.Spec.UseHeavyForwarder {
 		if err != nil && errors.IsNotFound(err) {
 			r.reqLogger.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
 			err = r.client.Create(context.TODO(), service)
