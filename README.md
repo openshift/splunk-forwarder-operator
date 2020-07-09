@@ -1,11 +1,11 @@
 # splunk-forwarder-operator
 
-This operator manages Splunk Universal Forwarder. It deploys a daemonset which 
+This operator manages [Splunk Universal Forwarder](https://docs.splunk.com/Documentation/Forwarder/latest/Forwarder/Abouttheuniversalforwarder). It deploys a daemonset which 
 deploys a pod on each node including the masters. It expects the service account
 for the namespace can deploy privileged pods. It also needs a secret that holds
 the forwarder auth.
 
-If you are using splunk cloud you can download the spl file, extract it with
+If you are using [splunk cloud](https://www.splunk.com/en_us/software/splunk-cloud.html) you can download the spl file, extract it with
 `tar xvf splunkclouduf.spl` then edit outputs.conf and change sslCertPath and
 sslRootCAPath to point to the directory `$SPLUNK_HOME/etc/apps/splunkauth/default/`
 create a secret with the files as is and they will be mounted in the correct place. 
