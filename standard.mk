@@ -91,6 +91,12 @@ gocheck: ## Lint code
 verify: ## Lint code
 	golangci-lint run
 
+.PHONY: vuln-check
+vuln-check: build
+	./hack/check-image-against-osd-sre-clair.sh $(OPERATOR_IMAGE_URI)
+	./hack/check-image-against-osd-sre-clair.sh $(FORWARDER_IMAGE_URI)
+	./hack/check-image-against-osd-sre-clair.sh $(HEAVYFORWARDER_IMAGE_URI)
+
 .PHONY: gobuild
 gobuild: gocheck gotest ## Build binary
 	${GOENV} go build ${GOFLAGS} -o ${BINFILE} ${MAINPACKAGE}
