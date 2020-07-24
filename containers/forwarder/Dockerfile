@@ -1,10 +1,10 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
 
-ARG VERSION
-ARG VERSION_HASH
-
 ADD containers/forwarder/bin/run.sh /
-RUN microdnf install -y libsemanage shadow-utils findutils procps wget && \
+ADD .splunk-version /
+ADD .splunk-version-hash /
+RUN export VERSION=$(cat /.splunk-version) && export VERSION_HASH=$(cat /.splunk-version-hash) && \
+    microdnf install -y libsemanage shadow-utils findutils procps wget && \
     microdnf clean all && \
     wget -O /tmp/splunkforwarder.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=universalforwarder&filename=splunkforwarder-${VERSION}-${VERSION_HASH}-linux-2.6-x86_64.rpm&wget=true" && \
     rpm -ivh /tmp/splunkforwarder.rpm && \
