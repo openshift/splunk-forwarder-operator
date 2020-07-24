@@ -8,8 +8,8 @@ IMAGE_NAME?=$(OPERATOR_NAME)
 FORWARDER_NAME=splunk-forwarder
 HEAVYFORWARDER_NAME=splunk-heavyforwarder
 
-FORWARDER_VERSION=8.0.3
-FORWARDER_HASH=a6754d8441bf
+FORWARDER_VERSION=$(shell cat .splunk-version)
+FORWARDER_HASH=$(shell cat .splunk-version-hash)
 
 VERSION_MAJOR?=0
 VERSION_MINOR?=1
