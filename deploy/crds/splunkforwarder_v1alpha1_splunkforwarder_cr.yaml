@@ -4,7 +4,7 @@ metadata:
   name: example-splunkforwarder
 spec:
   image: quay.io/app-sre/splunk-forwarder
-  imageTag: 8.0.3-a6754d8441bf
+  imageTag: 8.0.5-a1a6394cc5ae
   splunkLicenseAccepted: true
   clusterID: mycluster
   splunkInputs:
