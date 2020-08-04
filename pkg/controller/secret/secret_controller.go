@@ -15,8 +15,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -40,6 +42,30 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileSecret{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
+// mySecretPredicate filters out any events not related to our Secret.
+var mySecretPredicate = predicate.Funcs{
+	CreateFunc: func(e event.CreateEvent) bool { return passes(e.Object) },
+	DeleteFunc: func(e event.DeleteEvent) bool { return passes(e.Object) },
+	// UpdateFunc passes if *either* the new or old object is one we care about.
+	UpdateFunc: func(e event.UpdateEvent) bool {
+		return passes(e.ObjectOld) || passes(e.ObjectNew)
+	},
+	GenericFunc: func(e event.GenericEvent) bool { return passes(e.Object) },
+}
+
+func passes(o runtime.Object) bool {
+	if o == nil {
+		log.Error(nil, "No Object for event!")
+		return false
+	}
+	s, ok := o.(*corev1.Secret)
+	if !ok {
+		log.Error(nil, "Not a Secret (this should never happen)")
+		return false
+	}
+	return s.GetName() == config.SplunkAuthSecretName
+}
+
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
@@ -49,7 +75,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Secret
-	err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, &handler.EnqueueRequestForObject{}, mySecretPredicate)
 	if err != nil {
 		return err
 	}
@@ -85,7 +111,7 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 	if len(sfCrds.Items) > 1 {
-		return reconcile.Result{}, goerr.New("More then one CR in namespace")
+		return reconcile.Result{}, goerr.New("More than one CR in namespace")
 	}
 
 	// Our CR does not exist in this namespace, just ignore and continue
@@ -93,11 +119,6 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, nil
 	}
 	sfCrd := &sfCrds.Items[0]
-
-	if request.Name != config.SplunkAuthSecretName {
-		// Not our secret, just ignore
-		return reconcile.Result{}, nil
-	}
 
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
