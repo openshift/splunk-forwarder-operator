@@ -38,8 +38,8 @@ skopeo copy --dest-creds "${QUAY_USER}:${QUAY_TOKEN}" \
     "docker-daemon:${HEAVYFORWARDER_IMG}" \
     "docker://${QUAY_HEAVYFORWARDER_IMAGE}:latest"
 
-FORWARDER_VERSION=$(grep FORWARDER_VERSION= project.mk | awk -F= '{print $2 }')
-FORWARDER_HASH=$(grep FORWARDER_HASH= project.mk | awk -F= '{print $2 }')
+FORWARDER_VERSION=$(cat .splunk-version)
+FORWARDER_HASH=$(cat .splunk-version-hash)
 
 skopeo copy --dest-creds "${QUAY_USER}:${QUAY_TOKEN}" \
     "docker-daemon:${FORWARDER_IMG}" \
