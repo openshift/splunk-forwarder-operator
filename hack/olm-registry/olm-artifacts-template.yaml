@@ -259,7 +259,6 @@ objects:
         api.openshift.com/managed: "true"
         api.openshift.com/environment: production
       matchExpressions:
-        - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
         - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
     resourceApplyMode: Sync
     resources:
@@ -315,7 +314,6 @@ objects:
         api.openshift.com/managed: "true"
         api.openshift.com/environment: staging
       matchExpressions:
-        - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
         - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
     resourceApplyMode: Sync
     resources:
