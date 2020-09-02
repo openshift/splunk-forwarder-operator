@@ -11,7 +11,7 @@ parameters:
 - name: IMAGE_TAG
   value: latest
 - name: ALERTS_SKIP_LEGALENTITY_IDS
-  value: '["NOOP"]'
+  value: '[]'
 
 objects:
 - apiVersion: hive.openshift.io/v1
