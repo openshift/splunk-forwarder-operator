@@ -23,8 +23,8 @@ git clone \
 REMOVED_VERSIONS=""
 if [[ "$REMOVE_UNDEPLOYED" == true ]]; then
     DEPLOYED_HASH=$(
-        curl -s 'https://gitlab.cee.redhat.com/service/saas-osd-operators/raw/master/splunk-forwarder-operator-services/splunk-forwarder-operator.yaml' | \
-            docker run --rm -i evns/yq -r '.services[]|select(.name="splunk-forwarder-operator").hash'
+        curl -s "https://gitlab.cee.redhat.com/service/app-interface/raw/master/data/services/osd-operators/cicd/saas/saas-splunk-forwarder-operator.yaml" | \
+            docker run --rm -i evns/yq -r '.resourceTemplates[]|select(.name="splunk-forwarder-operator").targets[]|select(.namespace["$ref"]=="/services/osd-operators/namespaces/hive-production-cluster-scope.yml")|.ref'
     )
 
     delete=false
