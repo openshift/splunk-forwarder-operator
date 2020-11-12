@@ -11,7 +11,7 @@ parameters:
 - name: IMAGE_TAG
   value: latest
 - name: ALERTS_SKIP_LEGALENTITY_IDS
-  value: '[]'
+  value: '["none"]'
 
 objects:
 - apiVersion: hive.openshift.io/v1
@@ -262,7 +262,9 @@ objects:
         - { key: api.openshift.com/environment, operator: In, values: ["production"] }
         - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
         - { key: ext-managed.openshift.io/noalerts, operator: NotIn, values: ["true"] }
-        - { key: api.openshift.com/legal-entity-id, operator: NotIn, values: ${{ALERTS_SKIP_LEGALENTITY_IDS}} }
+        - key: api.openshift.com/legal-entity-id
+          operator: NotIn
+          values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
         - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
     resourceApplyMode: Sync
     resources:
