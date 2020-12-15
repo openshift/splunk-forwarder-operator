@@ -240,6 +240,14 @@ objects:
         kind: ClusterRole
         name: splunk-forwarder-operator
 
+    secretMappings:
+    - sourceRef:
+        name: splunk-auth
+        namespace: splunk-forwarder-operator
+      targetRef:
+        name: splunk-auth
+        namespace: openshift-security
+
     secretReferences:
     - source:
         name: splunk-auth
