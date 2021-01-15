@@ -12,11 +12,18 @@ parameters:
   value: latest
 - name: ALERTS_SKIP_LEGALENTITY_IDS
   value: '["none"]'
+- name: OPERATOR_NAME
+  value: splunk-forwarder-operator
+  required: true
 
 objects:
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
+    annotations:
+      component-display-name: Splunk Forwarder Operator
+      component-name: ${OPERATOR_NAME}
+      telemeter-query: csv_succeeded{_id="$CLUSTER_ID",name=~"${OPERATOR_NAME}.*",exported_namespace=~"openshift-.*",namespace="openshift-operator-lifecycle-manager"} == 1
     name: splunk-forwarder-operator-sss
     namespace: splunk-forwarder-operator
   spec:
