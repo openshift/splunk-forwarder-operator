@@ -14,6 +14,7 @@ func TestGetVolumeMounts(t *testing.T) {
 	type args struct {
 		instance *sfv1alpha1.SplunkForwarder
 	}
+	var mountPropagationMode = corev1.MountPropagationHostToContainer
 	tests := []struct {
 		name string
 		args args
@@ -53,9 +54,10 @@ func TestGetVolumeMounts(t *testing.T) {
 					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
 				},
 				{
-					Name:      "host",
-					MountPath: "/host",
-					ReadOnly:  true,
+					Name:             "host",
+					MountPath:        "/host",
+					MountPropagation: &mountPropagationMode,
+					ReadOnly:         true,
 				},
 			},
 		},
@@ -93,9 +95,10 @@ func TestGetVolumeMounts(t *testing.T) {
 					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
 				},
 				{
-					Name:      "host",
-					MountPath: "/host",
-					ReadOnly:  true,
+					Name:             "host",
+					MountPath:        "/host",
+					MountPropagation: &mountPropagationMode,
+					ReadOnly:         true,
 				},
 			},
 		},

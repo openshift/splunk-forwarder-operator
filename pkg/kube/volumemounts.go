@@ -10,6 +10,7 @@ import (
 // gets mounted in the container
 func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount {
 	var forwarderConfig string
+	var mountPropagationMode = corev1.MountPropagationHostToContainer
 	if instance.Spec.UseHeavyForwarder {
 		forwarderConfig = instance.Name + "-internalsplunk"
 	} else {
@@ -42,9 +43,10 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount 
 
 		// Host Mount
 		{
-			Name:      "host",
-			MountPath: "/host",
-			ReadOnly:  true,
+			Name:             "host",
+			MountPath:        "/host",
+			MountPropagation: &mountPropagationMode,
+			ReadOnly:         true,
 		},
 	}
 }
