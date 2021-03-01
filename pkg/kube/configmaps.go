@@ -159,12 +159,16 @@ connection_host = dns
 [thruput]
 maxKBps = 0
 `
+
+	data["props.conf"] = `
+[_json]
+TRUNCATE = 1000000
+`
+
 	if len(instance.Spec.Filters) > 0 {
 		data["transforms.conf"] = ""
 
-		data["props.conf"] = `
-[_json]
-TRANSFORMS-null =`
+		data["props.conf"] += "TRANSFORMS-null ="
 
 		for _, filter := range instance.Spec.Filters {
 			data["transforms.conf"] += "[filter_" + filter.Name + "]\n"

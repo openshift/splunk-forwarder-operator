@@ -263,6 +263,10 @@ connection_host = dns
 [thruput]
 maxKBps = 0
 `,
+					"props.conf": `
+[_json]
+TRUNCATE = 1000000
+`,
 				},
 			},
 		},
@@ -302,6 +306,7 @@ maxKBps = 0
 `,
 					"props.conf": `
 [_json]
+TRUNCATE = 1000000
 TRANSFORMS-null =filter_ignore_chatty_system_users `,
 					"transforms.conf": `[filter_ignore_chatty_system_users]
 DEST_KEY = queue

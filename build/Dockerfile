@@ -1,5 +1,5 @@
 # Currenlty the use of ${OPERATOR_PATH} is failing. Explicity pass the path for now. 
-FROM registry.svc.ci.openshift.org/openshift/release:golang-1.12 AS builder
+FROM registry.ci.openshift.org/openshift/release:golang-1.12 AS builder
 COPY . /go/src/github.com/openshift/splunk-forwarder-operator
 WORKDIR /go/src/github.com/openshift/splunk-forwarder-operator
 RUN make gobuild
