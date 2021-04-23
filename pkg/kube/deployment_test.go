@@ -92,7 +92,7 @@ func TestGenerateDeployment(t *testing.T) {
 								{
 									Name:            "splunk-hf",
 									ImagePullPolicy: corev1.PullAlways,
-									Image:           "test-image:0.0.1",
+									Image:           "quay.io/app-sre/splunk-heavyforwarder@sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a",
 									Ports: []corev1.ContainerPort{
 										{
 											ContainerPort: 8089,
