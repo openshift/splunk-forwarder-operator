@@ -80,7 +80,8 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 						{
 							Name:            "splunk-hf",
 							ImagePullPolicy: corev1.PullAlways,
-							Image:           instance.Spec.HeavyForwarderImage + ":" + instance.Spec.ImageTag,
+							// TEMPORARY: hardcode by-digest pull spec
+							Image: "quay.io/app-sre/splunk-heavyforwarder@sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8089,

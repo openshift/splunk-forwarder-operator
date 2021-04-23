@@ -105,7 +105,7 @@ func TestGenerateDaemonSet(t *testing.T) {
 								{
 									Name:            "splunk-uf",
 									ImagePullPolicy: corev1.PullAlways,
-									Image:           image + ":" + imageTag,
+									Image:           "quay.io/app-sre/splunk-forwarder@sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701",
 									Ports: []corev1.ContainerPort{
 										{
 											ContainerPort: 8089,
@@ -182,7 +182,7 @@ func TestGenerateDaemonSet(t *testing.T) {
 								{
 									Name:            "splunk-uf",
 									ImagePullPolicy: corev1.PullAlways,
-									Image:           image + ":" + imageTag,
+									Image:           "quay.io/app-sre/splunk-forwarder@sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701",
 									Ports: []corev1.ContainerPort{
 										{
 											ContainerPort: 8089,

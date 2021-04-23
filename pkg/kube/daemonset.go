@@ -76,7 +76,8 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 						{
 							Name:            "splunk-uf",
 							ImagePullPolicy: corev1.PullAlways,
-							Image:           instance.Spec.Image + ":" + instance.Spec.ImageTag,
+							// TEMPORARY: hardcode by-digest pull spec
+							Image: "quay.io/app-sre/splunk-forwarder@sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8089,
