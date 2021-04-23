@@ -15,22 +15,15 @@ import sys
 import yaml
 import shutil
 
-# This script will append the current number of commits given as an arg
-# (presumably since some past base tag), and the git hash arg for a final
-# version like: 0.1.189-3f73a592
-VERSION_BASE = "0.1"
-
-if len(sys.argv) != 6:
-    print("USAGE: %s OUTPUT_DIR PREVIOUS_VERSION GIT_NUM_COMMITS GIT_HASH HIVE_IMAGE" % sys.argv[0])
+if len(sys.argv) != 5:
+    print("USAGE: %s OUTPUT_DIR PREVIOUS_VERSION CATALOG_VERSION OPERATOR_IMAGE" % sys.argv[0])
     sys.exit(1)
 
 outdir = sys.argv[1]
 prev_version = sys.argv[2]
-git_num_commits = sys.argv[3]
-git_hash = sys.argv[4]
-splunk_forwarder_operator_image = sys.argv[5]
+full_version = sys.argv[3]
+splunk_forwarder_operator_image = sys.argv[4]
 
-full_version = "%s.%s-%s" % (VERSION_BASE, git_num_commits, git_hash)
 print("Generating CSV for version: %s" % full_version)
 
 if not os.path.exists(outdir):

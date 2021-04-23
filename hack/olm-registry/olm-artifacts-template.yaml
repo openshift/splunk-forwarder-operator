@@ -10,6 +10,8 @@ parameters:
   value: staging
 - name: IMAGE_TAG
   value: latest
+- name: REPO_DIGEST
+  required: true
 - name: ALERTS_SKIP_LEGALENTITY_IDS
   value: '["none"]'
 - name: OPERATOR_NAME
@@ -145,7 +147,7 @@ objects:
         namespace: openshift-splunk-forwarder-operator
       spec:
         sourceType: grpc
-        image: ${REGISTRY_IMG}:${CHANNEL}-${IMAGE_TAG}
+        image: ${REPO_DIGEST}
         displayName: splunk-forwarder-operator Registry
         publisher: SRE
         affinity:

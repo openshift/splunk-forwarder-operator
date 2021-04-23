@@ -36,3 +36,12 @@ spec:
 
 The image and imageTag are for the image in /forwarder (currently version 
 8.0.5-a1a6394cc5ae)
+
+## Testing the app-sre pipeline
+
+This repository is configured to support the testing strategy documented
+[here](https://github.com/openshift/boilerplate/blob/cc252374715df1910c8f4a8846d38e7b5d00f94f/boilerplate/openshift/golang-osd-operator/app-sre.md).
+
+Note that, in addition to creating personal repositories for the operator and
+OLM registry, you must also create them for `splunk-forwarder` and
+`splunk-heavyforwarder`.
