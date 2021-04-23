@@ -292,8 +292,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageTag: 8.0.5-a1a6394cc5ae
+        imageDigest: sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
+        heavyForwarderDigest: sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a
         heavyForwarderSelector: infra
         useHeavyForwarder: true
         splunkLicenseAccepted: true
@@ -356,8 +357,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageTag: 8.0.5-a1a6394cc5ae
+        imageDigest: sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
+        heavyForwarderDigest: sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a
         heavyForwarderSelector: infra
         useHeavyForwarder: true
         splunkLicenseAccepted: true

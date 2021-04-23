@@ -9,12 +9,14 @@ import (
 type SplunkForwarderSpec struct {
 	SplunkLicenseAccepted  bool                    `json:"splunkLicenseAccepted,omitempty"`
 	Image                  string                  `json:"image"`
-	ImageTag               string                  `json:"imageTag"`
+	ImageTag               string                  `json:"imageTag,omitempty"`
+	ImageDigest            string                  `json:"imageDigest,omitempty"`
 	ClusterID              string                  `json:"clusterID,omitempty"`
 	// +listType=atomic
 	SplunkInputs           []SplunkForwarderInputs `json:"splunkInputs"`
 	UseHeavyForwarder      bool                    `json:"useHeavyForwarder,omitempty"`
 	HeavyForwarderImage    string                  `json:"heavyForwarderImage,omitempty"`
+	HeavyForwarderDigest   string                  `json:"heavyForwarderDigest,omitempty"`
 	HeavyForwarderReplicas int32                   `json:"heavyForwarderReplicas,omitempty"`
 	HeavyForwarderSelector string                  `json:"heavyForwarderSelector,omitempty"`
 	// +listType=map

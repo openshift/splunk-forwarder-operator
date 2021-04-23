@@ -16,6 +16,7 @@ require (
 )
 
 require (
+	github.com/google/go-cmp v0.4.0
 	github.com/operator-framework/operator-sdk v0.16.0
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0

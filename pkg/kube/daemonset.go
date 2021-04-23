@@ -9,6 +9,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func forwarderPullSpec(instance *sfv1alpha1.SplunkForwarder) string {
+	var sep, suffix string
+	// ImageDigest takes precedence.
+	if instance.Spec.ImageDigest != "" {
+		sep = "@"
+		suffix = instance.Spec.ImageDigest
+	} else {
+		sep = ":"
+		suffix = instance.Spec.ImageTag
+	}
+	return instance.Spec.Image + sep + suffix
+}
+
 // GenerateDaemonSet returns a daemonset that can be created with the oc client
 func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
@@ -76,8 +89,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 						{
 							Name:            "splunk-uf",
 							ImagePullPolicy: corev1.PullAlways,
-							// TEMPORARY: hardcode by-digest pull spec
-							Image: "quay.io/app-sre/splunk-forwarder@sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701",
+							Image:           forwarderPullSpec(instance),
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8089,

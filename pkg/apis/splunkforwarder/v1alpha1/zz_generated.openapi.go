@@ -88,6 +88,12 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 							Format: "",
 						},
 					},
+					"imageDigest": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"clusterID": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -118,6 +124,12 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 						},
 					},
 					"heavyForwarderImage": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"heavyForwarderDigest": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -156,7 +168,7 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 						},
 					},
 				},
-				Required: []string{"image", "imageTag", "splunkInputs"},
+				Required: []string{"image", "splunkInputs"},
 			},
 		},
 		Dependencies: []string{

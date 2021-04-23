@@ -42,6 +42,8 @@ spec:
                   - name
                 type: object
               type: array
+            heavyForwarderDigest:
+              type: string
             heavyForwarderImage:
               type: string
             heavyForwarderReplicas:
@@ -50,6 +52,8 @@ spec:
             heavyForwarderSelector:
               type: string
             image:
+              type: string
+            imageDigest:
               type: string
             imageTag:
               type: string
@@ -77,7 +81,6 @@ spec:
               type: boolean
           required:
             - image
-            - imageTag
             - splunkInputs
           type: object
         status:
