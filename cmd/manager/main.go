@@ -13,6 +13,8 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/splunk-forwarder-operator/pkg/apis"
 	"github.com/openshift/splunk-forwarder-operator/pkg/controller"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
@@ -109,7 +111,10 @@ func main() {
 	}
 
 	// Create Service object to expose the metrics port.
-	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+	}
+	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
 		log.Info(err.Error())
 	}
