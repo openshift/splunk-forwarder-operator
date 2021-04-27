@@ -1,22 +1,26 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 operator_uri_base git_hash forwarder_uri heavyforwarder_uri" >&2
+    echo "Usage: $0 operator_uri_base git_hash operator_version forwarder_uri heavyforwarder_uri" >&2
     exit -1
 }
 
 set -exv
 
-[[ $# -eq 4 ]] || usage
+[[ $# -eq 5 ]] || usage
 
 # Base URI, no tag
 operator_uri_base=$1
-# Used to tag operator and registry images
+# Used to tag registry images
 git_hash=$2
+# Used to tag operator image
+# Format: {major}.{minor}.{commit-number}-{commit-hash-7}
+# (no leading 'v')
+operator_version=$3
 # Full URI with tag
-forwarder_uri=$3
+forwarder_uri=$4
 # Full URI with tag
-heavyforwarder_uri=$4
+heavyforwarder_uri=$5
 
 for param_name in operator_uri_base git_hash forwarder_uri heavyforwarder_uri; do
     eval param_val=\$$param_name
@@ -27,7 +31,7 @@ for param_name in operator_uri_base git_hash forwarder_uri heavyforwarder_uri; d
 done
 
 # FIXME: Dedup these computations from the Makefile.
-operator_uri=${operator_uri_base}:${git_hash}
+operator_uri=${operator_uri_base}:v${operator_version}
 catalog_uri_base=${operator_uri_base}-registry
 
 source ${0%/*}/common.sh

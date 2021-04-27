@@ -6,12 +6,13 @@ BRANCH_CHANNEL="$1"
 # Base image, no tag
 OPERATOR_IMAGE_BASE="$2"
 GIT_HASH="$3"
-CATALOG_VERSION="$4"
+OPERATOR_VERSION="$4"
 
 # Get the image URI as repo URL + image digest
-IMAGE_DIGEST=$(skopeo inspect docker://${OPERATOR_IMAGE_BASE}:${GIT_HASH} | jq -r .Digest)
+IMAGE_TAG_URI=${OPERATOR_IMAGE_BASE}:v${OPERATOR_VERSION}
+IMAGE_DIGEST=$(skopeo inspect docker://${IMAGE_TAG_URI} | jq -r .Digest)
 if [[ -z "$IMAGE_DIGEST" ]]; then
-    echo "Couldn't discover IMAGE_DIGEST for docker://${OPERATOR_IMAGE_BASE}:${GIT_HASH}!"
+    echo "Couldn't discover IMAGE_DIGEST for docker://${IMAGE_TAG_URI}!"
     exit 1
 fi
 REPO_DIGEST=${OPERATOR_IMAGE_BASE}@${IMAGE_DIGEST}
@@ -76,7 +77,7 @@ PREV_VERSION=$(ls "$BUNDLE_DIR" | sort -t . -k 3 -g | tail -n 1)
 ./hack/generate-operator-bundle.py \
     "$BUNDLE_DIR" \
     "$PREV_VERSION" \
-    "$CATALOG_VERSION" \
+    "$OPERATOR_VERSION" \
     "$REPO_DIGEST"
 
 NEW_VERSION=$(ls "$BUNDLE_DIR" | sort -t . -k 3 -g | tail -n 1)
