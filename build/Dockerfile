@@ -1,4 +1,4 @@
-# Currenlty the use of ${OPERATOR_PATH} is failing. Explicity pass the path for now. 
+FROM quay.io/app-sre/boilerplate:image-v0.5.2 AS builder
 FROM registry.ci.openshift.org/openshift/release:golang-1.13 AS builder
 COPY . /go/src/github.com/openshift/splunk-forwarder-operator
 WORKDIR /go/src/github.com/openshift/splunk-forwarder-operator

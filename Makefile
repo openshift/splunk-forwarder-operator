@@ -1,3 +1,5 @@
+include boilerplate/generated-includes.mk
+
 SHELL := /usr/bin/env bash
 
 OPERATOR_NAME?=$(shell sed -n 's/.*OperatorName .*"\([^"]*\)".*/\1/p' config/config.go)
@@ -130,3 +132,7 @@ gotest:
 test: gotest
 
 default: gobuild
+
+.PHONY: boilerplate-update
+boilerplate-update:
+	@boilerplate/update
