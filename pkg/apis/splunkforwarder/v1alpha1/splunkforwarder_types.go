@@ -11,11 +11,14 @@ type SplunkForwarderSpec struct {
 	Image                  string                  `json:"image"`
 	ImageTag               string                  `json:"imageTag"`
 	ClusterID              string                  `json:"clusterID,omitempty"`
+	// +listType=atomic
 	SplunkInputs           []SplunkForwarderInputs `json:"splunkInputs"`
 	UseHeavyForwarder      bool                    `json:"useHeavyForwarder,omitempty"`
 	HeavyForwarderImage    string                  `json:"heavyForwarderImage,omitempty"`
 	HeavyForwarderReplicas int32                   `json:"heavyForwarderReplicas,omitempty"`
 	HeavyForwarderSelector string                  `json:"heavyForwarderSelector,omitempty"`
+	// +listType=map
+	// +listMapKey=name
 	Filters                []SplunkFilter          `json:"filters,omitempty"`
 }
 
@@ -52,7 +55,7 @@ type SplunkFilter struct {
 	Filter string `json:"filter"`
 }
 
-// SplunkForwarderInputs ia the struct that defines all the splunk inputs
+// SplunkForwarderInputs is the struct that defines all the splunk inputs
 type SplunkForwarderInputs struct {
 	Path       string `json:"path"`
 	Index      string `json:"index,omitempty"`
