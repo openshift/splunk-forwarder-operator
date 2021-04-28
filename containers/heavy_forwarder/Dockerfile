@@ -4,10 +4,10 @@ ADD containers/heavy_forwarder/bin/run.sh /
 ADD .splunk-version /
 ADD .splunk-version-hash /
 RUN export VERSION=$(cat /.splunk-version) && export VERSION_HASH=$(cat /.splunk-version-hash) && \
-    microdnf install -y libsemanage shadow-utils findutils procps wget && \
-    microdnf clean all && \
-    wget -O /tmp/splunk.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=splunk&filename=splunk-${VERSION}-${VERSION_HASH}-linux-2.6-x86_64.rpm&wget=true" && \
+    curl -Lo /tmp/splunk.rpm "https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=${VERSION}&product=splunk&filename=splunk-${VERSION}-${VERSION_HASH}-linux-2.6-x86_64.rpm&wget=true" && \
+    microdnf install -y findutils libsemanage procps-ng shadow-utils && \
     rpm -ivh /tmp/splunk.rpm && \
+    microdnf clean all && \
     rm -f /tmp/splunk.rpm && \
     mkdir -p /host && chown splunk:splunk /host && \
     mkdir -p /opt/splunk/var/{lib,run,spool}/splunk && \
