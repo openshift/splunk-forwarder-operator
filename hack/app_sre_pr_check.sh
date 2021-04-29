@@ -10,5 +10,3 @@ python "$CURRENT_DIR"/validate_yaml.py "$CURRENT_DIR"/../deploy/crds
 if [ "$?" != "0" ]; then
     exit 1
 fi
-
-make build
