@@ -1,8 +1,7 @@
-# Currenlty the use of ${OPERATOR_PATH} is failing. Explicity pass the path for now. 
-FROM registry.ci.openshift.org/openshift/release:golang-1.12 AS builder
+FROM quay.io/app-sre/boilerplate:image-v0.5.2 AS builder
 COPY . /go/src/github.com/openshift/splunk-forwarder-operator
 WORKDIR /go/src/github.com/openshift/splunk-forwarder-operator
-RUN make gobuild
+RUN make go-build
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 ENV OPERATOR_PATH=/go/src/github.com/openshift/splunk-forwarder-operator \

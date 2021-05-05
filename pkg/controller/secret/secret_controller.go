@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -105,7 +105,10 @@ func (r *ReconcileSecret) Reconcile(request reconcile.Request) (reconcile.Result
 	// TODO: Fix this namespace, look for our crd and check against the namespace it lives in
 
 	sfCrds := &sfv1alpha1.SplunkForwarderList{}
-	err := r.client.List(context.TODO(), &client.ListOptions{Namespace: request.Namespace}, sfCrds)
+	listOpts := []client.ListOption{
+		client.InNamespace(request.Namespace),
+	}
+	err := r.client.List(context.TODO(), sfCrds, listOpts...)
 	// Error getting CR
 	if err != nil {
 		return reconcile.Result{}, err
