@@ -9,6 +9,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func heavyForwarderPullSpec(instance *sfv1alpha1.SplunkForwarder) string {
+	var sep, suffix string
+	// HeavyForwarderDigest takes precedence.
+	if instance.Spec.HeavyForwarderDigest != "" {
+		sep = "@"
+		suffix = instance.Spec.HeavyForwarderDigest
+	} else {
+		sep = ":"
+		suffix = instance.Spec.ImageTag
+	}
+	return instance.Spec.HeavyForwarderImage + sep + suffix
+}
+
 // GenerateDeployment returns a deployment that can be created with the oc client
 func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment {
 	var replicas int32 = instance.Spec.HeavyForwarderReplicas
@@ -80,8 +93,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 						{
 							Name:            "splunk-hf",
 							ImagePullPolicy: corev1.PullAlways,
-							// TEMPORARY: hardcode by-digest pull spec
-							Image: "quay.io/app-sre/splunk-heavyforwarder@sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a",
+							Image:           heavyForwarderPullSpec(instance),
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8089,
