@@ -19,9 +19,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -193,7 +193,7 @@ func (r *ReconcileSplunkForwarder) Reconcile(request reconcile.Request) (reconci
 	} else if err != nil {
 		return reconcile.Result{}, err
 	} else if instance.CreationTimestamp.After(dsFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(dsFound.GetAnnotations(), instance) {
-		err = r.client.Delete(context.TODO(), daemonSet)
+		err = r.client.Update(context.TODO(), daemonSet)
 		if err != nil {
 			return reconcile.Result{}, err
 		}

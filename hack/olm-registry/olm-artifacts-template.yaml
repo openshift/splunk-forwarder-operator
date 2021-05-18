@@ -356,8 +356,8 @@ objects:
         name: splunkforwarder
         namespace: openshift-security
       spec:
-        image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701
+        image: quay.io/gsleeman/splunk-forwarder
+        imageDigest: sha256:94f19937896b9b3b5f2cada75295e850e4cbebd5ac9ea0803aa33dc47077503a
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
         heavyForwarderDigest: sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a
         heavyForwarderSelector: infra
@@ -368,3 +368,245 @@ objects:
           index: openshift_managed_debug_node
           whiteList: \.log$
           sourceType: openshift:debug
+        auditPolicy:
+          index: openshift_managed_audit_stage
+          rules:
+          # metrics for policy rules include the rule number (starting at 1)
+          # 1. drop common non-resource read requests (~50k/day)
+          - level: None
+            nonResourceURLs:
+            - /
+            - /api*
+            - /healthz*
+            - /livez*
+            - /openapi/v2*
+            - /readyz*
+            - /version
+            - /.well-known*
+            verbs:
+            - get
+            - head
+            - options
+          # 2. drop leases, tokenreviews, subjectaccessreviews (~500k/day)
+          - level: None
+            resources:
+            - group: coordination.k8s.io
+              resources: ['leases']
+            - group: authentication.k8s.io
+              resources: ['tokenreviews']
+            - group: oauth.openshift.io
+              resources: ['tokenreviews']
+            - group: authorization.k8s.io
+              resources:
+              - subjectaccessreviews
+              - selfsubjectaccessreviews
+          # 3. reduce events with sensitive content to metadata
+          - level: Metadata
+            resources:
+            - group: oauth.openshift.io
+              resources: ['oauthclients']
+            - group: image.openshift.io
+              resources: ['imagestreams/secrets']
+            verbs:
+            - create
+            - update
+            - patch
+            - delete
+            - deletecollection
+          # 4. forward events from key namespaces
+          - level: Request
+            resources:
+            - group: events.k8s.io
+              resources: ['events']
+            verbs: ['create']
+            namespaces:
+            - default
+            - openshift-etcd
+            - openshift-apiserver
+            - openshift-kube-apiserver
+          # 5. drop remaining events
+          - level: None
+            resources:
+            - group: events.k8s.io
+              resources: ['events']
+          # 6. always forward system:admin activity
+          - level: Request
+            users: ['system:admin']
+          # 7. drop job events initiated from cronjob controller
+          - level: None
+            users: ['system:serviceaccount:kube-system:cronjob-controller']
+            resources:
+            - group: 'batch'
+              resources: ['jobs']
+          # 8. exclude backplane cronjob serviceaccounts
+          - level: None
+            users:
+            - system:serviceaccount:openshift-backplane:osd-delete-backplane-serviceaccounts
+            - system:serviceaccount:openshift-backplane-srep:osd-delete-ownerrefs-serviceaccounts
+            namespaces: ['openshift-backplane-srep','openshift-backplane']
+          # 9. forward all other backplane serviceaccount events
+          - level: Request
+            userGroups: ['system:serviceaccounts:openshift-backplane-*']
+          # 10. drop control plane reads (~500k/day)
+          - level: None
+            users:
+            - system:apiserver
+            - system:kube-apiserver
+            - system:kube-scheduler
+            - system:kube-controller-manager
+            verbs:
+            - get
+            - head
+            - list
+            - watch
+          # 11. drop node and openshift-internal sa reads (~5M/day)
+          - level: None
+            userGroups:
+            - system:nodes
+            - system:serviceaccounts:kube-*
+            - system:serviceaccounts:openshift-*
+            verbs:
+            - get
+            - list
+            - watch
+          # 12. exclude node pod bindings and tokenrequests
+          - level: None
+            userGroups: ['system:nodes']
+            resources:
+            - resources: ['serviceaccounts/token','pods/binding']
+            verbs: ['create']
+          # 13. exclude control plane pod bindings and tokenrequests
+          - level: None
+            users:
+            - system:kube-controller-manager
+            - system:kube-scheduler
+            resources:
+            - resources: ['serviceaccounts/token','pods/binding']
+            verbs: ['create']
+          # 14. drop sre-build-test and sre-pruning activity (~6k/day)
+          - level: None
+            namespaces:
+            - openshift-sre-pruning
+            - openshift-build-test-*
+          # 15. drop openshift-marketplace pod events (~1.5k/day)
+          - level: None
+            resources:
+            - resources: ['pods']
+            namespaces: ['openshift-marketplace']
+          # 16. reduce pod delete events to metadata (data is in create)
+          - level: Metadata
+            resources:
+            - resources: ['pods']
+            verbs: ['delete']
+          # 17. forward pod events and other CRs we want to track
+          - level: Request
+            resources:
+            - resources:
+              - pods
+            - group: compliance.openshift.io
+              resources:
+              - compliancecheckresults
+            - group: secscan.quay.redhat.com
+              resources:
+              - imagemanifestvulns
+            verbs:
+            - create
+            - update
+            - patch
+            - delete
+            - deletecollection
+          # 18. drop noisy system status updates (~115k/day)
+          - level: None
+            userGroups:
+            - system:nodes
+            - system:serviceaccounts
+            - system:masters
+            resources:
+            - resources: ['*/status']
+            - group: apps
+              resources: ['*/status']
+            - group: batch
+              resources: ['*/status']
+            - group: quota.openshift.io
+              resources: ['clusterresourcequotas/status']
+            - group: managed.openshift.io
+              resources: ['subjectpermissions/status']
+            - group: apiserver.openshift.io
+              resources: ['apirequestcounts/*','apirequestcounts']
+            - group: controlplane.operator.openshift.io
+              resources: ['podnetworkconnectivitychecks/status']
+            - group: velero.io
+              resources: ['backups','backupstoragelocations/status']
+            verbs: ['create','update','patch']
+          # 19. drop olm no-op updates (~30k/day)
+          - level: None
+            users: ['system:serviceaccount:openshift-operator-lifecycle-manager:olm-operator-serviceaccount']
+            resources:
+            - resources: ['namespaces']
+            - group: apps
+              resources: ['deployments']
+            - group: operators.coreos.com
+              resources: ['clusterserviceversions']
+            - group: operators.coreos.com
+              resources: ['*/status','operatorgroups']
+            - group: rbac.authorization.k8s.io
+              resources: ['clusterroles']
+            verbs: ['update','patch']
+          # 20. drop cmo no-op secret updates (~2k/day)
+          - level: None
+            users:
+            - system:serviceaccount:openshift-monitoring:cluster-monitoring-operator
+            - system:serviceaccount:openshift-monitoring:prometheus-operator
+            resources:
+            - resources: ['secrets']
+            namespaces: ['openshift-*']
+          # 21. service-ca no-op updates (~2k/day)
+          - level: None
+            users:
+            - system:serviceaccount:openshift-service-ca:service-ca
+            resources:
+            - group: admissionregistration.k8s.io
+              resources: ['validatingwebhookconfigurations']
+            - resources: ['secrets']
+            verbs: ['update','patch']
+          # 22. drop console no-op route updates (~2k/day)
+          - level: None
+            users: ['system:serviceaccount:openshift-console-operator:console-operator']
+            resources:
+            - group: route.openshift.io
+              resources: ['routes']
+              resourceNames: ['console','downloads']
+            namespaces: ['openshift-console']
+            verbs: ['update']
+          # 23. drop clusterrole rbac aggregation updates (2.5k/day)
+          - level: None
+            users: ['system:serviceaccount:kube-system:clusterrole-aggregation-controller']
+            resources:
+            - group: rbac.authorization.k8s.io
+              resources: ['clusterroles']
+            verbs: ['update','patch']
+          # 24. drop cvo no-op imagestream updates (2.5k/day)
+          - level: None
+            users: ['system:serviceaccount:openshift-cluster-version:default']
+            resources:
+            - group: image.openshift.io
+              resources: ['imagestreams']
+            verbs: ['update']
+          # 25. drop control plane endpoint updates (3k/day, data already captured in pod status)
+          - level: None
+            resources:
+            - group: discovery.k8s.io
+              resources: ['endpointslices']
+            - resources: ['endpoints']
+          # 26. reduce clusterserviceversions create & delete to metadata
+          - level: Metadata
+            resources:
+            - group: operators.coreos.com
+              resources: ['clusterserviceversions']
+            verbs: ['create','delete','deletecollection']
+          # 27. drop network-operator no-op namespace updates (1k/day)
+          - level: None
+            users: ['system:serviceaccount:openshift-network-operator:default']
+            resources:
+            - resources: ['namespaces']
+            verbs: ['patch','update']

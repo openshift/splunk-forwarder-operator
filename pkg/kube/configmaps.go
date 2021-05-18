@@ -7,6 +7,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // GenerateConfigMaps generates config maps based on the values in our CRD
@@ -35,6 +37,17 @@ export = system
 	ret = append(ret, metadataCM)
 
 	inputsStr := ""
+
+	if len(instance.Spec.AuditPolicy.Rules) > 0 && instance.Spec.AuditPolicy.Index != "" {
+		inputsStr += "[script://./bin/audit-log-exporter]\n"
+		inputsStr += "interval = 0\n" // restart on exit
+		inputsStr += "source = audit.log\n"
+		inputsStr += "sourcetype = _json\n"
+		inputsStr += "index = " + instance.Spec.AuditPolicy.Index + "\n"
+		inputsStr += "_meta = clusterid::" + clusterid + "\n"
+		inputsStr += "disabled = false\n"
+		inputsStr += "\n"
+	}
 
 	for _, input := range instance.Spec.SplunkInputs {
 		// No path passed in, skip it
@@ -96,6 +109,22 @@ is_manageable = false
 `,
 			"inputs.conf": inputsStr,
 		},
+	}
+
+	if len(instance.Spec.AuditPolicy.Rules) > 0 && instance.Spec.AuditPolicy.Index != "" {
+		policy := &auditv1.Policy{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Policy",
+				APIVersion: "audit.k8s.io/v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "SplunkForwarder",
+			},
+			Rules: instance.Spec.AuditPolicy.Rules,
+		}
+		if policyStr, err := yaml.Marshal(policy); err == nil {
+			localCM.Data["policy.yaml"] = string(policyStr)
+		}
 	}
 
 	ret = append(ret, localCM)

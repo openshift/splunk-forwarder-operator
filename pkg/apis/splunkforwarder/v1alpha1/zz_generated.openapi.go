@@ -167,12 +167,17 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 							},
 						},
 					},
+					"auditPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.AuditPolicy"),
+						},
+					},
 				},
 				Required: []string{"image", "splunkInputs"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkFilter", "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkForwarderInputs"},
+			"github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.AuditPolicy", "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkFilter", "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1.SplunkForwarderInputs"},
 	}
 }
 

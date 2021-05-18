@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 )
 
 // SplunkForwarderSpec defines the desired state of SplunkForwarder
@@ -22,6 +23,7 @@ type SplunkForwarderSpec struct {
 	// +listType=map
 	// +listMapKey=name
 	Filters                []SplunkFilter          `json:"filters,omitempty"`
+	AuditPolicy            AuditPolicy             `json:"auditPolicy,omitempty"`
 }
 
 // SplunkForwarderStatus defines the observed state of SplunkForwarder
@@ -55,6 +57,12 @@ type SplunkForwarderList struct {
 type SplunkFilter struct {
 	Name   string `json:"name"`
 	Filter string `json:"filter"`
+}
+
+// AuditPolicy is the struct for audit policy rules, index, etc
+type AuditPolicy struct {
+	Index string               `json:"index"`
+	Rules []auditv1.PolicyRule `json:"rules"`
 }
 
 // SplunkForwarderInputs is the struct that defines all the splunk inputs
