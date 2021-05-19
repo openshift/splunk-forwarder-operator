@@ -2,6 +2,8 @@
 
 set -xeuo pipefail
 
+source hack/common.sh
+
 usage() {
     echo "Usage: $0 FORWARDER_IMAGE_URI HEAVYFORWARDER_IMAGE_URI" >&2
     exit -1
@@ -13,16 +15,6 @@ discover_digest_for_image() {
 }
 
 [[ $# -eq 2 ]] || usage
-
-# Set SED variable
-if LANG=C sed --help 2>&1 | grep -q GNU; then
-  SED="sed"
-elif command -v gsed &>/dev/null; then
-  SED="gsed"
-else
-  echo "Failed to find GNU sed as sed or gsed. If you are on Mac: brew install gnu-sed." >&2
-  exit 1
-fi
 
 f_img=$1
 hf_img=$2

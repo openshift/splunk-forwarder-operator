@@ -53,7 +53,8 @@ To use the current version, `8.0.5-a1a6394cc5ae`, specify the following:
 ## Upgrading Splunk Universal Forwarder
 To use a different version of Splunk Universal Forwarder
 1. Make sure the [splunk-forwarder-images](https://github.com/openshift/splunk-forwarder-images/) repository has [built the desired version](https://github.com/openshift/splunk-forwarder-images/#versioning-and-tagging).
-2. Edit the [version](.splunk-version) and [hash](.splunk-version-hash) files to register the desired version.
+2. Run `make image-update` to update the Makefile with new values for `FORWARDER_VERSION`, `FORWARDER_HASH` and `SFI_HASH_7` from the current master branch commit of `splunk-forwarder-images`.
+  * To register a specific version, use `make SFI_UPDATE=<commit/branch/etc> image-update`, or update the Makefile with the desired values for the [forwarder version](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version), [forwarder hash](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version-hash), and [git commit](https://github.com/openshift/splunk-forwarder-images/blob/master/Makefile)
 3. Run `make image-digests`.
    This will populate the [OLM template](hack/olm-registry/olm-artifacts-template.yaml) with the by-digest URIs for the registered version.
 4. Edit the version and digest strings in the [section above](#splunk-forwarder-operator) to keep them in sync with the version files and the OLM template.
