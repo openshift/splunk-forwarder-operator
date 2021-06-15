@@ -292,9 +292,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701
+        imageDigest: sha256:f4aadcdd52400bee07587d81c8000ff99af18c78d1b0c57d3cb7fe41e3393a66
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a
+        heavyForwarderDigest: sha256:714780cf50e80251662538aaa4a55ba1a6e6c5aaca7f09d160f628fcbd7a54d8
         heavyForwarderSelector: infra
         useHeavyForwarder: true
         splunkLicenseAccepted: true
@@ -357,9 +357,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701
+        imageDigest: sha256:f4aadcdd52400bee07587d81c8000ff99af18c78d1b0c57d3cb7fe41e3393a66
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a
+        heavyForwarderDigest: sha256:714780cf50e80251662538aaa4a55ba1a6e6c5aaca7f09d160f628fcbd7a54d8
         heavyForwarderSelector: infra
         useHeavyForwarder: true
         splunkLicenseAccepted: true

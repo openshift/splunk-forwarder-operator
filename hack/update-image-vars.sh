@@ -29,7 +29,11 @@ clone_or_fetch_sfi_repo $SFI_REF
 forwarder_version=$(<${SFI_DIR}/.splunk-version)
 forwarder_hash=$(<${SFI_DIR}/.splunk-version-hash)
 commit_hash=$(git -C ${SFI_DIR} rev-parse --short=7 HEAD)
+image_tag=${forwarder_version}-${forwarder_hash}-${commit_hash}
+
+make FORWARDER_VERSION=$forwarder_version FORWARDER_HASH=$forwarder_hash SFI_HASH_7=$commit_hash image-digests
 
 ${SED?} -i "s,^\(FORWARDER_VERSION\)\b.*=.*$,\1 ?= $forwarder_version," Makefile
 ${SED?} -i "s,^\(FORWARDER_HASH\)\b.*=.*$,\1 ?= $forwarder_hash," Makefile
 ${SED?} -i "s,^\(SFI_HASH_7\)\b.*=.*$,\1 ?= $commit_hash," Makefile
+${SED?} -i "s,\(current version\,.\`\|\?tag=\).*\([&\`]\),\1$image_tag\2,g" README.md
