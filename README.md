@@ -54,7 +54,7 @@ To use the current version, `8.0.5-a1a6394cc5ae-fa50892`, specify the following:
 
 Run `make image-update` to update to the current master branch commit of [splunk-forwarder-images](https://github.com/openshift/splunk-forwarder-images/).
 
-This process will update the Makefile with the values for [`FORWARDER_VERSION`](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version), [`FORWARDER_HASH`](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version-hash) and [`SFI_HASH_7`](https://github.com/openshift/splunk-forwarder-images/blob/fa50892e3ea29cb19e34b287ac4a5dd42aab45ec/Makefile#L14) and populate the [OLM template](hack/olm-registry/olm-artifacts-template.yaml) with the by-digest URIs for [that version](https://github.com/openshift/splunk-forwarder-images/#versioning-and-tagging).
+This process will update the Makefile with a new value for `FORWARDER_IMAGE_TAG` (from the [forwarder version](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version), [forwarder hash](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version-hash) and [commit hash](https://github.com/openshift/splunk-forwarder-images/blob/fa50892e3ea29cb19e34b287ac4a5dd42aab45ec/Makefile#L14)) and populate the [OLM template](hack/olm-registry/olm-artifacts-template.yaml) with the by-digest URIs for [that version](https://github.com/openshift/splunk-forwarder-images/#versioning-and-tagging).
 
 To use a specific version, use `make SFI_UPDATE=<commit/branch/etc> image-update` or edit the Makefile by hand and run `make image-digests` to update the OLM template.
 
