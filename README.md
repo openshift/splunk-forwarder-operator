@@ -20,7 +20,7 @@ metadata:
   name: example-splunkforwarder
 spec:
   image: dockerimageurl
-  imageDigest: "sha256:8c4a2a8bb186c6b0ea744fd4c05df61d2c50053ebf42a0a6ec7aef8170be4c55"
+  imageDigest: sha256:f4aadcdd52400bee07587d81c8000ff99af18c78d1b0c57d3cb7fe41e3393a66
   splunkLicenseAccepted: true
   clusterID: optional-cluster-name
   splunkInputs:
@@ -38,26 +38,27 @@ The `image` and `imageDigest` are for the splunk-forwarder image.
 If `useHeavyForwarder` is `true`, `heavyForwarderImage` and `heavyForwarderDigest` are used for the splunk-heavyforwarder image.
 (The CRD supports `imageTag` for both, but this is deprecated.)
 
-To use the current version, `8.0.5-a1a6394cc5ae`, specify the following:
-- For [splunk-forwarder](https://quay.io/repository/app-sre/splunk-forwarder?tag=8.0.5-a1a6394cc5ae&tab=tags):
+To use the current version, `8.0.5-a1a6394cc5ae-fa50892`, specify the following:
+- For [splunk-forwarder](https://quay.io/repository/app-sre/splunk-forwarder?tag=8.0.5-a1a6394cc5ae-fa50892&tab=tags):
   ```yaml
   image: quay.io/app-sre/splunk-forwarder
-  imageDigest: sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701
+  imageDigest: sha256:f4aadcdd52400bee07587d81c8000ff99af18c78d1b0c57d3cb7fe41e3393a66
   ```
-- For [splunk-heavyforwarder](https://quay.io/repository/app-sre/splunk-heavyforwarder?tag=8.0.5-a1a6394cc5ae&tab=tags):
+- For [splunk-heavyforwarder](https://quay.io/repository/app-sre/splunk-heavyforwarder?tag=8.0.5-a1a6394cc5ae-fa50892&tab=tags):
   ```yaml
   heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-  heavyForwarderDigest: sha256:49b40c2c5d79913efb7eff9f3bf9c7348e322f619df10173e551b2596913d52a
+  heavyForwarderDigest: sha256:714780cf50e80251662538aaa4a55ba1a6e6c5aaca7f09d160f628fcbd7a54d8
   ```
 
 ## Upgrading Splunk Universal Forwarder
-To use a different version of Splunk Universal Forwarder
-1. Make sure the [splunk-forwarder-images](https://github.com/openshift/splunk-forwarder-images/) repository has [built the desired version](https://github.com/openshift/splunk-forwarder-images/#versioning-and-tagging).
-2. Edit the [version](.splunk-version) and [hash](.splunk-version-hash) files to register the desired version.
-3. Run `make image-digests`.
-   This will populate the [OLM template](hack/olm-registry/olm-artifacts-template.yaml) with the by-digest URIs for the registered version.
-4. Edit the version and digest strings in the [section above](#splunk-forwarder-operator) to keep them in sync with the version files and the OLM template.
-5. Commit and propose the changes as usual.
+
+Run `make image-update` to update to the current master branch commit of [splunk-forwarder-images](https://github.com/openshift/splunk-forwarder-images/).
+
+This process will update the Makefile with a new value for `FORWARDER_IMAGE_TAG` (from the [forwarder version](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version), [forwarder hash](https://github.com/openshift/splunk-forwarder-images/blob/master/.splunk-version-hash) and [commit hash](https://github.com/openshift/splunk-forwarder-images/blob/fa50892e3ea29cb19e34b287ac4a5dd42aab45ec/Makefile#L14)) and populate the [OLM template](hack/olm-registry/olm-artifacts-template.yaml) with the by-digest URIs for [that version](https://github.com/openshift/splunk-forwarder-images/#versioning-and-tagging).
+
+To use a specific version, use `make SFI_UPDATE=<commit/branch/etc> image-update` or edit the Makefile by hand and run `make image-digests` to update the OLM template.
+
+Commit and propose the changes as usual.
 
 ## Testing the app-sre pipeline
 
