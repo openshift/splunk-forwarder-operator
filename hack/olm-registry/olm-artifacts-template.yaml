@@ -558,7 +558,7 @@ objects:
           - level: None
             userGroups:
             - system:serviceaccounts:openshift-cluster-version
-            - system:serviceaccount:openshift-console-operator
+            - system:serviceaccounts:openshift-console-operator
             - system:serviceaccounts:openshift-console
             resources:
             - group: route.openshift.io
@@ -570,7 +570,7 @@ objects:
             resources:
             - group: image.openshift.io
             verbs: ['delete']
-          # 19. drop opeshift ns templates & imagestream and imagestreamimports
+          # 19. drop openshift ns templates & imagestream and imagestreamimports
           - level: None
             userGroups:
             - system:serviceaccounts:openshift-cluster-samples-operator
@@ -585,7 +585,11 @@ objects:
               - imagestreams
               - imagestreamimports
             verbs: ['create','update']
-          #
+          # 20. drop events.events.k8s.io
+          - level: None
+            resources:
+            - group: events.k8s.io
+              resources: ['events']
           # field redactions
           redactions:
           # tokens in request objects
@@ -715,7 +719,7 @@ objects:
                 limits:
                   cpu: 50m
                   memory: 128Mi
-              image: quay.io/app-sre/splunk-audit-exporter:latest
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:04107ac197e45a3e6d82423dda2eb233f7d8b02e7717bf2187d4fc5d4f0641ea
               imagePullPolicy: Always
               securityContext:
                 privileged: true
