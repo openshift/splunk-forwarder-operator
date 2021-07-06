@@ -183,6 +183,10 @@ server = test:9997
 [thruput]
 maxKBps = 0
 `,
+					"props.conf": `
+[_json]
+TRUNCATE = 1000000
+`,
 				},
 			},
 		},
