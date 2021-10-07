@@ -300,7 +300,7 @@ objects:
         splunkLicenseAccepted: true
         filters:
         - name: ignore_serviceaccount_users
-          filter: '"user":{"username":"(?:system:serviceaccount:[^"]+)".*"userAgent":"(?:(?![^"]*(Mozilla|oc|Wget|curl|kubectl(?:\.exe)?)/)[^"]+)'
+          filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
         - name: ignore_system_node_users
           filter: '"user":{"username":"system:node:[^"]+"'
         - name: ignore_chatty_system_users
