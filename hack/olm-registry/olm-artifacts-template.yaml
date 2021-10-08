@@ -497,6 +497,8 @@ objects:
               resources: ['*/status']
             - group: batch
               resources: ['*/status']
+            - group: autoscaling
+              resources: ['*/status']
             - group: velero.io
               resources: ['*/status',]
             - group: operators.coreos.com
@@ -719,7 +721,7 @@ objects:
                 limits:
                   cpu: 50m
                   memory: 128Mi
-              image: quay.io/app-sre/splunk-audit-exporter@sha256:04107ac197e45a3e6d82423dda2eb233f7d8b02e7717bf2187d4fc5d4f0641ea
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:b5b8ff9869d03a16e017fbc63fcfaf55cfdb06da3aa04cf4893f610171df0b78
               imagePullPolicy: Always
               securityContext:
                 privileged: true
