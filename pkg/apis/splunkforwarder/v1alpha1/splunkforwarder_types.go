@@ -7,21 +7,46 @@ import (
 // SplunkForwarderSpec defines the desired state of SplunkForwarder
 // +k8s:openapi-gen=true
 type SplunkForwarderSpec struct {
-	SplunkLicenseAccepted  bool                    `json:"splunkLicenseAccepted,omitempty"`
-	Image                  string                  `json:"image"`
-	ImageTag               string                  `json:"imageTag,omitempty"`
-	ImageDigest            string                  `json:"imageDigest,omitempty"`
-	ClusterID              string                  `json:"clusterID,omitempty"`
+	// Adds an --accept-license flag to automatically accept the Splunk License Agreement.
+	// Must be true for the Red Hat provided Splunk Forwarder image.
+	// Optional: Defaults to false.
+	SplunkLicenseAccepted bool `json:"splunkLicenseAccepted,omitempty"`
+	// Container image path to the Splunk Forwarder
+	Image string `json:"image"`
+	// The container image tag of the Splunk Forwarder image.
+	// Is not used if ImageDigest is supplied.
+	// Optional: Defaults to latest
+	ImageTag string `json:"imageTag,omitempty"`
+	// Container image digest of the Splunk Forwarder image.
+	// Has precedence and is recommended over ImageTag.
+	// Optional: Defaults to latest
+	ImageDigest string `json:"imageDigest,omitempty"`
+	// Unique cluster name.
+	// Optional: Looked up on the cluster if not provided, default to openshift
+	ClusterID string `json:"clusterID,omitempty"`
 	// +listType=atomic
-	SplunkInputs           []SplunkForwarderInputs `json:"splunkInputs"`
-	UseHeavyForwarder      bool                    `json:"useHeavyForwarder,omitempty"`
-	HeavyForwarderImage    string                  `json:"heavyForwarderImage,omitempty"`
-	HeavyForwarderDigest   string                  `json:"heavyForwarderDigest,omitempty"`
-	HeavyForwarderReplicas int32                   `json:"heavyForwarderReplicas,omitempty"`
-	HeavyForwarderSelector string                  `json:"heavyForwarderSelector,omitempty"`
+	SplunkInputs []SplunkForwarderInputs `json:"splunkInputs"`
+	// Whether an additional Splunk Heavy Forwarder should be deployed.
+	// Optional: Defaults to false.
+	UseHeavyForwarder bool `json:"useHeavyForwarder,omitempty"`
+	// Container image path to the Splunk Heavy Forwarder image. Required when
+	// UseHeavyForwarder is true.
+	HeavyForwarderImage string `json:"heavyForwarderImage,omitempty"`
+	// Container image digest of the container image defined in HeavyForwarderImage.
+	// Optional: Defaults to latest
+	HeavyForwarderDigest string `json:"heavyForwarderDigest,omitempty"`
+	// Number of desired Splunk Heavy Forwarder pods.
+	// Optional: Defaults to 2
+	HeavyForwarderReplicas int32 `json:"heavyForwarderReplicas,omitempty"`
+	// Specifies the value of the NodeSelector for the Splunk Heavy Forwarder pods
+	// with key: "node-role.kubernetes.io"
+	// Optional: Defaults to an empty value.
+	HeavyForwarderSelector string `json:"heavyForwarderSelector,omitempty"`
+	// List of additional filters supplied to configure the Splunk Heavy Forwarder
+	// Optional: Defaults to no additional filters (no transforms.conf).
 	// +listType=map
 	// +listMapKey=name
-	Filters                []SplunkFilter          `json:"filters,omitempty"`
+	Filters []SplunkFilter `json:"filters,omitempty"`
 }
 
 // SplunkForwarderStatus defines the observed state of SplunkForwarder
@@ -51,19 +76,30 @@ type SplunkForwarderList struct {
 	Items           []SplunkForwarder `json:"items"`
 }
 
-// SplunkFilter is the stuct for filters
+// SplunkFilter is the struct that configures Splunk Heavy Forwarder filters.
 type SplunkFilter struct {
-	Name   string `json:"name"`
+	// Name of the filter, will be prepended with "filter_".
+	Name string `json:"name"`
+	// Routing criteria regex for the filter to match on.
 	Filter string `json:"filter"`
 }
 
 // SplunkForwarderInputs is the struct that defines all the splunk inputs
 type SplunkForwarderInputs struct {
-	Path       string `json:"path"`
-	Index      string `json:"index,omitempty"`
+	// Required: Filepath for Splunk to monitor.
+	Path string `json:"path"`
+	// Repository for data. More info: https://docs.splunk.com/Splexicon:Index
+	// Optional: Defaults to "main"
+	Index string `json:"index,omitempty"`
+	// Data structure of the event. More info: https://docs.splunk.com/Splexicon:Sourcetype
+	// Optional: Defaults to "_json"
 	SourceType string `json:"sourceType,omitempty"`
-	WhiteList  string `json:"whiteList,omitempty"`
-	BlackList  string `json:"blackList,omitempty"`
+	// Regex to monitor certain files. Multiple regex rules may be specified separated by "|" (OR)
+	// Optional: Defaults to monitoring all files in the specified Path
+	WhiteList string `json:"whiteList,omitempty"`
+	// Regex to exclude certain files from monitoring. Multiple regex rules may be specified separated by "|" (OR)
+	// Optional: Defaults to monitoring all files in the specified Path
+	BlackList string `json:"blackList,omitempty"`
 }
 
 func init() {
