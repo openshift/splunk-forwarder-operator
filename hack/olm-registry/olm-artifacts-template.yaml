@@ -334,6 +334,12 @@ objects:
           index: openshift_managed_backplane_prod
           sourceType: _json
           whiteList: \.log$
+        - path: /host/etc/kubernetes/aide.log
+          index: openshift_managed_fio_results
+          sourceType: log
+        - path: /host/etc/kubernetes/aide.log.new
+          index: openshift_managed_fio_results
+          sourceType: log     
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
