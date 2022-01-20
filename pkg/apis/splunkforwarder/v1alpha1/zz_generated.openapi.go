@@ -72,32 +72,37 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"splunkLicenseAccepted": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Description: "Adds an --accept-license flag to automatically accept the Splunk License Agreement. Must be true for the Red Hat provided Splunk Forwarder image. Optional: Defaults to false.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"image": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Container image path to the Splunk Forwarder",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"imageTag": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The container image tag of the Splunk Forwarder image. Is not used if ImageDigest is supplied. Optional: Defaults to latest",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"imageDigest": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Container image digest of the Splunk Forwarder image. Has precedence and is recommended over ImageTag. Optional: Defaults to latest",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"clusterID": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Unique cluster name. Optional: Looked up on the cluster if not provided, default to openshift",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"splunkInputs": {
@@ -119,32 +124,37 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 					},
 					"useHeavyForwarder": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
+							Description: "Whether an additional Splunk Heavy Forwarder should be deployed. Optional: Defaults to false.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"heavyForwarderImage": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Container image path to the Splunk Heavy Forwarder image. Required when UseHeavyForwarder is true.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"heavyForwarderDigest": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Container image digest of the container image defined in HeavyForwarderImage. Optional: Defaults to latest",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"heavyForwarderReplicas": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
+							Description: "Number of desired Splunk Heavy Forwarder pods. Optional: Defaults to 2",
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 					"heavyForwarderSelector": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Specifies the value of the NodeSelector for the Splunk Heavy Forwarder pods with key: \"node-role.kubernetes.io\" Optional: Defaults to an empty value.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"filters": {
@@ -157,7 +167,8 @@ func schema_pkg_apis_splunkforwarder_v1alpha1_SplunkForwarderSpec(ref common.Ref
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "List of additional filters supplied to configure the Splunk Heavy Forwarder Optional: Defaults to no additional filters (no transforms.conf).",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
