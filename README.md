@@ -5,15 +5,28 @@ deploys a pod on each node including the masters. It expects the service account
 for the namespace can deploy privileged pods. It also needs a secret that holds
 the forwarder auth.
 
-If you are using [splunk cloud](https://www.splunk.com/en_us/software/splunk-cloud.html) you can download the spl file, extract it with
-`tar xvf splunkclouduf.spl` then edit outputs.conf and change sslCertPath and
-sslRootCAPath to point to the directory `$SPLUNK_HOME/etc/apps/splunkauth/default/`
-create a secret with the files as is and they will be mounted in the correct place. 
+If you are using [Splunk Cloud](https://www.splunk.com/en_us/software/splunk-cloud.html), credentials can be obtained by
+downloading a credentials package from the specific Splunk application being used, such as the Universal Forwarder app.
+The credentials package is a tarball, so first extract the contents with `tar xvf splunkclouduf.spl`, then add the
+following fields in outputs.conf
+```
+sslCertPath = $SPLUNK_HOME/etc/apps/splunkauth/default/server.pem
+sslRootCAPath = $SPLUNK_HOME/etc/apps/splunkauth/default/cacert.pem
+sslPassword = <Your SSL Password>
+```
 
-The CRD is very to point to the files you want to ship(currently only supports
-monitor://).
+Then create a secret named "splunk-auth" using the extracted spl files and modified outputs.conf:
+```
+oc create secret generic splunk-auth --dry-run=client -o yaml \
+  --from-file=cacert.pem=/path/to/spl/cacert.pem \
+  --from-file=limits.conf=/path/to/spl/limits.conf \
+  --from-file=outputs.conf=/path/to/spl/outputs.conf \
+  --from-file=server.pem=/path/to/spl/server.pem
+```
 
-```json
+The SplunkForwarder CRD explicitly points to the files you want to monitor (currently only supports monitor://).
+
+```yaml
 apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
 kind: SplunkForwarder
 metadata:
@@ -36,18 +49,18 @@ spec:
 
 The `image` and `imageDigest` are for the splunk-forwarder image.
 If `useHeavyForwarder` is `true`, `heavyForwarderImage` and `heavyForwarderDigest` are used for the splunk-heavyforwarder image.
-(The CRD supports `imageTag` for both, but this is deprecated.)
+(The CRD supports `imageTag` for both, but this is deprecated in favor of `imageDigest`.)
 
-To use the current version, `8.0.5-a1a6394cc5ae-fa50892`, specify the following:
-- For [splunk-forwarder](https://quay.io/repository/app-sre/splunk-forwarder?tag=8.0.5-a1a6394cc5ae-fa50892&tab=tags):
+To use the current version, `8.2.3`, specify the following:
+- For [splunk-forwarder](https://quay.io/repository/app-sre/splunk-forwarder?tag=8.2.3-cd0848707637-661ed09):
   ```yaml
   image: quay.io/app-sre/splunk-forwarder
-  imageDigest: sha256:f4aadcdd52400bee07587d81c8000ff99af18c78d1b0c57d3cb7fe41e3393a66
+  imageDigest: sha256:4418ace46c3dd933f98d83f357f31048e72d5db3d97bccfdb0acef769ee8234f
   ```
-- For [splunk-heavyforwarder](https://quay.io/repository/app-sre/splunk-heavyforwarder?tag=8.0.5-a1a6394cc5ae-fa50892&tab=tags):
+- For [splunk-heavyforwarder](https://quay.io/repository/app-sre/splunk-heavyforwarder?tag=8.2.3-cd0848707637-661ed09):
   ```yaml
   heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-  heavyForwarderDigest: sha256:714780cf50e80251662538aaa4a55ba1a6e6c5aaca7f09d160f628fcbd7a54d8
+  heavyForwarderDigest: sha256:4418ace46c3dd933f98d83f357f31048e72d5db3d97bccfdb0acef769ee8234f
   ```
 
 ## Upgrading Splunk Universal Forwarder
@@ -66,5 +79,4 @@ This repository is configured to support the testing strategy documented
 [here](https://github.com/openshift/boilerplate/blob/cc252374715df1910c8f4a8846d38e7b5d00f94f/boilerplate/openshift/golang-osd-operator/app-sre.md).
 
 Note that, in addition to creating personal repositories for the operator and
-OLM registry, you must also create them for `splunk-forwarder` and
-`splunk-heavyforwarder`.
+OLM registry, you must also create them for `splunk-forwarder` and `splunk-heavyforwarder`.
