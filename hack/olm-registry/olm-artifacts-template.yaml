@@ -305,6 +305,10 @@ objects:
           filter: '"user":{"username":"system:node:[^"]+"'
         - name: ignore_chatty_system_users
           filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+        - name: ignore_well_known_oauth_endpoint
+          filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+        - name: ignore_livez_health_check
+          filter: '"requestURI":"/livez"'
         splunkInputs:
         - path: /host/var/log/openshift-apiserver/audit.log
           index: openshift_managed_audit
