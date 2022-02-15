@@ -417,7 +417,7 @@ objects:
     name: splunk-forwarder-operator-audit-policy
   spec:
     clusterDeploymentSelector:
-      matchLabels:
+      matchExpressions:
       - { key: api.openshift.com/managed, operator: In, values: ["true"] }
     resourceApplyMode: Sync
     patches:
