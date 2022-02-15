@@ -334,51 +334,6 @@ objects:
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
-    name: splunk-forwarder-operator-cr-fr-sss
-    namespace: splunk-forwarder-operator
-  spec:
-    clusterDeploymentSelector:
-      matchExpressions:
-        - { key: api.openshift.com/managed, operator: In, values: ["true"] }
-        - { key: api.openshift.com/environment, operator: In, values: ["production"] }
-        - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
-        - { key: ext-managed.openshift.io/noalerts, operator: NotIn, values: ["true"] }
-        - { key: api.openshift.com/fedramp, operator: In, values: ["true"] }
-    resourceApplyMode: Sync
-    resources:
-    - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
-      kind: SplunkForwarder
-      metadata:
-        name: splunkforwarder
-        namespace: openshift-security
-      spec:
-        image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:f4aadcdd52400bee07587d81c8000ff99af18c78d1b0c57d3cb7fe41e3393a66
-        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:714780cf50e80251662538aaa4a55ba1a6e6c5aaca7f09d160f628fcbd7a54d8
-        useHeavyForwarder: false
-        splunkLicenseAccepted: true
-        splunkInputs:
-        - index: rh_osd_cluster_audit
-          path: /host/var/log/osd-audit/audit.log
-          sourceType: _json
-          whiteList: \.log$
-        - index: rh_osd_pod_creation
-          path: /host/var/log/openshift_managed_pod_creation.log
-          sourceType: _json
-          whiteList: \.log$
-        - index: rh_osd_malware_scan
-          path: /host/var/log/openshift_managed_malware_scan.log
-          sourceType: _json
-          whiteList: \.log$
-        - index: rh_osd_debug_node
-          path: /host/var/log/pods/default_ip-*-debug_*/container-*/*.log
-          sourceType: openshift:debug
-          whiteList: \.log$
-
-- apiVersion: hive.openshift.io/v1
-  kind: SelectorSyncSet
-  metadata:
     name: splunk-forwarder-operator-cr-stg-sss
     namespace: splunk-forwarder-operator
   spec:
@@ -417,13 +372,12 @@ objects:
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
-    name: splunk-forwarder-operator-cr-fr-stg-sss
+    name: splunk-forwarder-operator-cr-fr-sss
     namespace: splunk-forwarder-operator
   spec:
     clusterDeploymentSelector:
       matchExpressions:
         - { key: api.openshift.com/managed, operator: In, values: ["true"] }
-        - { key: api.openshift.com/environment, operator: In, values: ["staging", "integration"] }
         - { key: api.openshift.com/fedramp, operator: In, values: ["true"] }
     resourceApplyMode: Sync
     resources:
@@ -873,3 +827,4 @@ objects:
                 lastSyncTimestamp: remove
                 storageBucket:
                   lastSyncTimestamp: remove
+
