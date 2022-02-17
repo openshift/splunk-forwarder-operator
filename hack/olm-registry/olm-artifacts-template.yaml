@@ -275,15 +275,34 @@ objects:
   spec:
     clusterDeploymentSelector:
       matchExpressions:
-        - { key: api.openshift.com/managed, operator: In, values: ["true"] }
-        - { key: api.openshift.com/environment, operator: In, values: ["production"] }
-        - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
-        - { key: ext-managed.openshift.io/noalerts, operator: NotIn, values: ["true"] }
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "production"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
         - key: api.openshift.com/legal-entity-id
           operator: NotIn
           values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
-        - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
-        - { key: api.openshift.com/fedramp, operator: DoesNotExist }
+        - key: hive.openshift.io/cluster-region
+          operator: NotIn
+          values:
+            - "cn-north-1"
+            - "cn-northwest-1"
+        - key: api.openshift.com/fedramp
+          operator: NotIn
+          values:
+            - "true"
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -339,12 +358,34 @@ objects:
   spec:
     clusterDeploymentSelector:
       matchExpressions:
-        - { key: api.openshift.com/managed, operator: In, values: ["true"] }
-        - { key: api.openshift.com/environment, operator: In, values: ["staging"] }
-        - { key: api.openshift.com/noalerts, operator: NotIn, values: ["true"] }
-        - { key: ext-managed.openshift.io/noalerts, operator: NotIn, values: ["true"] }
-        - { key: hive.openshift.io/cluster-region, operator: NotIn, values: ["cn-north-1", "cn-northwest-1"] }
-        - { key: api.openshift.com/fedramp, operator: DoesNotExist }
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "staging"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: api.openshift.com/legal-entity-id
+          operator: NotIn
+          values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+        - key: hive.openshift.io/cluster-region
+          operator: NotIn
+          values:
+            - "cn-north-1"
+            - "cn-northwest-1"
+        - key: api.openshift.com/fedramp
+          operator: NotIn
+          values:
+            - "true"
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -377,8 +418,14 @@ objects:
   spec:
     clusterDeploymentSelector:
       matchExpressions:
-        - { key: api.openshift.com/managed, operator: In, values: ["true"] }
-        - { key: api.openshift.com/fedramp, operator: In, values: ["true"] }
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: api.openshift.com/fedramp
+          operator: In
+          values:
+            - "true"
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -434,7 +481,10 @@ objects:
   spec:
     clusterDeploymentSelector:
       matchExpressions:
-      - { key: api.openshift.com/managed, operator: In, values: ["true"] }
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
     resourceApplyMode: Sync
     patches:
     - apiVersion: config.openshift.io/v1
