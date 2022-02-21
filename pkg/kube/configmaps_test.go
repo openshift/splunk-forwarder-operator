@@ -117,6 +117,10 @@ _meta = clusterid::test
 disabled = false
 
 `,
+					"props.conf": `
+[_json]
+TRUNCATE = 1000000
+`,
 					},
 				},
 			},

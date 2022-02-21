@@ -95,6 +95,10 @@ is_visible = false
 is_manageable = false
 `,
 			"inputs.conf": inputsStr,
+			"props.conf": `
+[_json]
+TRUNCATE = 1000000
+`,
 		},
 	}
 
