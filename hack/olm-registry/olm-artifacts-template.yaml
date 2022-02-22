@@ -470,7 +470,7 @@ objects:
                 limits:
                   cpu: 50m
                   memory: 128Mi
-              image: quay.io/app-sre/splunk-audit-exporter@sha256:b5b8ff9869d03a16e017fbc63fcfaf55cfdb06da3aa04cf4893f610171df0b78
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:75b0b0a54cc2a8cdb5b87011e1f319208034a6b33ad2e6c7d9cdc38954d6a29a
               imagePullPolicy: Always
               securityContext:
                 privileged: true
@@ -733,7 +733,7 @@ objects:
             namespaces: ['openshift-console-user-settings']
             resources:
             - resources: ['configmaps']
-          # 23. drop cco pod-identity-webhook cert requests
+          # 23. drop cco pod-identity-webhook cert requests (BZ2023906)
           - level: None
             users: ['system:serviceaccount:openshift-cloud-credential-operator:pod-identity-webhook']
             resources:
@@ -751,7 +751,7 @@ objects:
                 token: replace
           # tokens in response objects
           - resources:
-            - serviceaccounts/token
+            - serviceaccounts
             fields:
               status:
                 token: replace
@@ -763,11 +763,24 @@ objects:
             fields:
               metadata:
                 name: replace
+              authorizeToken: replace
           # tokens in annotations
           - fields:
               metadata:
                 annotations:
                   openshift.io/token-secret.value: replace
+                  ocs.openshift.io/provider-onboarding-ticket: replace
+          # other observed token misuse
+          - fields:
+              data:
+                black-box-config.yaml: replace
+              prometheus:
+                prom_token: replace
+              spec:
+                httpSecret: replace
+                tokenSecret: replace
+                externalStorage:
+                  onboardingTicket: replace
           # remove certs from certificate signing requests
           - group: certificates.k8s.io
             resources:
