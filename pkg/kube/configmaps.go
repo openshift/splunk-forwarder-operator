@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"fmt"
 	"strconv"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
@@ -95,10 +96,10 @@ is_visible = false
 is_manageable = false
 `,
 			"inputs.conf": inputsStr,
-			"props.conf": `
+			"props.conf": fmt.Sprintf(`
 [_json]
-TRUNCATE = 1000000
-`,
+TRUNCATE = %d
+`, MaxEventSize),
 		},
 	}
 
@@ -137,10 +138,10 @@ server = ` + instance.Name + `:9997
 [thruput]
 maxKBps = 0
 `,
-			"props.conf": `
+			"props.conf": fmt.Sprintf(`
 [_json]
-TRUNCATE = 1000000
-`,
+TRUNCATE = %d
+`, MaxEventSize),
 		},
 	}
 
@@ -168,10 +169,10 @@ connection_host = dns
 maxKBps = 0
 `
 
-	data["props.conf"] = `
+	data["props.conf"] = fmt.Sprintf(`
 [_json]
-TRUNCATE = 1000000
-`
+TRUNCATE = %d
+`, MaxEventSize)
 
 	if len(instance.Spec.Filters) > 0 {
 		data["transforms.conf"] = ""
