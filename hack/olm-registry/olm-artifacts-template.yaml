@@ -520,7 +520,7 @@ objects:
                 limits:
                   cpu: 50m
                   memory: 128Mi
-              image: quay.io/app-sre/splunk-audit-exporter@sha256:75b0b0a54cc2a8cdb5b87011e1f319208034a6b33ad2e6c7d9cdc38954d6a29a
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:e9d70816ad7ea3d6782a0781fe5cc2237b0300a87953f41f6004e2c7587a3428
               imagePullPolicy: Always
               securityContext:
                 privileged: true
@@ -551,9 +551,8 @@ objects:
         namespace: openshift-security
       data:
         policy.yaml: |
-          # event rule metrics include the rule number in the label, numbering them here helps debugging
           rules:
-          # 1. drop leases, tokenreviews, subjectaccessreviews, user self-lookup (~500k/day)
+          # drop leases, tokenreviews, subjectaccessreviews, user self-lookup (~500k/day)
           - level: None
             resources:
             - group: coordination.k8s.io
@@ -569,7 +568,7 @@ objects:
               resources:
               - subjectaccessreviews
               - selfsubjectaccessreviews
-          # 2. drop node & control plane read events (~750k/day)
+          # drop node & control plane read events (~750k/day)
           - level: None
             users:
             - system:apiserver
@@ -581,7 +580,7 @@ objects:
             - head
             - list
             - watch
-          # 3. drop control plane configmap leases leader updates (~50k/day)
+          # drop control plane configmap leases leader updates (~50k/day)
           - level: None
             users:
             - system:kube-scheduler
@@ -592,7 +591,7 @@ objects:
             resources:
             - resources: ['configmaps']
             verbs: ['update']
-          # 4. drop common non-resource read requests (~15k/day)
+          # drop common non-resource read requests (~15k/day)
           - level: None
             nonResourceURLs:
             - /
@@ -604,18 +603,28 @@ objects:
             - /version
             - /.well-known*
             verbs: ['get','head','options']
-          # 5. forward system:admin activity
-          - level: RequestResponse
+          # forward system:admin list/get secrets at metadata level
+          - level: Metadata
             users: ['system:admin']
-          # 6. drop backplane cronjob events before rule 7 (TODO: these jobs somewhere else)
+            resources:
+            - resources: ['secrets']
+            verbs: ['get','watch','list']
+          # drop other system:admin read events
+          - level: None
+            users: ['system:admin']
+            verbs: ['get','watch','list']
+          # forward all other system:admin activity
+          - level: Request
+            users: ['system:admin']
+          # drop backplane cronjob events before rule 7 (TODO: these jobs somewhere else)
           - level: None
             users:
             - system:serviceaccount:openshift-backplane-srep:osd-delete-ownerrefs-serviceaccounts
             - system:serviceaccount:openshift-backplane:osd-delete-backplane-serviceaccounts
-          # 7. forward backplane activity
+          # forward backplane activity
           - level: RequestResponse
             userGroups: ['system:serviceaccounts:openshift-backplane-*']
-          # 8. drop openshift-* and kube-* serviceaccount read events (~5M/day)
+          # drop openshift-* and kube-* serviceaccount read events (~5M/day)
           - level: None
             userGroups:
             - system:serviceaccounts:openshift-*
@@ -624,14 +633,14 @@ objects:
             - get
             - list
             - watch
-          # 9. drop events from marketplace, pruning and build tests (~80k/day)
+          # drop events from marketplace, pruning and build tests (~80k/day)
           - level: None
             namespaces:
             - openshift-build-test
             - openshift-build-test-*
             - openshift-marketplace
             - openshift-sre-pruning
-          # 10. drop control plane cronjob activity within -openshift
+          # drop control plane cronjob activity within -openshift
           - level: None
             users:
             - system:apiserver
@@ -647,10 +656,9 @@ objects:
             - group: discovery.k8s.io
               resources: ['endpointslices']
             verbs: ['create','update']
-          # 11. forward resources we wish to monitor
+          # forward resources we wish to monitor
           - level: Request
             resources:
-            - resources: ['pods']
             - group: compliance.openshift.io
               resources: ['compliancecheckresults']
             - group: secscan.quay.redhat.com
@@ -659,9 +667,7 @@ objects:
             - create
             - update
             - patch
-            - delete
-            - deletecollection
-          # 12. drop resource status updates (~100k/day)
+          # drop resource status updates (~100k/day)
           - level: None
             resources:
             - resources: ['*/status']
@@ -685,11 +691,11 @@ objects:
               resources: ['apirequestcounts/status']
             - group: controlplane.operator.openshift.io
               resources: ['podnetworkconnectivitychecks/status']
-          # 13. drop olm updates (~50k/day)
+          # drop olm updates (~50k/day)
           - level: None
-            users: ['system:serviceaccount:openshift-operator-lifecycle-manager:olm-operator-serviceaccount']
+            groups: ['system:serviceaccounts:openshift-operator-lifecycle-manager']
             resources:
-            - resources: ['namespaces']
+            - resources: ['namespaces','configmaps']
             - group: apps
               resources: ['deployments']
             - group: rbac.authorization.k8s.io
@@ -699,9 +705,10 @@ objects:
               - operatorgroups
               - clusterserviceversions
             verbs:
+            - create
             - update
             - patch
-          # 14. drop update secret from cmo & prom within openshift-* namespaces (~3k/day)
+          # drop update secret from cmo & prom within openshift-* namespaces (~3k/day)
           - level: None
             users:
             - system:serviceaccount:openshift-monitoring:cluster-monitoring-operator
@@ -710,7 +717,7 @@ objects:
             resources:
             - resources: ['secrets']
             verbs: ['update']
-          # 15. drop update route from console-operator (~10k/day)
+          # drop update route from console-operator (~10k/day)
           - level: None
             users: ['system:serviceaccount:openshift-console-operator:console-operator']
             namespaces: ['openshift-console']
@@ -719,14 +726,14 @@ objects:
               resourceNames: ['console','downloads']
               resources: ['routes','routes/status']
             verbs: ['update','patch']
-          # 16. drop clusterrole aggregation updates (~5k/day)
+          # drop clusterrole aggregation updates (~5k/day)
           - level: None
             users: ['system:serviceaccount:kube-system:clusterrole-aggregation-controller']
             resources:
             - group: rbac.authorization.k8s.io
               resources: ['clusterroles']
             verbs: ['update','patch']
-          # 17. drop console route updates from cvo (~50k/day)
+          # drop console route updates from cvo (~50k/day)
           - level: None
             userGroups:
             - system:serviceaccounts:openshift-cluster-version
@@ -736,13 +743,13 @@ objects:
             - group: route.openshift.io
               resources: ['routes']
             verbs: ['update','patch']
-          # 18. drop routine image pruner activity
+          # drop routine serviceaccount image activity
           - level: None
-            users: ['system:serviceaccount:openshift-image-registry:pruner']
+            groups: ['system:serviceaccounts']
             resources:
             - group: image.openshift.io
-            verbs: ['delete']
-          # 19. drop openshift ns templates & imagestream and imagestreamimports
+              resources: ['*']
+          # drop openshift ns templates & imagestream and imagestreamimports
           - level: None
             userGroups:
             - system:serviceaccounts:openshift-cluster-samples-operator
@@ -757,12 +764,12 @@ objects:
               - imagestreams
               - imagestreamimports
             verbs: ['create','update']
-          # 20. drop events.events.k8s.io
+          # drop events.events.k8s.io
           - level: None
             resources:
             - group: events.k8s.io
               resources: ['events']
-          # 21. drop noisy namespace reads
+          # drop noisy namespace reads
           - level: None
             resources:
             - group: console.openshift.io
@@ -778,18 +785,24 @@ objects:
             - group: config.openshift.io
               resources: ['clusterversions']
             verbs: ['get', 'head', 'list', 'watch']
-          # 22. drop browser storage updates from the console
+          # drop browser storage updates from the console
           - level: None
             namespaces: ['openshift-console-user-settings']
             resources:
             - resources: ['configmaps']
-          # 23. drop cco pod-identity-webhook cert requests (BZ2023906)
+          # drop cco pod-identity-webhook cert requests (BZ2023906)
           - level: None
             users: ['system:serviceaccount:openshift-cloud-credential-operator:pod-identity-webhook']
             resources:
             - group: certificates.k8s.io
               resources: ['certificatesigningrequests']
             verbs: ['create']
+          # reduce token deletions to metadata
+          - level: Metadata
+            resources:
+            - group: oauth.openshift.io
+              resources: ['oauthaccesstokens','oauthauthorizetokens']
+            verbs: ['delete','deletecollection']
           # field redactions
           redactions:
           # tokens in request objects
@@ -807,30 +820,28 @@ objects:
                 token: replace
           # tokens in object names
           - group: oauth.openshift.io
-            resources:
-            - oauthaccesstokens
-            - useroauthaccesstokens
+            resources: ['oauthaccesstokens','oauthauthorizetokens']
             fields:
               metadata:
                 name: replace
               authorizeToken: replace
-          # tokens in annotations
+              details:
+                authorizeToken: replace
+              state: replace
+          # tokens in annotations & other observed token misuse
           - fields:
               metadata:
-                annotations:
-                  openshift.io/token-secret.value: replace
-                  ocs.openshift.io/provider-onboarding-ticket: replace
-          # other observed token misuse
-          - fields:
-              data:
-                black-box-config.yaml: replace
-              prometheus:
-                prom_token: replace
+                annotations: remove
               spec:
                 httpSecret: replace
                 tokenSecret: replace
-                externalStorage:
-                  onboardingTicket: replace
+                externalStorage: {onboardingTicket: replace}
+              connectorData: replace
+              objects: {data: replace}
+              parameters: {value: replace}
+              prometheus: {prom_token: replace}
+              data:
+                black-box-config.yaml: replace
           # remove certs from certificate signing requests
           - group: certificates.k8s.io
             resources:
@@ -850,10 +861,11 @@ objects:
               webhooks:
                 clientConfig:
                   caBundle: remove
-          # remove certs and ca-bundles from configmaps
+          # remove certs and binary data from configmaps
           - resources:
             - configmaps
             fields:
+              binaryData: replace
               data:
                 ca.crt: replace
                 ca-bundle.crt: replace
@@ -887,6 +899,22 @@ objects:
               status:
                 affectedPods: remove
                 lastUpdate: remove
+          # remove object data and parameter values from processed templates
+          - resources: ['processedtemplates']
+            fields:
+              objects: replace
+              parameters: {value: replace}
+          # redact env var values from pods and controller specs
+          - resources: ['pods']
+            fields:
+              spec: &podSpec
+                containers: &envSpec
+                  env: {value: replace}
+                initContainers: *envSpec
+                ephemeralContainers: *envSpec
+          - fields:
+              template: {spec: *podSpec}
+              spec: {pod_spec: *podSpec}
           # remove certain fields from metadata and status
           - fields:
               metadata:
