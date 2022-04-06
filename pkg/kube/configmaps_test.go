@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -117,6 +118,10 @@ _meta = clusterid::test
 disabled = false
 
 `,
+					"props.conf": fmt.Sprintf(`
+[_json]
+TRUNCATE = %d
+`, MaxEventSize),
 					},
 				},
 			},
@@ -183,10 +188,10 @@ server = test:9997
 [thruput]
 maxKBps = 0
 `,
-					"props.conf": `
+					"props.conf": fmt.Sprintf(`
 [_json]
-TRUNCATE = 1000000
-`,
+TRUNCATE = %d
+`, MaxEventSize),
 				},
 			},
 		},
@@ -267,10 +272,10 @@ connection_host = dns
 [thruput]
 maxKBps = 0
 `,
-					"props.conf": `
+					"props.conf": fmt.Sprintf(`
 [_json]
-TRUNCATE = 1000000
-`,
+TRUNCATE = %d
+`, MaxEventSize),
 				},
 			},
 		},
@@ -308,10 +313,10 @@ connection_host = dns
 [thruput]
 maxKBps = 0
 `,
-					"props.conf": `
+					"props.conf": fmt.Sprintf(`
 [_json]
-TRUNCATE = 1000000
-TRANSFORMS-null =filter_ignore_chatty_system_users `,
+TRUNCATE = %d
+TRANSFORMS-null =filter_ignore_chatty_system_users `, MaxEventSize),
 					"transforms.conf": `[filter_ignore_chatty_system_users]
 DEST_KEY = queue
 FORMAT = nullQueue
