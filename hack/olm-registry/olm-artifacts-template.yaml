@@ -477,6 +477,31 @@ objects:
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
+    name: splunk-forwarder-operator-audit-profile-rules
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: hive.openshift.io/version-major-minor
+          operator: In
+          values:
+            - "4.9"
+            - "4.10"
+            - "4.11"
+    patches:
+    - apiVersion: config.openshift.io/v1
+      applyMode: AlwaysApply
+      kind: APIServer
+      name: cluster
+      patch: '{"spec":{"audit":{"customRules":[{"group":"system:serviceaccounts:openshift-ingress","profile":"Default"}]}}}'
+      patchType: merge
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
     name: splunk-forwarder-operator-audit-policy
   spec:
     clusterDeploymentSelector:
