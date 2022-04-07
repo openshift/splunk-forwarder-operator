@@ -852,6 +852,18 @@ objects:
                 request: replace
               status:
                 certificate: replace
+          # remove certs and keys from routes (BZ2073220)
+          - group: route.openshift.io
+            resources:
+            - routes
+            - routes/status
+            fields:
+              spec:
+                tls:
+                  key: replace
+                  certificate: replace
+                  caCertificate: replace
+                  destinationCACertificate: replace
           # remove injected cabundles from webhook
           - group: admissionregistration.k8s.io
             resources:
