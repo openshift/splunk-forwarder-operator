@@ -462,7 +462,7 @@ objects:
           sourceType: linux_audit
           whiteList: \.log$
         - index: rh_osd_suricata
-          path: /host/var/log/openshift_managed_suricata.log
+          path: /host/var/log/fast.log
           sourceType: syslog
           whiteList: \.log$
         - index: rh_osd_fail2ban
