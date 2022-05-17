@@ -688,6 +688,8 @@ objects:
               resources: ['compliancecheckresults']
             - group: secscan.quay.redhat.com
               resources: ['imagemanifestvulns']
+            - group: hive.openshift.io
+              resources: ['clusterdeployments']
             verbs:
             - create
             - update
@@ -950,8 +952,9 @@ objects:
                 initContainers: *envSpec
                 ephemeralContainers: *envSpec
           - fields:
-              template: {spec: *podSpec}
-              spec: {pod_spec: *podSpec}
+              spec:
+                template: {spec: *podSpec}
+                pod_spec: *podSpec
           # remove certain fields from metadata and status
           - fields:
               metadata:
