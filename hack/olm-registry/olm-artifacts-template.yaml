@@ -694,6 +694,16 @@ objects:
             - create
             - update
             - patch
+          - level: Request
+            users:
+            - system:serviceaccount:openshift-file-integrity:file-integrity-daemon
+            resources:
+            - resources: ['configmaps']
+            namespaces: ["openshift-file-integrity"]
+            verbs:
+            - create
+            - update
+            - patch
           # drop resource status updates (~100k/day)
           - level: None
             resources:
