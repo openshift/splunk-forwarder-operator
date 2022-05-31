@@ -698,8 +698,7 @@ objects:
             users:
             - system:serviceaccount:openshift-file-integrity:file-integrity-daemon
             resources:
-            - group: fileintegrity.openshift.io
-              resources: ['configmaps']
+            - resources: ['configmaps']
             namespaces: ["openshift-file-integrity"]
             verbs:
             - create
