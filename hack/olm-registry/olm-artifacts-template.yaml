@@ -462,8 +462,8 @@ objects:
           sourceType: linux_audit
           whiteList: \.log$
         - index: rh_osd_suricata
-          path: /host/var/log/fast.log
-          sourceType: syslog
+          path: /host/var/log/eve-*.json
+          sourceType: _json
           whiteList: \.log$
         - index: rh_osd_fail2ban
           path: /host/var/log/fail2ban.log
