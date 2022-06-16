@@ -464,7 +464,7 @@ objects:
         - index: rh_osd_suricata
           path: /host/var/log/eve-*.json
           sourceType: _json
-          whiteList: \.log$
+          whiteList: \.json$
         - index: rh_osd_fail2ban
           path: /host/var/log/fail2ban.log
           sourceType: linux_audit
