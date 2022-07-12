@@ -13,6 +13,8 @@
 # ./check-image-against-osd-sre-clair.sh alpine:latest #APK good
 # ./check-image-against-osd-sre-clair.sh alpine:3.9.2 #APK bad
 
+[ -x /usr/bin/curl ] || exit 0
+
 CLAIR_SERVER=${CLAIR_SERVER:-https://clair.apps.osd-v4prod-aws.n2a0.p1.openshiftapps.com}
 
 IMAGE="$1"
