@@ -312,9 +312,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:7bb3a10cf1e12d50a52495a365b98f87fa74dd93b467e5715b2dae9f69a195a8
+        imageDigest: sha256:afc413cd2504b586b6f28c16355db243c8bfdef536cc80e44f61e03c01e12235
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:09a93e1952ecac5e5f22d16728d9c08c6078f8a4f193d9079458efa1243d9beb
+        heavyForwarderDigest: sha256:083847a013e4e29db923b03d5c3c1f21f3b250063b51794e5cc00c24ceb3a8b2
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         filters:
@@ -395,9 +395,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:7bb3a10cf1e12d50a52495a365b98f87fa74dd93b467e5715b2dae9f69a195a8
+        imageDigest: sha256:afc413cd2504b586b6f28c16355db243c8bfdef536cc80e44f61e03c01e12235
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:09a93e1952ecac5e5f22d16728d9c08c6078f8a4f193d9079458efa1243d9beb
+        heavyForwarderDigest: sha256:083847a013e4e29db923b03d5c3c1f21f3b250063b51794e5cc00c24ceb3a8b2
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
@@ -435,9 +435,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:7bb3a10cf1e12d50a52495a365b98f87fa74dd93b467e5715b2dae9f69a195a8
+        imageDigest: sha256:afc413cd2504b586b6f28c16355db243c8bfdef536cc80e44f61e03c01e12235
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:09a93e1952ecac5e5f22d16728d9c08c6078f8a4f193d9079458efa1243d9beb
+        heavyForwarderDigest: sha256:083847a013e4e29db923b03d5c3c1f21f3b250063b51794e5cc00c24ceb3a8b2
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
