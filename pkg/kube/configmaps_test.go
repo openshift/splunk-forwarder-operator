@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
+	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -118,7 +118,7 @@ _meta = clusterid::test
 disabled = false
 
 `,
-					"props.conf": fmt.Sprintf(`
+						"props.conf": fmt.Sprintf(`
 [_json]
 TRUNCATE = %d
 `, MaxEventSize),
