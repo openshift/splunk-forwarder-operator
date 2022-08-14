@@ -2,13 +2,13 @@ package splunkforwarder
 
 import (
 	"context"
-	"github.com/openshift/splunk-forwarder-operator/config"
 	"reflect"
 	"testing"
 	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -180,7 +180,7 @@ func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeClient := fakekubeclient.NewFakeClientWithScheme(scheme.Scheme, tt.localObjects...)
+			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.localObjects...).Build()
 			r := &SplunkForwarderReconciler{
 				Client:    fakeClient,
 				Scheme:    scheme.Scheme,

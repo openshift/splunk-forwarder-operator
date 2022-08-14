@@ -169,10 +169,10 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeClient := fakekubeclient.NewFakeClientWithScheme(scheme.Scheme, tt.localObjects...)
+			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.localObjects...).Build()
 			r := &SecretReconciler{
-				client: fakeClient,
-				scheme: scheme.Scheme,
+				Client: fakeClient,
+				Scheme: scheme.Scheme,
 			}
 			got, err := r.Reconcile(context.TODO(), tt.args.request)
 			if (err != nil) != tt.wantErr {
