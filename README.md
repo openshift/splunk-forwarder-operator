@@ -73,10 +73,46 @@ To use a specific version, use `make SFI_UPDATE=<commit/branch/etc> image-update
 
 Commit and propose the changes as usual.
 
-## Testing the app-sre pipeline
+## Building and Testing
+
+### app-sre pipeline
 
 This repository is configured to support the testing strategy documented
 [here](https://github.com/openshift/boilerplate/blob/cc252374715df1910c8f4a8846d38e7b5d00f94f/boilerplate/openshift/golang-osd-operator/app-sre.md).
 
 Note that, in addition to creating personal repositories for the operator and
 OLM registry, you must also create them for `splunk-forwarder` and `splunk-heavyforwarder`.
+
+### Operator development requirements
+
+#### golang
+
+A recent Go distribution (>=1.17) with enabled Go modules.
+
+```bash
+$ go version
+go version go1.17.11 linux/amd64
+```
+
+#### operator-sdk
+
+The Operator is developed using the [Operator SDK](https://sdk.operatorframework.io/). Ensure this is installed and available in your `$PATH`.
+
+v1.21.0 is the minimum-verified version required for `splunk-forwarder-operator` development.
+
+OperatorSDK releases are avaiable [here](https://github.com/operator-framework/operator-sdk/releases).
+
+```bash
+$ operator-sdk version
+operator-sdk version: "v1.21.0", commit: "89d21a133750aee994476736fa9523656c793588", kubernetes version: "1.23", go version: "go1.17.10", GOOS: "linux", GOARCH: "amd64"
+```
+
+### Local testing
+
+To run the operator in a local environment (not via a pod running on-cluster), ensure that the following environment variables are set:
+
+```bash
+export OPERATOR_NAMESPACE=openshift-splunk-forwarder-operator
+export WATCH_NAMESPACE=""
+export OSDK_FORCE_RUN_MODE="local"
+```
