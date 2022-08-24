@@ -1,14 +1,14 @@
-package secret
+package splunkforwarder
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
+	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
-	"github.com/openshift/splunk-forwarder-operator/pkg/apis"
-	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,7 +25,7 @@ const (
 	imageTag          = "0.0.1"
 )
 
-func testSplunkForwarderCR() *sfv1alpha1.SplunkForwarder {
+func testSplunkForwarderCR(useHeavyForwarder bool) *sfv1alpha1.SplunkForwarder {
 	ret := &sfv1alpha1.SplunkForwarder{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "SplunkForwarder",
@@ -39,6 +39,7 @@ func testSplunkForwarderCR() *sfv1alpha1.SplunkForwarder {
 			SplunkLicenseAccepted: true,
 			Image:                 image,
 			ImageTag:              imageTag,
+			UseHeavyForwarder:     useHeavyForwarder,
 			SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
 				{
 					Path: "/var/log/test",
@@ -62,10 +63,10 @@ func testSplunkForwarderSecret() *corev1.Secret {
 	return ret
 }
 
-func testSplunkForwarderDS() *appsv1.DaemonSet {
-	ret := &appsv1.DaemonSet{
+func testSplunkForwarderService() *corev1.Service {
+	ret := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName + "-ds",
+			Name:      instanceName,
 			Namespace: instanceNamespace,
 			CreationTimestamp: metav1.Time{
 				Time: time.Date(2019, 12, 01, 12, 12, 0, 0, time.UTC),
@@ -75,9 +76,13 @@ func testSplunkForwarderDS() *appsv1.DaemonSet {
 	return ret
 }
 
-func TestReconcileSecret_Reconcile(t *testing.T) {
-	if err := apis.AddToScheme(scheme.Scheme); err != nil {
-		t.Errorf("ReconcileSecret.Reconcile() error = %v", err)
+func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
+	if err := sfv1alpha1.AddToScheme(scheme.Scheme); err != nil {
+		t.Errorf("ReconcileSplunkForwarder.Reconcile() error = %v", err)
+		return
+	}
+	if err := configv1.AddToScheme(scheme.Scheme); err != nil {
+		t.Errorf("ReconcileSplunkForwarder.Reconcile() error = %v", err)
 		return
 	}
 	type args struct {
@@ -91,7 +96,7 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 		localObjects []runtime.Object
 	}{
 		{
-			name: "No CRD",
+			name: "No CR",
 			args: args{
 				request: reconcile.Request{},
 			},
@@ -100,60 +105,47 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 			localObjects: []runtime.Object{},
 		},
 		{
-			name: "Invalid Secret Name",
+			name: "No Secret",
 			args: args{
 				request: reconcile.Request{
 					NamespacedName: types.NamespacedName{
-						Name:      "invalid-secret-name",
+						Name:      instanceName,
 						Namespace: instanceNamespace,
 					},
 				},
 			},
 			want:    reconcile.Result{},
-			wantErr: false,
+			wantErr: true,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
+				testSplunkForwarderCR(false),
 			},
 		},
 		{
-			name: "No secret",
+			name: "No heavy forwarders",
 			args: args{
 				request: reconcile.Request{
 					NamespacedName: types.NamespacedName{
-						Name:      config.SplunkAuthSecretName,
+						Name:      instanceName,
 						Namespace: instanceNamespace,
 					},
 				},
 			},
-			want:    reconcile.Result{},
+			want: reconcile.Result{
+				Requeue: true,
+			},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
-			},
-		},
-		{
-			name: "No daemonset",
-			args: args{
-				request: reconcile.Request{
-					NamespacedName: types.NamespacedName{
-						Name:      config.SplunkAuthSecretName,
-						Namespace: instanceNamespace,
-					},
-				},
-			},
-			want:    reconcile.Result{},
-			wantErr: false,
-			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
+				testSplunkForwarderCR(false),
+				testSplunkForwarderService(),
 				testSplunkForwarderSecret(),
 			},
 		},
 		{
-			name: "Daemonset Timestamp",
+			name: "Heavy forwarders",
 			args: args{
 				request: reconcile.Request{
 					NamespacedName: types.NamespacedName{
-						Name:      config.SplunkAuthSecretName,
+						Name:      instanceName,
 						Namespace: instanceNamespace,
 					},
 				},
@@ -161,26 +153,46 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 			want:    reconcile.Result{},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
+				testSplunkForwarderCR(true),
 				testSplunkForwarderSecret(),
-				testSplunkForwarderDS(),
+			},
+		},
+		{
+			name: "Heavy forwarders - Old Service",
+			args: args{
+				request: reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      instanceName,
+						Namespace: instanceNamespace,
+					},
+				},
+			},
+			want: reconcile.Result{
+				Requeue: true,
+			},
+			wantErr: false,
+			localObjects: []runtime.Object{
+				testSplunkForwarderCR(true),
+				testSplunkForwarderService(),
+				testSplunkForwarderSecret(),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeClient := fakekubeclient.NewFakeClientWithScheme(scheme.Scheme, tt.localObjects...)
-			r := &ReconcileSecret{
-				client: fakeClient,
-				scheme: scheme.Scheme,
+			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.localObjects...).Build()
+			r := &SplunkForwarderReconciler{
+				Client:    fakeClient,
+				Scheme:    scheme.Scheme,
+				ReqLogger: log.WithValues(),
 			}
-			got, err := r.Reconcile(tt.args.request)
+			got, err := r.Reconcile(context.TODO(), tt.args.request)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ReconcileSecret.Reconcile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ReconcileSplunkForwarder.Reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ReconcileSecret.Reconcile() = %v, want %v", got, tt.want)
+				t.Errorf("ReconcileSplunkForwarder.Reconcile() = %v, want %v", got, tt.want)
 			}
 		})
 	}

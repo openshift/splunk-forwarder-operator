@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
-	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
