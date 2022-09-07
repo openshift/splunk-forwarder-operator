@@ -168,6 +168,8 @@ objects:
       metadata:
         name: splunk-forwarder-operator-og
         namespace: openshift-splunk-forwarder-operator
+        annotations:
+          olm.operatorframework.io/exclude-global-namespace-resolution: 'true'
       spec:
         targetNamespaces:
         - openshift-splunk-forwarder-operator
