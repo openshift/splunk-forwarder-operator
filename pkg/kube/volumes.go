@@ -8,6 +8,8 @@ import (
 // GetVolumes Returns an array of corev1.Volumes we want to attach
 // It contains configmaps, secrets, and the host mount
 func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.Volume {
+	var hostPathDirectoryTypeForPtr = corev1.HostPathDirectory
+
 	volumes := []corev1.Volume{
 		{
 			Name: "osd-monitored-logs-local",
@@ -29,10 +31,18 @@ func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.
 				},
 			},
 		},
+		{
+			Name: "splunk-state",
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: "/var/lib/misc",
+					Type: &hostPathDirectoryTypeForPtr,
+				},
+			},
+		},
 	}
 
 	if mountHost {
-		var hostPathDirectoryTypeForPtr = corev1.HostPathDirectory
 		volumes = append(volumes,
 			corev1.Volume{
 				Name: "host",

@@ -50,6 +50,15 @@ func TestGetVolumes(t *testing.T) {
 					},
 				},
 				{
+					Name: "splunk-state",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/misc",
+							Type: &hostPathDirectoryTypeForPtr,
+						},
+					},
+				},
+				{
 					Name: "host",
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
@@ -95,6 +104,15 @@ func TestGetVolumes(t *testing.T) {
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: "osd-monitored-logs-metadata",
 							},
+						},
+					},
+				},
+				{
+					Name: "splunk-state",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/misc",
+							Type: &hostPathDirectoryTypeForPtr,
 						},
 					},
 				},
@@ -146,6 +164,15 @@ func TestGetVolumes(t *testing.T) {
 					},
 				},
 				{
+					Name: "splunk-state",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/misc",
+							Type: &hostPathDirectoryTypeForPtr,
+						},
+					},
+				},
+				{
 					Name: "test-hfconfig",
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -192,6 +219,15 @@ func TestGetVolumes(t *testing.T) {
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: "osd-monitored-logs-metadata",
 							},
+						},
+					},
+				},
+				{
+					Name: "splunk-state",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/var/lib/misc",
+							Type: &hostPathDirectoryTypeForPtr,
 						},
 					},
 				},

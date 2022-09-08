@@ -37,6 +37,12 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 			Name:  "SPLUNK_ACCEPT_LICENSE",
 			Value: licenseAccepted,
 		},
+		{	Name: "HOSTNAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "spec.nodeName",
+			}},
+		},
 	}
 
 	var volumes []corev1.Volume
