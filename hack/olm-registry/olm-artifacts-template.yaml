@@ -339,14 +339,14 @@ objects:
           index: openshift_managed_debug_node
           whiteList: \.log$
           sourceType: openshift:debug
-        - path: /host/var/log/openshift_managed_pod_creation.log
+        - path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
           index: openshift_managed_pod_creation
           whiteList: \.log$
-          sourceType: _json
-        - path: /host/var/log/openshift_managed_malware_scan.log
+          sourceType: openshift:debug
+        - path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
           index: openshift_managed_malware_scan
           whiteList: \.log$
-          sourceType: _json
+          sourceType: openshift:debug
         - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
           index: openshift_managed_backplane_prod
           sourceType: _json
@@ -448,12 +448,12 @@ objects:
           sourceType: _json
           whiteList: \.log$
         - index: rh_osd_pod_creation
-          path: /host/var/log/openshift_managed_pod_creation.log
-          sourceType: _json
+          path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+          sourceType: openshift:debug
           whiteList: \.log$
         - index: rh_osd_malware_scan
-          path: /host/var/log/openshift_managed_malware_scan.log
-          sourceType: _json
+          path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+          sourceType: openshift:debug
           whiteList: \.log$
         - index: rh_osd_debug_node
           path: /host/var/log/pods/default_ip-*-debug_*/container-*/*.log
