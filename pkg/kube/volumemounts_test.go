@@ -54,6 +54,10 @@ func TestGetVolumeMounts(t *testing.T) {
 					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
 				},
 				{
+					Name:      "splunk-state",
+					MountPath: "/opt/splunkforwarder/var/lib",
+				},
+				{
 					Name:             "host",
 					MountPath:        "/host",
 					MountPropagation: &mountPropagationMode,
@@ -93,6 +97,10 @@ func TestGetVolumeMounts(t *testing.T) {
 				{
 					Name:      "osd-monitored-logs-metadata",
 					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
+				},
+				{
+					Name:      "splunk-state",
+					MountPath: "/opt/splunkforwarder/var/lib",
 				},
 				{
 					Name:             "host",
@@ -153,6 +161,10 @@ func TestGetHeavyForwarderVolumeMounts(t *testing.T) {
 				{
 					Name:      "test-hfconfig",
 					MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/metadata",
+				},
+				{
+					Name:      "splunk-state",
+					MountPath: "/opt/splunk/var/lib",
 				},
 			},
 		},

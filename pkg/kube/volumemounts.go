@@ -41,6 +41,12 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount 
 			MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
 		},
 
+		// State Mount
+		{
+			Name:      "splunk-state",
+			MountPath: "/opt/splunkforwarder/var/lib",
+		},
+
 		// Host Mount
 		{
 			Name:             "host",
@@ -76,6 +82,12 @@ func GetHeavyForwarderVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev
 		{
 			Name:      instance.Name + "-hfconfig",
 			MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/metadata",
+		},
+
+		// State Mount (https://www.splunk.com/en_us/blog/tips-and-tricks/what-is-this-fishbucket-thing.html)
+		{
+			Name:      "splunk-state",
+			MountPath: "/opt/splunk/var/lib",
 		},
 	}
 }
