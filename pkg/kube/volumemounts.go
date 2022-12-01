@@ -84,7 +84,7 @@ func GetHeavyForwarderVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev
 			MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/metadata",
 		},
 
-		// State Mount
+		// State Mount (https://www.splunk.com/en_us/blog/tips-and-tricks/what-is-this-fishbucket-thing.html)
 		{
 			Name:      "splunk-state",
 			MountPath: "/opt/splunk/var/lib",
