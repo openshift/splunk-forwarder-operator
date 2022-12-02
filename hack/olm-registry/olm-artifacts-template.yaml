@@ -556,7 +556,7 @@ objects:
                 limits:
                   cpu: 50m
                   memory: 128Mi
-              image: quay.io/app-sre/splunk-audit-exporter@sha256:513f7f360ee7c2d115810ba326d35e6835d9c6da2b082122f3ef37648f5fa306
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:bbca8dfd77d15c6dde3495985c1a75354ad79339ecba6820e7ceef2282422964
               imagePullPolicy: Always
               securityContext:
                 privileged: true
@@ -1016,62 +1016,62 @@ objects:
                 responseStatus:
                   codes: ["!403"]
               alert: NonSystemChangeValidationWebhookConfiguration  
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels: 
-      app: audit-exporter
-    name: audit-exporter
-    namespace: openshift-security
-    annotations:
-       service.beta.openshift.io/serving-cert-secret-name: audit-exporter-certs
-  spec:
-    ports:
-    - name: metrics
-      port: 9090
-      protocol: TCP
-      targetPort: 9090
-    selector:
-      matchLabels:
-        app: audit-exporter
-    sessionAffinity: None
-    type: ClusterIP
-- apiVersion: monitoring.coreos.com/v1
-  kind: ServiceMonitor
-  metadata:
-    name: audit-exporter
-    namespace: openshift-security
-  spec:
-    endpoints:
-    - path: /metrics
-      port: metrics
-      scheme: https
-      tlsConfig:
-        caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
-        serverName: audit-exporter.openshift-security.svc
-    namespaceSelector: {}
-    selector:
-      matchLabels:
-        app: audit-exporter
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: RoleBinding
-  metadata:
-    name: prometheus-k8s
-    namespace: openshift-security
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: Role
-    name: prometheus-k8s
-  subjects:
-  - kind: ServiceAccount
-    name: prometheus-k8s
-    namespace: openshift-monitoring
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    name: prometheus-k8s
-    namespace: openshift-security
-  rules:
-  - apiGroups: ['']
-    resources: ['services','endpoints','pods','servicemonitors']
-    verbs: ['get','list','watch']
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: audit-exporter
+        name: audit-exporter
+        namespace: openshift-security
+        annotations:
+          service.beta.openshift.io/serving-cert-secret-name: audit-exporter-certs
+      spec:
+        ports:
+          - name: metrics
+            port: 9090
+            protocol: TCP
+            targetPort: 9090
+        selector:
+          matchLabels:
+            app: audit-exporter
+        sessionAffinity: None
+        type: ClusterIP
+    - apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: audit-exporter
+        namespace: openshift-security
+      spec:
+        endpoints:
+          - path: /metrics
+            port: metrics
+            scheme: https
+            tlsConfig:
+              caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+              serverName: audit-exporter.openshift-security.svc
+        namespaceSelector: {}
+        selector:
+          matchLabels:
+            app: audit-exporter
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: prometheus-k8s
+        namespace: openshift-security
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: prometheus-k8s
+      subjects:
+        - kind: ServiceAccount
+          name: prometheus-k8s
+          namespace: openshift-monitoring
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: prometheus-k8s
+        namespace: openshift-security
+      rules:
+        - apiGroups: [""]
+          resources: ["services", "endpoints", "pods", "servicemonitors"]
+          verbs: ["get", "list", "watch"]
