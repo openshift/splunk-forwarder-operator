@@ -8,7 +8,7 @@ the forwarder auth.
 If you are using [Splunk Cloud](https://www.splunk.com/en_us/software/splunk-cloud.html), credentials can be obtained by
 downloading a credentials package from the specific Splunk application being used, such as the Universal Forwarder app.
 The credentials package is a tarball, so first extract the contents with `tar xvf splunkclouduf.spl`, then add the
-following fields in outputs.conf
+following fields in `outputs.conf`
 
 ```
 sslCertPath = $SPLUNK_HOME/etc/apps/splunkauth/default/server.pem
