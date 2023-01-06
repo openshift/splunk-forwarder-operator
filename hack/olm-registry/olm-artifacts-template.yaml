@@ -1015,7 +1015,16 @@ objects:
                     resources: ["validatingwebhookconfigurations"]
                 responseStatus:
                   codes: ["!403"]
-              alert: NonSystemChangeValidationWebhookConfiguration  
+              alert: NonSystemChangeValidationWebhookConfiguration
+            - eventselector:
+                users:
+                  usernames: ["!system:*"]
+                verbs: ["create"]
+                objectReferences:
+                  - resources: ["ingresscontrollers"]
+                responseStatus:
+                  codes: ["!403"]
+              alert: UserCreatedIngressControllerDetected
     - apiVersion: v1
       kind: Service
       metadata:
