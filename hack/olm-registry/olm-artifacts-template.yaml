@@ -418,6 +418,114 @@ objects:
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
+    name: splunk-forwarder-operator-cr-hs-stg-sss
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchLabels:
+        ext-hypershift.openshift.io/cluster-type: management-cluster
+      matchExpressions:
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "staging"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: api.openshift.com/legal-entity-id
+          operator: NotIn
+          values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+        - key: hive.openshift.io/cluster-region
+          operator: NotIn
+          values:
+            - "cn-north-1"
+            - "cn-northwest-1"
+        - key: api.openshift.com/fedramp
+          operator: NotIn
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:afc413cd2504b586b6f28c16355db243c8bfdef536cc80e44f61e03c01e12235
+          heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
+          heavyForwarderDigest: sha256:083847a013e4e29db923b03d5c3c1f21f3b250063b51794e5cc00c24ceb3a8b2
+          useHeavyForwarder: false
+          splunkLicenseAccepted: true
+          splunkInputs:
+            - path: /host/var/log/hypershift-osd-audit/*/audit.log
+              index: openshift_managed_hypershift_audit_stage
+              white: \.log$
+              sourceType: _json
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-forwarder-operator-cr-hs-sss
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchLabels:
+        ext-hypershift.openshift.io/cluster-type: management-cluster
+      matchExpressions:
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "production"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: api.openshift.com/legal-entity-id
+          operator: NotIn
+          values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+        - key: hive.openshift.io/cluster-region
+          operator: NotIn
+          values:
+            - "cn-north-1"
+            - "cn-northwest-1"
+        - key: api.openshift.com/fedramp
+          operator: NotIn
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:afc413cd2504b586b6f28c16355db243c8bfdef536cc80e44f61e03c01e12235
+          heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
+          heavyForwarderDigest: sha256:083847a013e4e29db923b03d5c3c1f21f3b250063b51794e5cc00c24ceb3a8b2
+          useHeavyForwarder: false
+          splunkLicenseAccepted: true
+          splunkInputs:
+            - path: /host/var/log/hypershift-osd-audit/*/audit.log
+              index: openshift_managed_hypershift_audit
+              white: \.log$
+              sourceType: _json
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
     name: splunk-forwarder-operator-cr-fr-sss
     namespace: splunk-forwarder-operator
   spec:
