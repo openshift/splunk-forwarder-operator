@@ -284,6 +284,10 @@ objects:
           operator: In
           values:
             - "true"
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: NotIn
+          values:
+            - "management-cluster"
         - key: api.openshift.com/environment
           operator: In
           values:
@@ -367,6 +371,10 @@ objects:
           operator: In
           values:
             - "true"
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: NotIn
+          values:
+            - "management-cluster"
         - key: api.openshift.com/environment
           operator: In
           values:
@@ -422,9 +430,11 @@ objects:
     namespace: splunk-forwarder-operator
   spec:
     clusterDeploymentSelector:
-      matchLabels:
-        ext-hypershift.openshift.io/cluster-type: management-cluster
       matchExpressions:
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: In
+          values:
+            - "management-cluster"
         - key: api.openshift.com/environment
           operator: In
           values:
@@ -466,7 +476,15 @@ objects:
           splunkInputs:
             - path: /host/var/log/hypershift-osd-audit/*/audit.log
               index: openshift_managed_hypershift_audit_stage
-              white: \.log$
+              whiteList: \.log$
+              sourceType: _json
+            - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+              index: openshift_managed_debug_node
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/log/osd-audit/audit.log
+              index: openshift_managed_audit_stage
+              whiteList: \.log$
               sourceType: _json
 
 - apiVersion: hive.openshift.io/v1
@@ -476,9 +494,11 @@ objects:
     namespace: splunk-forwarder-operator
   spec:
     clusterDeploymentSelector:
-      matchLabels:
-        ext-hypershift.openshift.io/cluster-type: management-cluster
       matchExpressions:
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: In
+          values:
+            - "management-cluster"
         - key: api.openshift.com/environment
           operator: In
           values:
@@ -517,11 +537,42 @@ objects:
           heavyForwarderDigest: sha256:083847a013e4e29db923b03d5c3c1f21f3b250063b51794e5cc00c24ceb3a8b2
           useHeavyForwarder: false
           splunkLicenseAccepted: true
+          filters:
+            - name: ignore_serviceaccount_users
+              filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+            - name: ignore_system_node_users
+              filter: '"user":{"username":"system:node:[^"]+"'
+            - name: ignore_chatty_system_users
+              filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+            - name: ignore_well_known_oauth_endpoint
+              filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+            - name: ignore_livez_health_check
+              filter: '"requestURI":"/livez"'
           splunkInputs:
             - path: /host/var/log/hypershift-osd-audit/*/audit.log
               index: openshift_managed_hypershift_audit
-              white: \.log$
+              whiteList: \.log$
               sourceType: _json
+            - path: /host/var/log/osd-audit/audit.log
+              index: openshift_managed_audit
+              whiteList: \.log$
+              sourceType: _json
+            - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+              index: openshift_managed_debug_node
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+              index: openshift_managed_pod_creation
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+              index: openshift_managed_malware_scan
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
+              index: openshift_managed_backplane_prod
+              sourceType: _json
+              whiteList: \.log$
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
