@@ -358,6 +358,10 @@ objects:
           index: openshift_managed_backplane_prod
           sourceType: _json
           whiteList: \.log$
+        - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/mount/backplane-audit.log
+          index: openshift_managed_backplane_prod
+          sourceType: _json
+          whiteList: \.log$
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
