@@ -615,11 +615,11 @@ objects:
           whiteList: \.log$
         - index: rh_osd_pod_creation
           path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
-          sourceType: openshift:debug
+          sourceType: _json
           whiteList: \.log$
         - index: rh_osd_malware_scan
           path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
-          sourceType: openshift:debug
+          sourceType: _json
           whiteList: \.log$
         - index: rh_osd_debug_node
           path: /host/var/log/pods/default_ip-*-debug_*/container-*/*.log
