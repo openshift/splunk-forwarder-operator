@@ -83,5 +83,4 @@ tags
 .venv/
 ## Local app-sre pipeline testing
 .docker/
-Dockerfile.olm-registry
 saas-splunk-forwarder-operator-bundle/
