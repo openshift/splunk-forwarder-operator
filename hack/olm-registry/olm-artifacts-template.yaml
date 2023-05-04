@@ -1224,6 +1224,37 @@ objects:
         selector:
           matchLabels:
             app: audit-exporter
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          name: splunk-forwarder
+        name: splunk-forwarder
+        namespace: openshift-security
+      spec:
+        ports:
+          - name: metrics
+            port: 8090
+            protocol: TCP
+            targetPort: 8090
+        selector:
+          name: splunk-forwarder
+        sessionAffinity: None
+        type: ClusterIP
+    - apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: splunk-forwarder
+        namespace: openshift-security
+      spec:
+        endpoints:
+          - path: /metrics
+            port: metrics
+            scheme: http
+        namespaceSelector: {}
+        selector:
+          matchLabels:
+            name: splunk-forwarder
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: RoleBinding
       metadata:
