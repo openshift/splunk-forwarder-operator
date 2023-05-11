@@ -594,6 +594,10 @@ objects:
           operator: In
           values:
             - "true"
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "production"              
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -644,6 +648,77 @@ objects:
         - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
           index: rh_osd_backplane_prod
           sourceType: _json
+          whiteList: \.log$
+        - index: rh_osd_goalert_audit
+          path: /host/var/log/pods/goalert_goalert-*/goalert/*.log
+          sourceType: log
+          whiteList: \.log$           
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-forwarder-operator-cr-fr-stg-sss
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: api.openshift.com/fedramp
+          operator: In
+          values:
+            - "true"
+        - key: api.openshift.com/environment
+          operator: In
+          values: ["stage", "staging"]
+    resourceApplyMode: Sync
+    resources:
+    - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+      kind: SplunkForwarder
+      metadata:
+        name: splunkforwarder
+        namespace: openshift-security
+      spec:
+        image: quay.io/app-sre/splunk-forwarder
+        imageDigest: sha256:64d8a5230eeb0d4a7f3961874dae0f1b43d5de5bb2a938b831fcacadb090bbd5
+        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
+        heavyForwarderDigest: sha256:1d1e37e770588d00cb82d53e363b0665985fe163bc7b2a80991923dfe2c60262
+        useHeavyForwarder: false
+        splunkLicenseAccepted: true
+        splunkInputs:
+        - index: rh_osd_cluster_audit_stage
+          path: /host/var/log/osd-audit/audit.log
+          sourceType: _json
+          whiteList: \.log$
+        - index: rh_osd_pod_creation_stage
+          path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+          sourceType: _json
+          whiteList: \.log$
+        - index: rh_osd_malware_scan_stage
+          path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+          sourceType: _json
+          whiteList: \.log$
+        - index: rh_osd_debug_node_stage
+          path: /host/var/log/pods/default_ip-*-debug_*/container-*/*.log
+          sourceType: openshift:debug
+          whiteList: \.log$
+        - index: rh_osd_selinux_stage
+          path: /host/var/log/audit/audit.log
+          sourceType: linux_audit
+          whiteList: \.log$
+        - index: rh_osd_suricata_stage
+          path: /host/var/log/eve-*.json
+          sourceType: _json
+          whiteList: \.json$
+        - index: rh_osd_fail2ban_stage
+          path: /host/var/log/fail2ban.log
+          sourceType: linux_audit
+          whiteList: \.log$
+        - index: rh_osd_sshguard_stage
+          path: /host/var/log/auth.log
+          sourceType: linux_audit
           whiteList: \.log$
 
 - apiVersion: hive.openshift.io/v1
