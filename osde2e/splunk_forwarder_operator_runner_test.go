@@ -20,8 +20,8 @@ const (
 func TestSplunkForwarderOperator(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	//suiteConfig, reporterConfig := GinkgoConfiguration()
-	//reporterConfig.JUnitReport = filepath.Join(testResultsDirectory, jUnitOutputFilename)
+	suiteConfig, reporterConfig := GinkgoConfiguration()
+	reporterConfig.JUnitReport = filepath.Join(testResultsDirectory, jUnitOutputFilename)
 	RunSpecs(t, "Splunk Forwarder Operator")
 
 }
