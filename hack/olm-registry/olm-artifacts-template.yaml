@@ -321,9 +321,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:64d8a5230eeb0d4a7f3961874dae0f1b43d5de5bb2a938b831fcacadb090bbd5
+        imageDigest: sha256:5fb837d6cfcb1d2bace7c689e060e6c83097eac5242c612111164c89e61b3c5d
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:1d1e37e770588d00cb82d53e363b0665985fe163bc7b2a80991923dfe2c60262
+        heavyForwarderDigest: sha256:5b1de5dd1e781b06a391f9d28162b30e23bafd0919cc041b14fedfd1b90f07f3
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         filters:
@@ -412,9 +412,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:64d8a5230eeb0d4a7f3961874dae0f1b43d5de5bb2a938b831fcacadb090bbd5
+        imageDigest: sha256:5fb837d6cfcb1d2bace7c689e060e6c83097eac5242c612111164c89e61b3c5d
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:1d1e37e770588d00cb82d53e363b0665985fe163bc7b2a80991923dfe2c60262
+        heavyForwarderDigest: sha256:5b1de5dd1e781b06a391f9d28162b30e23bafd0919cc041b14fedfd1b90f07f3
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
@@ -472,9 +472,9 @@ objects:
           namespace: openshift-security
         spec:
           image: quay.io/app-sre/splunk-forwarder
-          imageDigest: sha256:64d8a5230eeb0d4a7f3961874dae0f1b43d5de5bb2a938b831fcacadb090bbd5
+          imageDigest: sha256:5fb837d6cfcb1d2bace7c689e060e6c83097eac5242c612111164c89e61b3c5d
           heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-          heavyForwarderDigest: sha256:1d1e37e770588d00cb82d53e363b0665985fe163bc7b2a80991923dfe2c60262
+          heavyForwarderDigest: sha256:5b1de5dd1e781b06a391f9d28162b30e23bafd0919cc041b14fedfd1b90f07f3
           useHeavyForwarder: false
           splunkLicenseAccepted: true
           splunkInputs:
@@ -536,9 +536,9 @@ objects:
           namespace: openshift-security
         spec:
           image: quay.io/app-sre/splunk-forwarder
-          imageDigest: sha256:64d8a5230eeb0d4a7f3961874dae0f1b43d5de5bb2a938b831fcacadb090bbd5
+          imageDigest: sha256:5fb837d6cfcb1d2bace7c689e060e6c83097eac5242c612111164c89e61b3c5d
           heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-          heavyForwarderDigest: sha256:1d1e37e770588d00cb82d53e363b0665985fe163bc7b2a80991923dfe2c60262
+          heavyForwarderDigest: sha256:5b1de5dd1e781b06a391f9d28162b30e23bafd0919cc041b14fedfd1b90f07f3
           useHeavyForwarder: false
           splunkLicenseAccepted: true
           filters:
@@ -607,9 +607,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:64d8a5230eeb0d4a7f3961874dae0f1b43d5de5bb2a938b831fcacadb090bbd5
+        imageDigest: sha256:5fb837d6cfcb1d2bace7c689e060e6c83097eac5242c612111164c89e61b3c5d
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:1d1e37e770588d00cb82d53e363b0665985fe163bc7b2a80991923dfe2c60262
+        heavyForwarderDigest: sha256:5b1de5dd1e781b06a391f9d28162b30e23bafd0919cc041b14fedfd1b90f07f3
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
@@ -682,9 +682,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:64d8a5230eeb0d4a7f3961874dae0f1b43d5de5bb2a938b831fcacadb090bbd5
+        imageDigest: sha256:5fb837d6cfcb1d2bace7c689e060e6c83097eac5242c612111164c89e61b3c5d
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:1d1e37e770588d00cb82d53e363b0665985fe163bc7b2a80991923dfe2c60262
+        heavyForwarderDigest: sha256:5b1de5dd1e781b06a391f9d28162b30e23bafd0919cc041b14fedfd1b90f07f3
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
