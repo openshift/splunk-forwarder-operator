@@ -48,6 +48,8 @@ objects:
           openshift.io/node-selector: ''
         labels:
           pod-security.kubernetes.io/enforce: 'privileged'
+          pod-security.kubernetes.io/audit: 'privileged'
+          pod-security.kubernetes.io/warn: 'privileged'
           openshift.io/cluster-monitoring: "true"
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRole
