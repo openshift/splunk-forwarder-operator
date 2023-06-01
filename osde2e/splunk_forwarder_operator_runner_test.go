@@ -7,6 +7,7 @@ package osde2etests
 import (
 	"path/filepath"
 	"testing"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -25,4 +26,3 @@ func TestSplunkForwarderOperator(t *testing.T) {
 	RunSpecs(t, "Splunk Forwarder Operator", suiteConfig, reporterConfig)
 
 }
-
