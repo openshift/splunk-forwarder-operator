@@ -6,47 +6,30 @@ package osde2etests
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/gomega/assertions"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
-	olm "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
-
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
+
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 )
 
 var (
-	resourceClient *resources.Resources
-	restConfig     *rest.Config
+	k8s            *openshift.Client
 	deploymentName = "splunk-forwarder-operator"
 	operatorName   = "splunk-forwarder-operator"
 	serviceNames   = []string{"splunk-forwarder-operator-metrics",
 		"splunk-forwarder-operator-catalog"}
-	clusterRoles = []string{
-		"splunk-forwarder-operator",
-		"splunk-forwarder-operator-og-admin",
-		"splunk-forwarder-operator-og-edit",
-		"splunk-forwarder-operator-og-view",
-	}
-	rolePrefix          = "splunk-forwarder-operator"
-	clusterRoleBindings = []string{
-		"splunk-forwarder-operator-clusterrolebinding",
-	}
-	splunkforwarder_names = []string{
-		"osde2e-dedicated-admin-splunkforwarder-x",
-		"osde2e-splunkforwarder-test-2",
-	}
+	rolePrefix                    = "splunk-forwarder-operator"
 	testsplunkforwarder           = "osde2e-splunkforwarder-test-2"
 	dedicatedadminsplunkforwarder = "osde2e-dedicated-admin-splunkforwarder-x"
 	operatorNamespace             = "openshift-splunk-forwarder-operator"
@@ -57,51 +40,49 @@ var (
 var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 	ginkgo.BeforeAll(func() {
-		// setup the k8s client
-		restConfig, err := config.GetConfig()
-		Expect(err).Should(BeNil(), "failed to get kubeconfig")
-		resourceClient, err = resources.New(restConfig)
-		Expect(err).Should(BeNil(), "resources.New error")
-		Expect(sfv1alpha1.AddToScheme(resourceClient.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
+		var err error
+		k8s, err = openshift.New()
+		Expect(err).ShouldNot(HaveOccurred(), "unable to setup k8s client")
+		Expect(sfv1alpha1.AddToScheme(k8s.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
 
 	})
 	ginkgo.It("is installed", func(ctx context.Context) {
 
 		ginkgo.By("checking the namespace exists")
-		err := resourceClient.Get(ctx, operatorNamespace, operatorNamespace, &corev1.Namespace{})
+		err := k8s.Get(ctx, operatorNamespace, operatorNamespace, &corev1.Namespace{})
 		Expect(err).Should(BeNil(), "namespace %s not found", operatorNamespace)
 
-		ginkgo.By("checking the clusterrolebindings exist")
+		ginkgo.By("checking the role exists")
+		var roles rbacv1.RoleList
+		err = k8s.WithNamespace(namespace).List(ctx, &roles)
+		Expect(err).ShouldNot(HaveOccurred(), "failed to list roles")
+		Expect(&roles).Should(ContainItemWithPrefix(rolePrefix), "unable to find roles with prefix %s", rolePrefix)
+
+		ginkgo.By("checking the rolebinding exists")
 		var rolebindings rbacv1.RoleBindingList
-		err = resourceClient.List(ctx, &rolebindings)
-		Expect(err).Should(BeNil(), "failed to list rolebindings")
-		found := false
-		for _, rolebinding := range rolebindings.Items {
-			if strings.HasPrefix(rolebinding.Name, rolePrefix) {
-				found = true
-			}
-		}
-		Expect(found).To(BeTrue(), "unable to find clusterrolebindings with prefix %s", rolePrefix)
+		err = k8s.List(ctx, &rolebindings)
+		Expect(err).ShouldNot(HaveOccurred(), "failed to list rolebindings")
+		Expect(&rolebindings).Should(ContainItemWithPrefix(rolePrefix), "unable to find rolebindings with prefix %s", rolePrefix)
 
 		ginkgo.By("checking the clusterrole exists")
 		var clusterRoles rbacv1.ClusterRoleList
-		err = resourceClient.List(ctx, &clusterRoles)
-		Expect(err).Should(BeNil(), "failed to list clusterroles")
-		found = false
-		for _, clusterRole := range clusterRoles.Items {
-			if strings.HasPrefix(clusterRole.Name, rolePrefix) {
-				found = true
-			}
-		}
-		Expect(found).To(BeTrue(), "unable to find cluster role with prefix %s", rolePrefix)
+		err = k8s.List(ctx, &clusterRoles)
+		Expect(err).ShouldNot(HaveOccurred(), "failed to list clusterroles")
+		Expect(&clusterRoles).Should(ContainItemWithPrefix(rolePrefix), "unable to find cluster role with prefix %s", clusterRolePrefix)
+
+		ginkgo.By("checking the clusterrolebinding exists")
+		var clusterRoleBindings rbacv1.ClusterRoleBindingList
+		err = k8s.List(ctx, &clusterRoleBindings)
+		Expect(err).ShouldNot(HaveOccurred(), "unable to list clusterrolebindings")
+		Expect(&clusterRoleBindings).Should(ContainItemWithPrefix(rolePrefix), "unable to find clusterrolebinding with prefix %s", clusterRolePrefix)
 
 		ginkgo.By("checking the services exist")
 		for _, serviceName := range serviceNames {
-			err = resourceClient.Get(ctx, serviceName, operatorNamespace, &corev1.Service{})
-			Expect(err).Should(BeNil(), "service %s/%s not found", operatorNamespace, serviceName)
+			err = k8s.Get(ctx, serviceName, operatorNamespace, &corev1.Service{})
+			Expect(err).Should(BeNil(), "unable to get service %s/%s", operatorNamespace, serviceName)
 		}
 		client, err := openshift.New()
-		Expect(err).NotTo(HaveOccurred(), "Openshift client could not be created")
+		Expect(err).NotTo(HaveOccurred(), "openshift client could not be created")
 
 		ginkgo.By("checking the deployment exists and is available")
 		assertions.EventuallyDeployment(ctx, client, deploymentName, operatorNamespace)
@@ -111,9 +92,9 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 		ginkgo.By("checking the operator CSV exists")
 		restConfig, _ = config.GetConfig()
-		clientset, err := olm.NewForConfig(restConfig)
-		Expect(err).ShouldNot(HaveOccurred(), "failed to configure Operator clientset")
-		EventuallyCsv(ctx, clientset, operatorName, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist", operatorName)
+		dynamicClient, err := dynamic.NewForConfig(restConfig)
+		Expect(err).ShouldNot(HaveOccurred(), "failed to configure Dynamic client")
+		EventuallyCsv(ctx, *dynamicClient, operatorName, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist and have Succeeded status", operatorName)
 
 		// TODO: post osde2e-common library add upgrade check
 		//checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator",
@@ -124,20 +105,18 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 	sf := makeMinimalSplunkforwarder(testsplunkforwarder)
 
 	ginkgo.It("admin should be able to create SplunkForwarders CR", func(ctx context.Context) {
-		err := resourceClient.WithNamespace(operatorNamespace).Create(ctx, &sf)
+		err := k8s.WithNamespace(operatorNamespace).Create(ctx, &sf)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	ginkgo.It("admin should be able to delete SplunkForwarders CR", func(ctx context.Context) {
-		err := resourceClient.Delete(ctx, &sf)
+		err := k8s.Delete(ctx, &sf)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	ginkgo.It("dedicated admin should not be able to manage SplunkForwarders CR", func(ctx context.Context) {
 		dsf := makeMinimalSplunkforwarder(dedicatedadminsplunkforwarder)
-		restConfig, _ := config.GetConfig()
-		u := User{Username: "test-user@redhat.com", Groups: []string{"dedicated-admins"}, RestConfig: restConfig}
-		impersonatedResourceClient := u.NewImpersonatedClient()
+		impersonatedResourceClient, _ := k8s.Impersonate("test-user@redhat.com", "dedicated-admins")
 		Expect(sfv1alpha1.AddToScheme(impersonatedResourceClient.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
 		err := impersonatedResourceClient.WithNamespace(operatorNamespace).Create(ctx, &dsf)
 		Expect(apierrors.IsForbidden(err)).To(BeTrue())
