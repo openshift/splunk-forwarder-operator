@@ -68,13 +68,13 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		var clusterRoles rbacv1.ClusterRoleList
 		err = k8s.List(ctx, &clusterRoles)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to list clusterroles")
-		Expect(&clusterRoles).Should(ContainItemWithPrefix(rolePrefix), "unable to find cluster role with prefix %s", clusterRolePrefix)
+		Expect(&clusterRoles).Should(ContainItemWithPrefix(rolePrefix), "unable to find cluster role with prefix %s", rolePrefix)
 
 		ginkgo.By("checking the clusterrolebinding exists")
 		var clusterRoleBindings rbacv1.ClusterRoleBindingList
 		err = k8s.List(ctx, &clusterRoleBindings)
 		Expect(err).ShouldNot(HaveOccurred(), "unable to list clusterrolebindings")
-		Expect(&clusterRoleBindings).Should(ContainItemWithPrefix(rolePrefix), "unable to find clusterrolebinding with prefix %s", clusterRolePrefix)
+		Expect(&clusterRoleBindings).Should(ContainItemWithPrefix(rolePrefix), "unable to find clusterrolebinding with prefix %s", rolePrefix)
 
 		ginkgo.By("checking the services exist")
 		for _, serviceName := range serviceNames {
