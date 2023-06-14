@@ -56,7 +56,7 @@ var (
 )
 
 // Blocking SplunkForwarder Signal
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", ginkgo.Ordered, func() {
+var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 	ginkgo.BeforeAll(func() {
 		// setup the k8s client
