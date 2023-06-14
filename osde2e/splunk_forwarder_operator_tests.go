@@ -28,8 +28,6 @@ import (
 
 var (
 	resourceClient *resources.Resources
-
-	defaultTimeout = 300
 	restConfig     *rest.Config
 	deploymentName = "splunk-forwarder-operator"
 	operatorName   = "splunk-forwarder-operator"
@@ -49,10 +47,10 @@ var (
 		"osde2e-dedicated-admin-splunkforwarder-x",
 		"osde2e-splunkforwarder-test-2",
 	}
-	testsplunkforwarder                  = "osde2e-splunkforwarder-test-2"
-	dedicatedadminsplunkforwarder        = "osde2e-dedicated-admin-splunkforwarder-x"
-	operatorNamespace             string = "openshift-splunk-forwarder-operator"
-	operatorLockFile              string = "splunk-forwarder-operator-lock"
+	testsplunkforwarder           = "osde2e-splunkforwarder-test-2"
+	dedicatedadminsplunkforwarder = "osde2e-dedicated-admin-splunkforwarder-x"
+	operatorNamespace             = "openshift-splunk-forwarder-operator"
+	operatorLockFile              = "splunk-forwarder-operator-lock"
 )
 
 // Blocking SplunkForwarder Signal
