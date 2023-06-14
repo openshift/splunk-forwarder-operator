@@ -6,30 +6,29 @@ package osde2etests
 
 import (
 	"context"
-	"log"
 	"strings"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/openshift/osde2e-common/pkg/clients/openshift"
+	"github.com/openshift/osde2e-common/pkg/gomega/assertions"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
+	olm "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
-	"sigs.k8s.io/e2e-framework/klient/wait"
-	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
 
 var (
-	resrcs         *resources.Resources
+	resourceClient *resources.Resources
+
 	defaultTimeout = 300
 	restConfig     *rest.Config
 	deploymentName = "splunk-forwarder-operator"
@@ -63,19 +62,20 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", gi
 		// setup the k8s client
 		restConfig, err := config.GetConfig()
 		Expect(err).Should(BeNil(), "failed to get kubeconfig")
-		resrcs, err = resources.New(restConfig)
+		resourceClient, err = resources.New(restConfig)
 		Expect(err).Should(BeNil(), "resources.New error")
+		Expect(sfv1alpha1.AddToScheme(resourceClient.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
+
 	})
 	ginkgo.It("is installed", func(ctx context.Context) {
 
 		ginkgo.By("checking the namespace exists")
-		err := resrcs.Get(ctx, operatorNamespace, operatorNamespace, &corev1.Namespace{})
+		err := resourceClient.Get(ctx, operatorNamespace, operatorNamespace, &corev1.Namespace{})
 		Expect(err).Should(BeNil(), "namespace %s not found", operatorNamespace)
 
-		// Check that the clusterRoleBindings exist
 		ginkgo.By("checking the clusterrolebindings exist")
 		var rolebindings rbacv1.RoleBindingList
-		err = resrcs.List(ctx, &rolebindings)
+		err = resourceClient.List(ctx, &rolebindings)
 		Expect(err).Should(BeNil(), "failed to list rolebindings")
 		found := false
 		for _, rolebinding := range rolebindings.Items {
@@ -85,10 +85,9 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", gi
 		}
 		Expect(found).To(BeTrue(), "unable to find clusterrolebindings with prefix %s", rolePrefix)
 
-		// Check that the clusterRoles exist
 		ginkgo.By("checking the clusterrole exists")
 		var clusterRoles rbacv1.ClusterRoleList
-		err = resrcs.List(ctx, &clusterRoles)
+		err = resourceClient.List(ctx, &clusterRoles)
 		Expect(err).Should(BeNil(), "failed to list clusterroles")
 		found = false
 		for _, clusterRole := range clusterRoles.Items {
@@ -100,20 +99,23 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", gi
 
 		ginkgo.By("checking the services exist")
 		for _, serviceName := range serviceNames {
-			err = resrcs.Get(ctx, serviceName, operatorNamespace, &corev1.Service{})
+			err = resourceClient.Get(ctx, serviceName, operatorNamespace, &corev1.Service{})
 			Expect(err).Should(BeNil(), "service %s/%s not found", operatorNamespace, serviceName)
 		}
+		client, err := openshift.New()
+		Expect(err).NotTo(HaveOccurred(), "Openshift client could not be created")
 
 		ginkgo.By("checking the deployment exists and is available")
-		deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: deploymentName, Namespace: operatorNamespace}}
-		err = wait.For(conditions.New(resrcs).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, corev1.ConditionTrue))
-		Expect(err).Should(BeNil(), "deployment %s not available", deploymentName)
+		assertions.EventuallyDeployment(ctx, client, deploymentName, operatorNamespace)
 
-		//TODO:  post osde2e-common library add configmap check
-		//checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
+		ginkgo.By("checking the operator lock file config map exists")
+		assertions.EventuallyConfigMap(ctx, client, operatorLockFile, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(Not(BeNil()), "configmap %s should exist", operatorLockFile)
 
-		//TODO:  post osde2e-common library add csv check
-		//checkClusterServiceVersion(h, operatorNamespace, operatorName)
+		ginkgo.By("checking the operator CSV exists")
+		restConfig, _ = config.GetConfig()
+		clientset, err := olm.NewForConfig(restConfig)
+		Expect(err).ShouldNot(HaveOccurred(), "failed to configure Operator clientset")
+		EventuallyCsv(ctx, clientset, operatorName, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist", operatorName)
 
 		// TODO: post osde2e-common library add upgrade check
 		//checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator",
@@ -121,41 +123,36 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", gi
 		//	"splunk-forwarder-operator-catalog")
 	})
 
-	ginkgo.It("admin should be able to manage SplunkForwarders CR", func(ctx context.Context) {
-		sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", testsplunkforwarder)
-		err := addSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator")
+	sf := makeMinimalSplunkforwarder(testsplunkforwarder)
+
+	ginkgo.It("admin should be able to create SplunkForwarders CR", func(ctx context.Context) {
+		err := resourceClient.WithNamespace(operatorNamespace).Create(ctx, &sf)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	ginkgo.It("test SplunkForwarders CR, if exists, should be deleted successfully", func(ctx context.Context) {
-		err := deleteSplunkforwarder(ctx, testsplunkforwarder, operatorNamespace)
+	ginkgo.It("admin should be able to delete SplunkForwarders CR", func(ctx context.Context) {
+		err := resourceClient.Delete(ctx, &sf)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	ginkgo.It("dedicated admin should not be able to manage SplunkForwarders CR", func(ctx context.Context) {
-
-		sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", dedicatedadminsplunkforwarder)
-		err := dedicatedAaddSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator")
+		dsf := makeMinimalSplunkforwarder(dedicatedadminsplunkforwarder)
+		restConfig, _ := config.GetConfig()
+		u := User{Username: "test-user@redhat.com", Groups: []string{"dedicated-admins"}, RestConfig: restConfig}
+		impersonatedResourceClient := u.NewImpersonatedClient()
+		Expect(sfv1alpha1.AddToScheme(impersonatedResourceClient.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
+		err := impersonatedResourceClient.WithNamespace(operatorNamespace).Create(ctx, &dsf)
 		Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		if err == nil {
-			err = deleteSplunkforwarder(ctx, dedicatedadminsplunkforwarder, operatorNamespace)
-			if err != nil {
-				log.Printf("Failed cleaning up %s CR in %s namespace", dedicatedadminsplunkforwarder, operatorNamespace)
-			}
-		}
 	})
 
 })
 
 // Create test splunkforwarder CR definition
-func makeMinimalSplunkforwarder(kind string, apiversion string, name string) sfv1alpha1.SplunkForwarder {
+func makeMinimalSplunkforwarder(name string) sfv1alpha1.SplunkForwarder {
 	sf := sfv1alpha1.SplunkForwarder{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       kind,
-			APIVersion: apiversion,
-		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: operatorNamespace,
 		},
 		Spec: sfv1alpha1.SplunkForwarderSpec{
 			SplunkLicenseAccepted: true,
@@ -168,63 +165,4 @@ func makeMinimalSplunkforwarder(kind string, apiversion string, name string) sfv
 		},
 	}
 	return sf
-}
-
-// Create test splunkforwarder CR as a dedicated admin user
-func dedicatedAaddSplunkforwarder(ctx context.Context, SplunkForwarder sfv1alpha1.SplunkForwarder, namespace string) error {
-	restConfig, err := config.GetConfig()
-	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(SplunkForwarder.DeepCopy())
-	if err != nil {
-		return err
-	}
-	unstructuredObj := unstructured.Unstructured{obj}
-
-	restConfig.Impersonate = rest.ImpersonationConfig{
-		UserName: "test-user@redhat.com",
-		Groups: []string{
-			"dedicated-admins",
-		},
-	}
-	defer func() {
-		restConfig.Impersonate = rest.ImpersonationConfig{}
-	}()
-	_, err = Dynamic(restConfig).Resource(schema.GroupVersionResource{
-		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
-	}).Namespace(namespace).Create(ctx, &unstructuredObj, metav1.CreateOptions{})
-	return (err)
-}
-
-// Create test splunkforwarder CR
-func addSplunkforwarder(ctx context.Context, SplunkForwarder sfv1alpha1.SplunkForwarder, namespace string) error {
-	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(SplunkForwarder.DeepCopy())
-	if err != nil {
-		return err
-	}
-	unstructuredObj := unstructured.Unstructured{obj}
-	restConfig, err := config.GetConfig()
-	_, err = Dynamic(restConfig).Resource(schema.GroupVersionResource{
-		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
-	}).Namespace(namespace).Create(ctx, &unstructuredObj, metav1.CreateOptions{})
-	return (err)
-}
-
-func deleteSplunkforwarder(ctx context.Context, name string, namespace string) error {
-	restConfig, _ = config.GetConfig()
-	_, err := Dynamic(restConfig).Resource(schema.GroupVersionResource{
-		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
-	}).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err == nil {
-		e := Dynamic(restConfig).Resource(schema.GroupVersionResource{
-			Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
-		}).Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-		log.Printf("Deleted splunkforwarder %s in namespace %s; Error:(%v)", name, operatorNamespace, e)
-		return (e)
-	}
-	return nil
-}
-
-func Dynamic(restConfig *rest.Config) dynamic.Interface {
-	client, err := dynamic.NewForConfig(restConfig)
-	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Dynamic client")
-	return client
 }
