@@ -146,7 +146,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 // Create test splunkforwarder CR definition
 func makeMinimalSplunkforwarder(name string) sfv1alpha1.SplunkForwarder {
-	sf := sfv1alpha1.SplunkForwarder{
+	return sfv1alpha1.SplunkForwarder{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: operatorNamespace,
@@ -161,5 +161,4 @@ func makeMinimalSplunkforwarder(name string) sfv1alpha1.SplunkForwarder {
 			},
 		},
 	}
-	return sf
 }
