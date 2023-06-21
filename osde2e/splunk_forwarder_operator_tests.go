@@ -139,7 +139,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		impersonatedResourceClient, _ := k8s.Impersonate("test-user@redhat.com", "dedicated-admins")
 		Expect(sfv1alpha1.AddToScheme(impersonatedResourceClient.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
 		err := impersonatedResourceClient.WithNamespace(operatorNamespace).Create(ctx, &dsf)
-		Expect(apierrors.IsForbidden(err)).To(BeTrue())
+		Expect(apierrors.IsForbidden(err)).To(BeTrue(), "expected err to be forbidden, got: %v", err)
 	})
 
 })
