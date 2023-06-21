@@ -6,8 +6,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.9.5
 	github.com/onsi/gomega v1.27.7
 	github.com/openshift/operator-custom-metrics v0.5.0
-	github.com/openshift/osde2e-common v0.0.0-20230613152827-b8af0f9930ce
-	github.com/operator-framework/operator-lifecycle-manager v0.24.0
+	github.com/openshift/osde2e-common v0.0.0-20230621125319-93f8f034f3aa
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.58.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.58.0
 	k8s.io/apimachinery v0.27.2
@@ -17,13 +16,10 @@ require (
 )
 
 require (
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
-	github.com/operator-framework/api v0.17.3 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 )
 
@@ -46,7 +42,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect

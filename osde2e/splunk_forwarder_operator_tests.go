@@ -10,10 +10,13 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/gomega/assertions"
+	. "github.com/openshift/osde2e-common/pkg/gomega/matchers"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -21,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
@@ -40,8 +44,9 @@ var (
 var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 	ginkgo.BeforeAll(func() {
+		log.SetLogger(ginkgo.GinkgoLogr)
 		var err error
-		k8s, err = openshift.New()
+		k8s, err = openshift.New(ginkgo.GinkgoLogr)
 		Expect(err).ShouldNot(HaveOccurred(), "unable to setup k8s client")
 		Expect(sfv1alpha1.AddToScheme(k8s.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
 
@@ -54,7 +59,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 		ginkgo.By("checking the role exists")
 		var roles rbacv1.RoleList
-		err = k8s.WithNamespace(namespace).List(ctx, &roles)
+		err = k8s.WithNamespace(operatorNamespace).List(ctx, &roles)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to list roles")
 		Expect(&roles).Should(ContainItemWithPrefix(rolePrefix), "unable to find roles with prefix %s", rolePrefix)
 
@@ -81,20 +86,35 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 			err = k8s.Get(ctx, serviceName, operatorNamespace, &corev1.Service{})
 			Expect(err).Should(BeNil(), "unable to get service %s/%s", operatorNamespace, serviceName)
 		}
-		client, err := openshift.New()
-		Expect(err).NotTo(HaveOccurred(), "openshift client could not be created")
 
 		ginkgo.By("checking the deployment exists and is available")
-		assertions.EventuallyDeployment(ctx, client, deploymentName, operatorNamespace)
+		assertions.EventuallyDeployment(ctx, k8s, deploymentName, operatorNamespace)
 
 		ginkgo.By("checking the operator lock file config map exists")
-		assertions.EventuallyConfigMap(ctx, client, operatorLockFile, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(Not(BeNil()), "configmap %s should exist", operatorLockFile)
+		assertions.EventuallyConfigMap(ctx, k8s, operatorLockFile, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(Not(BeNil()), "configmap %s should exist", operatorLockFile)
 
-		ginkgo.By("checking the operator CSV exists")
-		restConfig, _ = config.GetConfig()
+		ginkgo.By("checking the operator CSV has Succeeded")
+		restConfig, _ := config.GetConfig()
 		dynamicClient, err := dynamic.NewForConfig(restConfig)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to configure Dynamic client")
-		EventuallyCsv(ctx, *dynamicClient, operatorName, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist and have Succeeded status", operatorName)
+		Eventually(func() bool {
+			csvList, err := dynamicClient.Resource(
+				schema.GroupVersionResource{
+					Group:    "operators.coreos.com",
+					Version:  "v1alpha1",
+					Resource: "clusterserviceversions",
+				},
+			).Namespace(operatorNamespace).List(ctx, metav1.ListOptions{})
+			Expect(err).NotTo(HaveOccurred(), "Failed to retrieve CSV from namespace %s", operatorNamespace)
+			for _, csv := range csvList.Items {
+				specName, _, _ := unstructured.NestedFieldCopy(csv.Object, "spec", "displayName")
+				statusPhase, _, _ := unstructured.NestedFieldCopy(csv.Object, "status", "phase")
+				if statusPhase == "Succeeded" && specName == operatorName {
+					return true
+				}
+			}
+			return false
+		}).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist and have Succeeded status", operatorName)
 
 		// TODO: post osde2e-common library add upgrade check
 		//checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator",
