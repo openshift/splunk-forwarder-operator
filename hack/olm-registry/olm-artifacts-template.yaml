@@ -152,6 +152,8 @@ objects:
         namespace: openshift-splunk-forwarder-operator
       spec:
         sourceType: grpc
+        grpcPodConfig:
+          securityContextConfig: restricted
         image: ${REPO_DIGEST}
         displayName: splunk-forwarder-operator Registry
         publisher: SRE
