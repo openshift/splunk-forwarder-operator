@@ -500,6 +500,10 @@ objects:
               index: openshift_managed_audit_stage
               whiteList: \.log$
               sourceType: _json
+            - path: /host/var/log/audit/audit.log
+              index: rh_osd_selinux
+              whiteList: \.log$
+              sourceType: linux_audit
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
