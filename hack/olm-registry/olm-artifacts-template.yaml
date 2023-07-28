@@ -152,6 +152,14 @@ objects:
         namespace: openshift-splunk-forwarder-operator
       spec:
         sourceType: grpc
+        grpcPodConfig:
+          securityContextConfig: restricted
+          nodeSelector:
+            node-role.kubernetes.io: infra
+          tolerations:
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/infra
+            operator: Exists
         image: ${REPO_DIGEST}
         displayName: splunk-forwarder-operator Registry
         publisher: SRE
@@ -791,10 +799,8 @@ objects:
               - --tls-private-key-file=/certs/tls.key
               resources:
                 requests:
-                  cpu: 100m
                   memory: 256Mi
                 limits:
-                  cpu: 100m
                   memory: 256Mi
               image: quay.io/app-sre/splunk-audit-exporter@sha256:bbca8dfd77d15c6dde3495985c1a75354ad79339ecba6820e7ceef2282422964
               imagePullPolicy: Always
