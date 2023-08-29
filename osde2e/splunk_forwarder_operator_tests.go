@@ -116,10 +116,10 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 			return false
 		}).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist and have Succeeded status", operatorName)
 
-		// TODO: post osde2e-common library add upgrade check
-		//checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator",
-		//	"openshift-splunk-forwarder-operator", "splunk-forwarder-operator",
-		//	"splunk-forwarder-operator-catalog")
+		ginkgo.By("testing operator upgrade")
+		err = k8s.UpgradeOperator(ctx, "openshift-"+operatorName, operatorNamespace)
+		Expect(err).NotTo(HaveOccurred(), "operator upgrade failed")
+
 	})
 
 	sf := makeMinimalSplunkforwarder(testsplunkforwarder)
