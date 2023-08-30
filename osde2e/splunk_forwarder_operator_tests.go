@@ -116,10 +116,6 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 			return false
 		}).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist and have Succeeded status", operatorName)
 
-		ginkgo.By("testing operator upgrade")
-		err = k8s.UpgradeOperator(ctx, "openshift-"+operatorName, operatorNamespace)
-		Expect(err).NotTo(HaveOccurred(), "operator upgrade failed")
-
 	})
 
 	sf := makeMinimalSplunkforwarder(testsplunkforwarder)
@@ -140,6 +136,12 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		Expect(sfv1alpha1.AddToScheme(impersonatedResourceClient.GetScheme())).Should(BeNil(), "unable to register sfv1alpha1 api scheme")
 		err := impersonatedResourceClient.WithNamespace(operatorNamespace).Create(ctx, &dsf)
 		Expect(apierrors.IsForbidden(err)).To(BeTrue(), "expected err to be forbidden, got: %v", err)
+	})
+
+	ginkgo.It("can be upgraded", func(ctx context.Context) {
+		ginkgo.By("forcing operator upgrade")
+		err := k8s.UpgradeOperator(ctx, "openshift-"+operatorName, operatorNamespace)
+		Expect(err).NotTo(HaveOccurred(), "operator upgrade failed")
 	})
 
 })
