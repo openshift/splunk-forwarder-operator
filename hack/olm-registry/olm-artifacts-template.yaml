@@ -1271,6 +1271,22 @@ objects:
                 responseStatus:
                   codes: ["!403"]
               alert: UserCreatedIngressControllerDetected
+            - eventselector:
+                users:
+                  usernames: ["system:serviceaccount:openshift-custom-domains-operator:custom-domains-operator"]
+                verbs: ["create", "update", "delete"]
+                namespaces: ["openshift-ingress", "openshift-ingress-operator"]
+                responseStatus:
+                  codes: ["200"]
+              alert: CustomDomainsOperatorInUse
+            - eventselector:
+                users:
+                  usernames: ["system:serviceaccount:openshift-cloud-ingress-operator:cloud-ingress-operator"]
+                verbs: ["create", "update", "delete"]
+                namespaces: ["openshift-ingress", "openshift-ingress-operator"]
+                responseStatus:
+                  codes: ["200"]
+              alert: CloudIngressOperatorInUse
     - apiVersion: v1
       kind: Service
       metadata:
