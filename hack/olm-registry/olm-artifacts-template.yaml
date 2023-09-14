@@ -501,7 +501,7 @@ objects:
               whiteList: \.log$
               sourceType: _json
             - path: /host/var/log/audit/audit.log
-              index: rh_osd_selinux
+              index: openshift_managed_hypershift_selinux_stage
               whiteList: \.log$
               sourceType: linux_audit
 
