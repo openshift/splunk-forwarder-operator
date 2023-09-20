@@ -1255,6 +1255,35 @@ objects:
                 lastSyncTimestamp: remove
                 storageBucket:
                   lastSyncTimestamp: remove
+          exposeAsMetric:
+            - eventSelector:
+                user:
+                  username: 
+                    NotIn: ["system:*"]
+                verb: 
+                  In: ["delete", "update", "patch"]
+                objectReference:
+                  name: 
+                    In: ["sre-*", "*openshift.io"]
+                  resource: 
+                    In: ["validatingwebhookconfigurations"]
+                responseStatus:
+                  code: 
+                    NotIn: ["403"]
+              alert: NonSystemChangeValidationWebhookConfiguration
+            - eventSelector:
+                  user:
+                    username: 
+                      NotIn: ["system:*"]
+                  verb: 
+                    In: ["create"]
+                  objectReference:
+                    resource: 
+                      In: ["ingresscontrollers"]
+                  responseStatus:
+                    code: 
+                      NotIn: ["403"]
+                alert: UserCreatedIngressControllerDetected
     - apiVersion: v1
       kind: Service
       metadata:
