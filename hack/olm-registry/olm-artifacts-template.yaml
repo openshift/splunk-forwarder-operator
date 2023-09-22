@@ -1283,7 +1283,7 @@ objects:
                   responseStatus:
                     code: 
                       NotIn: ["403"]
-                alert: UserCreatedIngressControllerDetected
+              alert: UserCreatedIngressControllerDetected
     - apiVersion: v1
       kind: Service
       metadata:
