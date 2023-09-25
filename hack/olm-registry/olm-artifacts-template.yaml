@@ -504,6 +504,10 @@ objects:
               index: openshift_managed_hypershift_selinux_stage
               whiteList: \.log$
               sourceType: linux_audit
+            - path: /host/var/log/ovn/acl-audit-log.log
+              index: openshift_managed_audit_stage
+              sourceType: linux_audit
+              whiteList: \.log$
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
