@@ -595,6 +595,10 @@ objects:
               index: openshift_managed_backplane_prod
               sourceType: _json
               whiteList: \.log$
+            - path: /host/var/log/audit/audit.log
+              index: openshift_managed_hypershift_selinux_prod
+              whiteList: \.log$
+              sourceType: linux_audit
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
