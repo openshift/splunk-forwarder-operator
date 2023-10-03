@@ -596,7 +596,7 @@ objects:
               sourceType: _json
               whiteList: \.log$
             - path: /host/var/log/audit/audit.log
-              index: openshift_managed_hypershift_selinux_prod
+              index: openshift_managed_hypershift_selinux
               whiteList: \.log$
               sourceType: linux_audit
 
