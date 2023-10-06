@@ -508,6 +508,10 @@ objects:
               index: openshift_managed_audit_stage
               sourceType: linux_audit
               whiteList: \.log$
+            - index: openshift_managed_hypershift_suricata_stage
+              path: /host/var/log/eve-*.json
+              sourceType: _json
+              whiteList: \.json$
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
@@ -599,6 +603,10 @@ objects:
               index: openshift_managed_hypershift_selinux
               whiteList: \.log$
               sourceType: linux_audit
+            - index: openshift_managed_hypershift_suricata
+              path: /host/var/log/eve-*.json
+              sourceType: _json
+              whiteList: \.json$
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
