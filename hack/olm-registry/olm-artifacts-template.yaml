@@ -603,6 +603,10 @@ objects:
               index: openshift_managed_hypershift_selinux
               whiteList: \.log$
               sourceType: linux_audit
+            - path: /host/var/log/ovn/acl-audit-log.log
+              index: openshift_managed_audit
+              sourceType: linux_audit
+              whiteList: \.log$
             - index: openshift_managed_hypershift_suricata
               path: /host/var/log/eve-*.json
               sourceType: _json
