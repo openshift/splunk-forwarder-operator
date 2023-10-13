@@ -84,3 +84,5 @@ tags
 ## Local app-sre pipeline testing
 .docker/
 saas-splunk-forwarder-operator-bundle/
+### IDE ###
+.idea/
