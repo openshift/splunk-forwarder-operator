@@ -46,7 +46,7 @@ spec:
   - path: /host/var/log/containers/ip-*-*-*-*ec2internal-debug*.log
     index: openshift_managed_debug_node
     whitelist: \.log$
-    sourcetype: _json
+    sourcetype: linux_audit
 ```
 
 The `image` and `imageDigest` are for the splunk-forwarder image.
