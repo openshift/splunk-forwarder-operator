@@ -631,7 +631,7 @@ objects:
         - key: api.openshift.com/environment
           operator: In
           values:
-            - "production"              
+            - "production"
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -686,7 +686,7 @@ objects:
         - index: rh_osd_goalert_audit
           path: /host/var/log/pods/goalert_goalert-*/goalert/*.log
           sourceType: log
-          whiteList: \.log$           
+          whiteList: \.log$
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
@@ -826,7 +826,7 @@ objects:
                   memory: 256Mi
                 limits:
                   memory: 256Mi
-              image: quay.io/app-sre/splunk-audit-exporter@sha256:9a3ba78122f00566b7f3279052ca0e8d09002b7836fe42d63096284bf1873d89
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:6de8c1a27cecdafdc51c83e74bb960dc1f6564e76603e68338f05501d119b53b #0.1.157-22496d2
               imagePullPolicy: Always
               securityContext:
                 privileged: true
@@ -866,7 +866,7 @@ objects:
         name: osd-audit-policy
         namespace: openshift-security
       data:
-        policy.yaml: |          
+        policy.yaml: |
           rules:
           # drop leases, tokenreviews, subjectaccessreviews, user self-lookup (~500k/day)
           - level: None
@@ -1278,30 +1278,30 @@ objects:
           exposeAsMetric:
             - eventSelector:
                 user:
-                  username: 
+                  username:
                     NotIn: ["system:*"]
-                verb: 
+                verb:
                   In: ["delete", "update", "patch"]
                 objectReference:
-                  name: 
+                  name:
                     In: ["sre-*", "*openshift.io"]
-                  resource: 
+                  resource:
                     In: ["validatingwebhookconfigurations"]
                 responseStatus:
-                  code: 
+                  code:
                     NotIn: ["403"]
               alert: NonSystemChangeValidationWebhookConfiguration
             - eventSelector:
                   user:
-                    username: 
+                    username:
                       NotIn: ["system:*"]
-                  verb: 
+                  verb:
                     In: ["create"]
                   objectReference:
-                    resource: 
+                    resource:
                       In: ["ingresscontrollers"]
                   responseStatus:
-                    code: 
+                    code:
                       NotIn: ["403"]
               alert: UserCreatedIngressControllerDetected
     - apiVersion: v1
