@@ -687,6 +687,10 @@ objects:
           path: /host/var/log/pods/goalert_goalert-*/goalert/*.log
           sourceType: log
           whiteList: \.log$
+        - index: rh_osd_keycloak_prod
+          path: /host/var/log/pods/keycloak_keycloak-*/keycloak/*.log
+          sourceType: log
+          whiteList: \.log$
 
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
@@ -753,6 +757,10 @@ objects:
         - index: rh_osd_sshguard_stage
           path: /host/var/log/auth.log
           sourceType: linux_audit
+          whiteList: \.log$
+        - index: rh_osd_keycloak_stage
+          path: /host/var/log/pods/keycloak_keycloak-*/keycloak/*.log
+          sourceType: log
           whiteList: \.log$
 
 - apiVersion: hive.openshift.io/v1
