@@ -59,6 +59,16 @@ func TestGetVolumes(t *testing.T) {
 					},
 				},
 				{
+					Name: "trusted-ca-bundle",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "trusted-ca-bundle",
+							},
+						},
+					},
+				},
+				{
 					Name: "host",
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
@@ -117,6 +127,16 @@ func TestGetVolumes(t *testing.T) {
 					},
 				},
 				{
+					Name: "trusted-ca-bundle",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "trusted-ca-bundle",
+							},
+						},
+					},
+				},
+				{
 					Name: "host",
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
@@ -126,10 +146,36 @@ func TestGetVolumes(t *testing.T) {
 					},
 				},
 				{
+					Name: "splunk-auth-app",
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+				{
 					Name: config.SplunkAuthSecretName,
 					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: config.SplunkAuthSecretName,
+						Projected: &corev1.ProjectedVolumeSource{
+							Sources: []corev1.VolumeProjection{{
+								Secret: &corev1.SecretProjection{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: config.SplunkAuthSecretName,
+									},
+									Items: []corev1.KeyToPath{
+										{
+											Key:  "cacert.pem",
+											Path: "cacert.pem",
+										},
+										{
+											Key:  "server.pem",
+											Path: "server.pem",
+										},
+										{
+											Key:  "outputs.conf",
+											Path: "outputs.conf",
+										},
+									},
+								},
+							}},
 						},
 					},
 				},
@@ -169,6 +215,16 @@ func TestGetVolumes(t *testing.T) {
 						HostPath: &corev1.HostPathVolumeSource{
 							Path: "/var/lib/misc",
 							Type: &hostPathDirectoryTypeForPtr,
+						},
+					},
+				},
+				{
+					Name: "trusted-ca-bundle",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "trusted-ca-bundle",
+							},
 						},
 					},
 				},
@@ -232,6 +288,16 @@ func TestGetVolumes(t *testing.T) {
 					},
 				},
 				{
+					Name: "trusted-ca-bundle",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "trusted-ca-bundle",
+							},
+						},
+					},
+				},
+				{
 					Name: "test-hfconfig",
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -242,10 +308,36 @@ func TestGetVolumes(t *testing.T) {
 					},
 				},
 				{
+					Name: "splunk-auth-app",
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+				{
 					Name: config.SplunkAuthSecretName,
 					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: config.SplunkAuthSecretName,
+						Projected: &corev1.ProjectedVolumeSource{
+							Sources: []corev1.VolumeProjection{{
+								Secret: &corev1.SecretProjection{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: config.SplunkAuthSecretName,
+									},
+									Items: []corev1.KeyToPath{
+										{
+											Key:  "cacert.pem",
+											Path: "cacert.pem",
+										},
+										{
+											Key:  "server.pem",
+											Path: "server.pem",
+										},
+										{
+											Key:  "outputs.conf",
+											Path: "outputs.conf",
+										},
+									},
+								},
+							}},
 						},
 					},
 				},
@@ -254,7 +346,7 @@ func TestGetVolumes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetVolumes(tt.args.mountHost, tt.args.mountSecret, tt.args.instanceName); !reflect.DeepEqual(got, tt.want) {
+			if got := GetVolumes(tt.args.mountHost, tt.args.mountSecret, false, tt.args.instanceName); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetVolumes() = %v, want %v", got, tt.want)
 			}
 		})

@@ -28,6 +28,7 @@ import (
 	opmetrics "github.com/openshift/operator-custom-metrics/pkg/metrics"
 	splunkforwarderv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
+	"github.com/openshift/splunk-forwarder-operator/controllers/proxy"
 	"github.com/openshift/splunk-forwarder-operator/controllers/secret"
 	"github.com/openshift/splunk-forwarder-operator/controllers/splunkforwarder"
 	"github.com/openshift/splunk-forwarder-operator/version"
@@ -38,9 +39,9 @@ import (
 )
 
 const (
-	// Environment variable to determine operator run mode
+	// ForceRunModeEnv defines the env variable name that determines operator run mode
 	ForceRunModeEnv = "OSDK_FORCE_RUN_MODE"
-	// Flags that the operator is running locally
+	// LocalRunMode defines the env variable value for the running locally mode
 	LocalRunMode = "local"
 )
 
@@ -135,6 +136,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Add Secret controller to manager
+	if err = (&proxy.ProxyReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Proxy")
+		os.Exit(1)
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -168,9 +178,8 @@ func addMetrics(ctx context.Context, cl client.Client, cfg *rest.Config, withSer
 		if !apierrors.IsAlreadyExists(err) {
 			log.Error(err, "Could not create metrics service")
 			return err
-		} else {
-			log.Info("Metrics service already exists, will not create")
 		}
+		log.Info("Metrics service already exists, will not create")
 	}
 
 	// If there's no need to create a ServiceMonitor, just return
