@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    operators.coreos.com/splunk-forwarder-operator.openshift-splunk-forwarder-operator: ""
+  name: splunk-forwarder-operator-beta
+  namespace: openshift-splunk-forwarder-operator
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      name: splunk-forwarder-operator-beta
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        categories: A list of comma separated categories that your operator falls
+          under.
+        certified: "false"
+        containerImage: quay.io/app-sre/splunk-forwarder-operator:latest
+        createdAt: "2024-03-21T15:00:08Z"
+        description: Splunk Forwarder Operator for OpenShift.
+        olm.operatorGroup: splunk-forwarder-operator-og
+        olm.operatorNamespace: openshift-splunk-forwarder-operator
+        olm.targetNamespaces: openshift-splunk-forwarder-operator
+        operatorframework.io/properties: '{"properties":[{"type":"olm.gvk","value":{"group":"splunkforwarder.managed.openshift.io","kind":"SplunkForwarder","version":"v1alpha1"}},{"type":"olm.package","value":{"packageName":"splunk-forwarder-operator","version":"0.1.447-ef9e76c"}}]}'
+        support: Wesley Hearn
+      creationTimestamp: null
+      labels:
+        name: splunk-forwarder-operator-beta
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/infra
+                operator: Exists
+            weight: 1
+      containers:
+      - command:
+        - splunk-forwarder-operator
+        env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: splunk-forwarder-operator
+        - name: OPERATOR_IMAGE
+          value: quay.io/app-sre/splunk-forwarder-operator@sha256:951f8e5f5b963dd5effc6c9182495fbdfd45943a23f8daf29256ab9dec06c4fe
+        - name: OPERATOR_CONDITION_NAME
+          value: splunk-forwarder-operator.v0.1.447-ef9e76c
+        image: quay.io/gsleeman/splunk-audit-exporter:sfo-v0.1.448-6929b62
+        imagePullPolicy: Always
+        name: splunk-forwarder-operator-beta
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: splunk-forwarder-operator
+      serviceAccountName: splunk-forwarder-operator
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/infra
+        operator: Exists
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2024-03-24T18:34:48Z"
+    lastUpdateTime: "2024-03-24T18:34:48Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2024-03-24T17:39:13Z"
+    lastUpdateTime: "2024-03-24T18:34:57Z"
+    message: ReplicaSet "splunk-forwarder-operator-956bfcbc6" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 13
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

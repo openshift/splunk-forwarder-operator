@@ -180,7 +180,11 @@ func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.localObjects...).Build()
+			if err := configv1.AddToScheme(scheme.Scheme); err != nil {
+				t.Errorf("ReconcileSplunkForwarder.Reconcile() error = %v", err)
+			}
+			proxy := &configv1.Proxy{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}
+			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(proxy).WithRuntimeObjects(tt.localObjects...).Build()
 			r := &SplunkForwarderReconciler{
 				Client:    fakeClient,
 				Scheme:    scheme.Scheme,

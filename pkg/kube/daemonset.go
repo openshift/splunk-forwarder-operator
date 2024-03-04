@@ -4,6 +4,8 @@ import (
 	"strconv"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/config"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +25,7 @@ func forwarderPullSpec(instance *sfv1alpha1.SplunkForwarder) string {
 }
 
 // GenerateDaemonSet returns a daemonset that can be created with the oc client
-func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
+func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHEC bool) *appsv1.DaemonSet {
 
 	var runAsUID int64 = 0
 	var isPrivContainer bool = true
@@ -38,21 +40,15 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 			Value: licenseAccepted,
 		},
 		{
-		  Name: "HOSTNAME",
+			Name: "HOSTNAME",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
-				FieldPath: "spec.nodeName",
-			}},
+					FieldPath: "spec.nodeName",
+				}},
 		},
 	}
 
-	var volumes []corev1.Volume
-
-	if instance.Spec.UseHeavyForwarder {
-		volumes = GetVolumes(true, false, instance.Name)
-	} else {
-		volumes = GetVolumes(true, true, instance.Name)
-	}
+	var volumes = GetVolumes(true, !instance.Spec.UseHeavyForwarder, useHEC, instance.Name)
 
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -105,7 +101,15 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 							},
 							Resources:              corev1.ResourceRequirements{},
 							TerminationMessagePath: "/dev/termination-log",
-
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									ConfigMapRef: &corev1.ConfigMapEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: config.ProxyConfigMapName,
+										},
+									},
+								},
+							},
 							Env: envVars,
 
 							VolumeMounts: GetVolumeMounts(instance),

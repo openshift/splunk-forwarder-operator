@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/config"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,20 +77,29 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 							},
 							Resources:              corev1.ResourceRequirements{},
 							TerminationMessagePath: "/dev/termination-log",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									ConfigMapRef: &corev1.ConfigMapEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: config.ProxyConfigMapName,
+										},
+									},
+								},
+							},
 							Env: []corev1.EnvVar{
 								{
 									Name:  "SPLUNK_ACCEPT_LICENSE",
 									Value: "yes",
 								},
-						                {
-						                  Name: "HOSTNAME",
-						                        ValueFrom: &corev1.EnvVarSource{
-						                                FieldRef: &corev1.ObjectFieldSelector{
-							                                FieldPath: "spec.nodeName",
+								{
+									Name: "HOSTNAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
 										},
-						                        },
+									},
 								},
-					                },
+							},
 
 							VolumeMounts: GetVolumeMounts(instance),
 
@@ -99,7 +109,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 							},
 						},
 					},
-					Volumes: GetVolumes(true, useVolumeSecret, instanceName),
+					Volumes: GetVolumes(true, useVolumeSecret, false, instanceName),
 				},
 			},
 		},
@@ -178,7 +188,7 @@ func TestGenerateDaemonSet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			DeepEqualWithDiff(t,
 				expectedDaemonSet(tt.instance),
-				GenerateDaemonSet(tt.instance))
+				GenerateDaemonSet(tt.instance, false))
 		})
 	}
 }
