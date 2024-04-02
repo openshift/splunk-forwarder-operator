@@ -10,7 +10,7 @@ downloading a credentials package from the specific Splunk application being use
 The credentials package is a tarball, so first extract the contents with `tar xvf splunkclouduf.spl`, then add the
 following fields in `outputs.conf`
 
-```
+```ini
 sslCertPath = $SPLUNK_HOME/etc/apps/splunkauth/default/server.pem
 sslRootCAPath = $SPLUNK_HOME/etc/apps/splunkauth/default/cacert.pem
 sslPassword = <Your SSL Password>
