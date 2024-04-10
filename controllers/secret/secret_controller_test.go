@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
+
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
 	appsv1 "k8s.io/api/apps/v1"
@@ -169,7 +171,11 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.localObjects...).Build()
+			if err := configv1.AddToScheme(scheme.Scheme); err != nil {
+				t.Errorf("SecretReconciler.Reconcile() error = %v", err)
+			}
+			proxy := &configv1.Proxy{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}
+			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(proxy).WithRuntimeObjects(tt.localObjects...).Build()
 			r := &SecretReconciler{
 				Client: fakeClient,
 				Scheme: scheme.Scheme,
