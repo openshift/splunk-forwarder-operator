@@ -348,9 +348,9 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:a1f0797cff3c507cea59ef9e3986e5d27bbc84275283722f5c49dcd0e659625a
+        imageDigest: sha256:70fc5c6478cb774eeb56de4c6afaed4869bd88457a840fdfa7ab91887474b80e
         heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:720da34231210a6050b1f425b3f89591baa1fb752283cfe9c6d716e154efb7b4
+        heavyForwarderDigest: sha256:186415dec31d94c84cf92cf46d15c60dd5f5d801f6f602d1af21c6c09a30a420
         useHeavyForwarder: false
         splunkLicenseAccepted: true
         filters:
@@ -852,7 +852,7 @@ objects:
                 limits:
                   cpu: 100m
                   memory: 256Mi
-              image: quay.io/app-sre/splunk-audit-exporter@sha256:6de8c1a27cecdafdc51c83e74bb960dc1f6564e76603e68338f05501d119b53b #0.1.157-22496d2
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:6c33492057b2be83d10d58d0b48067c78b55d5003caed8087227dce4d7787de4 #0.1.161-4966141
               imagePullPolicy: Always
               securityContext:
                 privileged: true
