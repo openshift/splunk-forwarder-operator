@@ -112,8 +112,14 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 				return
 			}
 
-			if !(maps.Equal(r.Config.Data, tt.want)) {
-				t.Errorf("go = %v, want %v", r.Config.Data, tt.want)
+			gotConfig := &corev1.ConfigMap{}
+			err = fakeClient.Get(context.TODO(), types.NamespacedName{Namespace: cm.Namespace, Name: cm.Name}, gotConfig)
+			if err != nil {
+				t.Errorf("got unexpected error: %v", err)
+			}
+
+			if !(maps.Equal(gotConfig.Data, tt.want)) {
+				t.Errorf("got = %v, want = %v", gotConfig.Data, tt.want)
 			}
 		})
 	}
