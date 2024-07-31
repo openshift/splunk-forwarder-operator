@@ -35,7 +35,7 @@ metadata:
   name: example-splunkforwarder
 spec:
   image: dockerimageurl
-  imageDigest: sha256:ac64e5260e68cd8d0310410d5e9f4544b830c082d1afba2bd0987adb2ba437b8
+  imageDigest: sha256:8a6181415ed98507eda9a8ed26d457256186386425001f2e3b1ca9f83966c335
   splunkLicenseAccepted: true
   clusterID: optional-cluster-name
   splunkInputs:
@@ -53,16 +53,16 @@ The `image` and `imageDigest` are for the splunk-forwarder image.
 If `useHeavyForwarder` is `true`, `heavyForwarderImage` and `heavyForwarderDigest` are used for the splunk-heavyforwarder image.
 (The CRD supports `imageTag` for both, but this is deprecated in favor of `imageDigest`.)
 
-To use the current version, `9.2.2-d76edf6f0a15-1102600`, specify the following:
+To use the current version, `9.2.1-78803f08aabb-3ed6cdd`, specify the following:
 - For [splunk-forwarder](https://quay.io/repository/app-sre/splunk-forwarder?tag=8.2.5-77015bc7a462-f4d16f7):
   ```yaml
   image: quay.io/app-sre/splunk-forwarder
-  imageDigest: sha256:ac64e5260e68cd8d0310410d5e9f4544b830c082d1afba2bd0987adb2ba437b8
+  imageDigest: sha256:8a6181415ed98507eda9a8ed26d457256186386425001f2e3b1ca9f83966c335
   ```
 - For [splunk-heavyforwarder](https://quay.io/repository/app-sre/splunk-heavyforwarder?tag=8.2.5-77015bc7a462-f4d16f7):
   ```yaml
   heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-  heavyForwarderDigest: sha256:f4915d86d180ac356fc67dc9d146395a0eda4dd88655c0f51bdb9f02d0722998
+  heavyForwarderDigest: sha256:0e7bf966044a667d04c103bf616fd14805dfef3caeef62eb6b64c41c255ecfc6
   ```
 
 ## Upgrading Splunk Universal Forwarder
