@@ -16,19 +16,17 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount 
 	} else {
 		forwarderConfig = config.SplunkAuthSecretName
 	}
+
 	return []corev1.VolumeMount{
-		// Splunk Forwarder Certificate Mounts
+
+		// Splunk Forwarder outputs and credentials
+		{
+			Name:      "splunk-auth-app",
+			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth",
+		},
 		{
 			Name:      forwarderConfig,
 			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
-		},
-		{
-			Name:      forwarderConfig,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
-		},
-		{
-			Name:      forwarderConfig,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
 		},
 
 		// Inputs Mount
@@ -53,6 +51,13 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount 
 			MountPath:        "/host",
 			MountPropagation: &mountPropagationMode,
 			ReadOnly:         true,
+		},
+
+		// Trust Bundle Mount
+		{
+			Name:      "trusted-ca-bundle",
+			MountPath: "/etc/pki/ca-trust/source/anchors",
+			ReadOnly:  true,
 		},
 	}
 }
@@ -88,6 +93,13 @@ func GetHeavyForwarderVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev
 		{
 			Name:      "splunk-state",
 			MountPath: "/opt/splunk/var/lib",
+		},
+
+		// Trust Bundle Mount
+		{
+			Name:      "trusted-ca-bundle",
+			MountPath: "/etc/pki/ca-trust/source/anchors",
+			ReadOnly:  true,
 		},
 	}
 }

@@ -108,7 +108,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 							VolumeMounts: GetHeavyForwarderVolumeMounts(instance),
 						},
 					},
-					Volumes:         GetVolumes(false, true, instance.Name),
+					Volumes:         GetVolumes(false, true, false, instance.Name),
 					SecurityContext: &podSecurityContext,
 				},
 			},

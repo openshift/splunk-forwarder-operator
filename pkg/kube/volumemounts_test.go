@@ -34,16 +34,12 @@ func TestGetVolumeMounts(t *testing.T) {
 			},
 			want: []corev1.VolumeMount{
 				{
+					Name:      "splunk-auth-app",
+					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth",
+				},
+				{
 					Name:      "test-internalsplunk",
 					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
-				},
-				{
-					Name:      "test-internalsplunk",
-					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
-				},
-				{
-					Name:      "test-internalsplunk",
-					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
 				},
 				{
 					Name:      "osd-monitored-logs-local",
@@ -62,6 +58,11 @@ func TestGetVolumeMounts(t *testing.T) {
 					MountPath:        "/host",
 					MountPropagation: &mountPropagationMode,
 					ReadOnly:         true,
+				},
+				{
+					Name:      "trusted-ca-bundle",
+					MountPath: "/etc/pki/ca-trust/source/anchors",
+					ReadOnly:  true,
 				},
 			},
 		},
@@ -79,16 +80,12 @@ func TestGetVolumeMounts(t *testing.T) {
 			},
 			want: []corev1.VolumeMount{
 				{
+					Name:      "splunk-auth-app",
+					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth",
+				},
+				{
 					Name:      config.SplunkAuthSecretName,
 					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
-				},
-				{
-					Name:      config.SplunkAuthSecretName,
-					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
-				},
-				{
-					Name:      config.SplunkAuthSecretName,
-					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
 				},
 				{
 					Name:      "osd-monitored-logs-local",
@@ -107,6 +104,11 @@ func TestGetVolumeMounts(t *testing.T) {
 					MountPath:        "/host",
 					MountPropagation: &mountPropagationMode,
 					ReadOnly:         true,
+				},
+				{
+					Name:      "trusted-ca-bundle",
+					MountPath: "/etc/pki/ca-trust/source/anchors",
+					ReadOnly:  true,
 				},
 			},
 		},
@@ -165,6 +167,11 @@ func TestGetHeavyForwarderVolumeMounts(t *testing.T) {
 				{
 					Name:      "splunk-state",
 					MountPath: "/opt/splunk/var/lib",
+				},
+				{
+					Name:      "trusted-ca-bundle",
+					MountPath: "/etc/pki/ca-trust/source/anchors",
+					ReadOnly:  true,
 				},
 			},
 		},
