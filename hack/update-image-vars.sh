@@ -6,29 +6,18 @@ source hack/common.sh
 
 SFI_REF="${1:-master}"
 SFI_GIT_URI=${SFI_GIT_URI:-https://github.com/openshift/splunk-forwarder-images}
-SFI_DIR=build/_sfi
+SFI_RAW=https://raw.githubusercontent.com/openshift/splunk-forwarder-images/${SFI_REF}
 
 usage() {
     echo "Usage: $0 FORWARDER_IMAGE_GIT_COMMIT-ISH" >&2
     exit -1
 }
 
-clone_or_fetch_sfi_repo() {
-    if [ -d ${SFI_DIR} ]; then
-        git -C ${SFI_DIR} fetch
-    else
-        git clone ${SFI_GIT_URI} ${SFI_DIR}
-    fi
-    (cd ${SFI_DIR} && git checkout --force --quiet $1)
-}
-
 [[ $# -gt 1 ]] || [[ "$*" = "-h" ]] || [[ "$*" = "--help" ]] && usage
 
-clone_or_fetch_sfi_repo $SFI_REF
-
-forwarder_version=$(<${SFI_DIR}/.splunk-version)
-forwarder_hash=$(<${SFI_DIR}/.splunk-version-hash)
-commit_hash=$(git -C ${SFI_DIR} rev-parse --short=7 HEAD)
+forwarder_version=$(curl ${SFI_RAW}/.splunk-version)
+forwarder_hash=$(curl ${SFI_RAW}/.splunk-version-hash)
+commit_hash=$(git ls-remote ${SFI_GIT_URI} ${SFI_REF} | awk '{print $1}' | head -c7)
 image_tag=${forwarder_version}-${forwarder_hash}-${commit_hash}
 
 make FORWARDER_IMAGE_TAG=${image_tag} image-digests
