@@ -99,6 +99,22 @@ objects:
         - '*'
         verbs:
         - '*'
+      - apiGroups:
+        - config.openshift.io
+        resources:
+        - proxies
+        verbs:
+        - get
+        - list
+        - watch
+      - apiGroups:
+        - ""
+        resources:
+        - nodes
+        verbs:
+        - get
+        - list
+        - watch
 
     - apiVersion: security.openshift.io/v1
       metadata:
@@ -208,7 +224,9 @@ objects:
         - ""
         resources:
         - secrets
+        - nodes
         verbs:
+        - watch
         - list
         - get
       - apiGroups:
@@ -241,6 +259,7 @@ objects:
         - config.openshift.io
         resources:
         - infrastructures
+        - proxies
         verbs:
         - get
         - list

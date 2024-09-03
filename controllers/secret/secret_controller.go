@@ -4,12 +4,14 @@ import (
 	"context"
 	goerr "errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -50,13 +52,7 @@ func passes(o runtime.Object) bool {
 	return s.GetName() == config.SplunkAuthSecretName
 }
 
-// blank assignment to verify that SecretReconciler implements reconcile.Reconciler
-var _ reconcile.Reconciler = &SecretReconciler{}
-
-// SecretReconciler reconciles a Secret object
 type SecretReconciler struct {
-	// This client, initialized using mgr.Client() above, is a split client
-	// that reads objects from the cache and writes to the apiserver
 	Client client.Client
 	Scheme *runtime.Scheme
 }
@@ -73,13 +69,13 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	listOpts := []client.ListOption{
 		client.InNamespace(request.Namespace),
 	}
-	err := r.Client.List(context.TODO(), sfCrds, listOpts...)
+	err := r.Client.List(ctx, sfCrds, listOpts...)
 	// Error getting CR
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 	if len(sfCrds.Items) > 1 {
-		return reconcile.Result{}, goerr.New("More than one CR in namespace")
+		return reconcile.Result{}, goerr.New("more than one CR in namespace")
 	}
 
 	// Our CR does not exist in this namespace, just ignore and continue
@@ -92,7 +88,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 
 	// Fetch the Secret instance
 	instance := &corev1.Secret{}
-	err = r.Client.Get(context.TODO(), request.NamespacedName, instance)
+	err = r.Client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Error(err, "Splunk Auth Secret was deleted, recreate it or delete the CRD, not restarting DaemonSet")
@@ -102,8 +98,15 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, err
 	}
 
+	// Fetch the Proxy instance
+	proxy := &configv1.Proxy{}
+	err = r.Client.Get(ctx, config.ProxyName, proxy)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	daemonSet := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: instance.Namespace}, daemonSet)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: instance.Namespace}, daemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -116,13 +119,13 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, nil
 	}
 
-	err = r.Client.Delete(context.TODO(), daemonSet)
+	err = r.Client.Delete(ctx, daemonSet)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	// DaemonSet
-	daemonSet = kube.GenerateDaemonSet(sfCrd)
+	daemonSet = kube.GenerateDaemonSet(sfCrd, proxy.Status.HTTPProxy != proxy.Status.HTTPSProxy)
 	// Set SplunkForwarder instance as the owner and controller
 	if err := controllerutil.SetControllerReference(sfCrd, daemonSet, r.Scheme); err != nil {
 		return reconcile.Result{}, err
@@ -130,10 +133,10 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 
 	// Check if this DaemonSet already exists
 	dsFound := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
 	if err != nil && errors.IsNotFound(err) {
 		reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
-		err = r.Client.Create(context.TODO(), daemonSet)
+		err = r.Client.Create(ctx, daemonSet)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
