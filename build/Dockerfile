@@ -1,4 +1,4 @@
-FROM quay.io/redhat-services-prod/boilerplate/image:image-v5.0.1 AS builder
+FROM quay.io/redhat-services-prod/boilerplate/image:6b4a1a8 AS builder
 COPY . /go/src/github.com/openshift/splunk-forwarder-operator
 WORKDIR /go/src/github.com/openshift/splunk-forwarder-operator
 RUN make go-build
