@@ -3,14 +3,11 @@ reviewers:
 - tonytheleg
 - theautoroboto
 - srep-functional-team-security
+- aleccohan
+- afreiberger
 approvers:
-- wshearn
-- jaybeeunix
 - dustman9000
-- gsleeman
-- sam-nguyen7
-- dem4gus
-- npecka
+- srep-functional-team-security
 maintainers:
 - jaybeeunix
 - wshearn

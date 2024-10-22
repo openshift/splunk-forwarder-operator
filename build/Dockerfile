@@ -1,9 +1,9 @@
-FROM quay.io/app-sre/boilerplate:image-v5.0.1 AS builder
+FROM quay.io/app-sre/boilerplate:image-v5.0.2 AS builder
 COPY . /go/src/github.com/openshift/splunk-forwarder-operator
 WORKDIR /go/src/github.com/openshift/splunk-forwarder-operator
 RUN make go-build
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1052.1724178568
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1086
 ENV OPERATOR_PATH=/go/src/github.com/openshift/splunk-forwarder-operator \
     OPERATOR_BIN=splunk-forwarder-operator
 
