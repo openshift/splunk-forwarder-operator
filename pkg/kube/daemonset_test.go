@@ -16,6 +16,8 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 	var expectedRunAsUID int64 = 0
 	var expectedIsPrivContainer bool = true
 	var expectedTerminationGracePeriodSeconds int64 = 10
+	var expectedPriorityClassName string = "system-node-critical"
+	var expectedPriority int32 = 2000001000
 
 	useVolumeSecret := !instance.Spec.UseHeavyForwarder
 	var sfImage string
@@ -51,6 +53,8 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 					},
 				},
 				Spec: corev1.PodSpec{
+					PriorityClassName: expectedPriorityClassName,
+					Priority:          &expectedPriority,
 					NodeSelector: map[string]string{
 						"beta.kubernetes.io/os": "linux",
 					},
@@ -81,15 +85,15 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 									Name:  "SPLUNK_ACCEPT_LICENSE",
 									Value: "yes",
 								},
-						                {
-						                  Name: "HOSTNAME",
-						                        ValueFrom: &corev1.EnvVarSource{
-						                                FieldRef: &corev1.ObjectFieldSelector{
-							                                FieldPath: "spec.nodeName",
+								{
+									Name: "HOSTNAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
 										},
-						                        },
+									},
 								},
-					                },
+							},
 
 							VolumeMounts: GetVolumeMounts(instance),
 
@@ -176,9 +180,9 @@ func TestGenerateDaemonSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			DeepEqualWithDiff(t,
-				expectedDaemonSet(tt.instance),
-				GenerateDaemonSet(tt.instance))
+			expected := expectedDaemonSet(tt.instance)
+			actual := GenerateDaemonSet(tt.instance)
+			DeepEqualWithDiff(t, expected, actual)
 		})
 	}
 }
