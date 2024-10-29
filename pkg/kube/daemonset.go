@@ -38,11 +38,12 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 			Value: licenseAccepted,
 		},
 		{
-		  Name: "HOSTNAME",
+			Name: "HOSTNAME",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
-				FieldPath: "spec.nodeName",
-			}},
+					FieldPath: "spec.nodeName",
+				},
+			},
 		},
 	}
 
@@ -53,6 +54,8 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 	} else {
 		volumes = GetVolumes(true, true, instance.Name)
 	}
+
+	var priority int32 = 2000001000
 
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -80,6 +83,8 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 					},
 				},
 				Spec: corev1.PodSpec{
+					PriorityClassName: "system-node-critical",
+					Priority:          &priority,
 					NodeSelector: map[string]string{
 						"beta.kubernetes.io/os": "linux",
 					},
