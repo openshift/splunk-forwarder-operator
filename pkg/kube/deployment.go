@@ -44,6 +44,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 
 	var runAsUserID int64 = 1000
 	podSecurityContext := corev1.PodSecurityContext{RunAsUser: &runAsUserID}
+	useHECToken := false // never using HEC for heavy forwarder deployments
 
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -108,7 +109,7 @@ func GenerateDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 							VolumeMounts: GetHeavyForwarderVolumeMounts(instance),
 						},
 					},
-					Volumes:         GetVolumes(false, true, instance.Name),
+					Volumes:         GetVolumes(false, true, useHECToken, instance.Name),
 					SecurityContext: &podSecurityContext,
 				},
 			},

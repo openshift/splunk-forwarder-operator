@@ -95,7 +95,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 								},
 							},
 
-							VolumeMounts: GetVolumeMounts(instance),
+							VolumeMounts: GetVolumeMounts(instance, false),
 
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &expectedIsPrivContainer,
@@ -103,7 +103,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 							},
 						},
 					},
-					Volumes: GetVolumes(true, useVolumeSecret, instanceName),
+					Volumes: GetVolumes(true, useVolumeSecret, false, instanceName),
 				},
 			},
 		},
@@ -112,8 +112,9 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
 func TestGenerateDaemonSet(t *testing.T) {
 	tests := []struct {
-		name     string
-		instance *sfv1alpha1.SplunkForwarder
+		name        string
+		instance    *sfv1alpha1.SplunkForwarder
+		useHECToken bool
 	}{
 		// TODO: The following configurations should be invalid and produce a predictable error:
 		// - splunkForwarderInstance(any, false, false, any)
@@ -181,7 +182,7 @@ func TestGenerateDaemonSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expected := expectedDaemonSet(tt.instance)
-			actual := GenerateDaemonSet(tt.instance)
+			actual := GenerateDaemonSet(tt.instance, tt.useHECToken)
 			DeepEqualWithDiff(t, expected, actual)
 		})
 	}

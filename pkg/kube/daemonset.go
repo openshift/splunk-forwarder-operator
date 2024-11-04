@@ -23,7 +23,7 @@ func forwarderPullSpec(instance *sfv1alpha1.SplunkForwarder) string {
 }
 
 // GenerateDaemonSet returns a daemonset that can be created with the oc client
-func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
+func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *appsv1.DaemonSet {
 
 	var runAsUID int64 = 0
 	var isPrivContainer bool = true
@@ -50,9 +50,9 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 	var volumes []corev1.Volume
 
 	if instance.Spec.UseHeavyForwarder {
-		volumes = GetVolumes(true, false, instance.Name)
+		volumes = GetVolumes(true, false, useHECToken, instance.Name)
 	} else {
-		volumes = GetVolumes(true, true, instance.Name)
+		volumes = GetVolumes(true, true, useHECToken, instance.Name)
 	}
 
 	var priority int32 = 2000001000
@@ -113,7 +113,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
 							Env: envVars,
 
-							VolumeMounts: GetVolumeMounts(instance),
+							VolumeMounts: GetVolumeMounts(instance, useHECToken),
 
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &isPrivContainer,
