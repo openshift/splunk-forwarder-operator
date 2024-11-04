@@ -8,29 +8,39 @@ import (
 
 // GetVolumeMounts returns []corev1.VolumeMount that tells where each secret, configmap, and host mount
 // gets mounted in the container
-func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount {
-	var forwarderConfig string
-	var mountPropagationMode = corev1.MountPropagationHostToContainer
-	if instance.Spec.UseHeavyForwarder {
-		forwarderConfig = instance.Name + "-internalsplunk"
-	} else {
-		forwarderConfig = config.SplunkAuthSecretName
-	}
-	return []corev1.VolumeMount{
-		// Splunk Forwarder Certificate Mounts
-		{
-			Name:      forwarderConfig,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
-		},
-		{
-			Name:      forwarderConfig,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
-		},
-		{
-			Name:      forwarderConfig,
-			MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
-		},
+func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) []corev1.VolumeMount {
+	mountPropagationMode := corev1.MountPropagationHostToContainer
 
+	volumeMounts := []corev1.VolumeMount{}
+	if useHECToken {
+		hecConfigMount := corev1.VolumeMount{
+			Name:      config.SplunkHECTokenSecretName,
+			MountPath: "/opt/splunkforwarder/etc/local",
+		}
+		volumeMounts = append(volumeMounts, hecConfigMount)
+	} else {
+		forwarderConfig := config.SplunkAuthSecretName
+		if instance.Spec.UseHeavyForwarder {
+			forwarderConfig = instance.Name + "-internalsplunk"
+		}
+		splunkConfigMounts := []corev1.VolumeMount{
+			// Splunk Forwarder Certificate Mounts
+			{
+				Name:      forwarderConfig,
+				MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
+			},
+			{
+				Name:      forwarderConfig,
+				MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
+			},
+			{
+				Name:      forwarderConfig,
+				MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
+			},
+		}
+		volumeMounts = append(volumeMounts, splunkConfigMounts...)
+	}
+	defaultMounts := []corev1.VolumeMount{
 		// Inputs Mount
 		{
 			Name:      "osd-monitored-logs-local",
@@ -55,6 +65,8 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount 
 			ReadOnly:         true,
 		},
 	}
+	volumeMounts = append(volumeMounts, defaultMounts...)
+	return volumeMounts
 }
 
 // GetHeavyForwarderVolumeMounts returns []corev1.VolumeMount that tells where each secret, and configmap gets mounted in the container

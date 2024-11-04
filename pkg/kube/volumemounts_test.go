@@ -12,7 +12,8 @@ import (
 
 func TestGetVolumeMounts(t *testing.T) {
 	type args struct {
-		instance *sfv1alpha1.SplunkForwarder
+		instance    *sfv1alpha1.SplunkForwarder
+		useHECToken bool
 	}
 	var mountPropagationMode = corev1.MountPropagationHostToContainer
 	tests := []struct {
@@ -110,10 +111,48 @@ func TestGetVolumeMounts(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Use HEC Token config",
+			args: args{
+				instance: &sfv1alpha1.SplunkForwarder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+					Spec: sfv1alpha1.SplunkForwarderSpec{
+						UseHeavyForwarder: false,
+					},
+				},
+				useHECToken: true,
+			},
+			want: []corev1.VolumeMount{
+				{
+					Name:      config.SplunkHECTokenSecretName,
+					MountPath: "/opt/splunkforwarder/etc/local",
+				},
+				{
+					Name:      "osd-monitored-logs-local",
+					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/local",
+				},
+				{
+					Name:      "osd-monitored-logs-metadata",
+					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
+				},
+				{
+					Name:      "splunk-state",
+					MountPath: "/opt/splunkforwarder/var/lib",
+				},
+				{
+					Name:             "host",
+					MountPath:        "/host",
+					MountPropagation: &mountPropagationMode,
+					ReadOnly:         true,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetVolumeMounts(tt.args.instance); !reflect.DeepEqual(got, tt.want) {
+			if got := GetVolumeMounts(tt.args.instance, tt.args.useHECToken); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetVolumeMounts() = %v, want %v", got, tt.want)
 			}
 		})
