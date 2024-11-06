@@ -47,7 +47,7 @@ func passes(o runtime.Object) bool {
 		log.Error(nil, "Not a Secret (this should never happen)")
 		return false
 	}
-	return s.GetName() == config.SplunkAuthSecretName
+	return s.GetName() == config.SplunkAuthSecretName || s.GetName() == config.SplunkHECTokenSecretName
 }
 
 // blank assignment to verify that SecretReconciler implements reconcile.Reconciler
@@ -121,8 +121,22 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, err
 	}
 
+	useHECToken := false
+	hecToken := &corev1.Secret{}
+	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkHECTokenSecretName, Namespace: request.Namespace}, hecToken)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("HTTP Event Collector token not present, using mTLS authentication")
+		} else {
+			return reconcile.Result{}, err
+		}
+	} else {
+		log.Info("HTTP Event Collector token found, using HEC mode for Splunk Universal Forwarder")
+		useHECToken = true
+	}
+
 	// DaemonSet
-	daemonSet = kube.GenerateDaemonSet(sfCrd)
+	daemonSet = kube.GenerateDaemonSet(sfCrd, useHECToken)
 	// Set SplunkForwarder instance as the owner and controller
 	if err := controllerutil.SetControllerReference(sfCrd, daemonSet, r.Scheme); err != nil {
 		return reconcile.Result{}, err

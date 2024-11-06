@@ -62,6 +62,19 @@ func testSplunkForwarderSecret() *corev1.Secret {
 	return ret
 }
 
+func testSplunkForwarderHECSecret() *corev1.Secret {
+	ret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      config.SplunkHECTokenSecretName,
+			Namespace: instanceNamespace,
+			CreationTimestamp: metav1.Time{
+				Time: time.Now(),
+			},
+		},
+	}
+	return ret
+}
+
 func testSplunkForwarderDS() *appsv1.DaemonSet {
 	ret := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -164,6 +177,25 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 				testSplunkForwarderCR(),
 				testSplunkForwarderSecret(),
 				testSplunkForwarderDS(),
+			},
+		},
+		{
+			name: "HEC Secret",
+			args: args{
+				request: reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      config.SplunkAuthSecretName,
+						Namespace: instanceNamespace,
+					},
+				},
+			},
+			want:    reconcile.Result{},
+			wantErr: false,
+			localObjects: []runtime.Object{
+				testSplunkForwarderCR(),
+				testSplunkForwarderSecret(),
+				testSplunkForwarderDS(),
+				testSplunkForwarderHECSecret(),
 			},
 		},
 	}
