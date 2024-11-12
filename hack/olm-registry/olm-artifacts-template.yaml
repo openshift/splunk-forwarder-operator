@@ -727,7 +727,7 @@ objects:
             - "true"
         - key: api.openshift.com/environment
           operator: In
-          values: ["stage", "staging"]
+          values: ["stage", "staging", "integration"]
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
