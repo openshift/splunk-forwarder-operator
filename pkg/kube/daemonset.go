@@ -86,7 +86,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *
 					PriorityClassName: "system-node-critical",
 					Priority:          &priority,
 					NodeSelector: map[string]string{
-						"beta.kubernetes.io/os": "linux",
+						"kubernetes.io/os": "linux",
 					},
 
 					ServiceAccountName: "default",
