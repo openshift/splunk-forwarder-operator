@@ -8,6 +8,8 @@ reviewers:
 approvers:
 - dustman9000
 - srep-functional-team-security
+- srep-functional-leads
+- srep-team-leads
 maintainers:
 - jaybeeunix
 - wshearn
