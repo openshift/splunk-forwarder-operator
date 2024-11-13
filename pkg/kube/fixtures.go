@@ -57,6 +57,7 @@ func splunkForwarderInstance(useHeavy, useTag, useDigest, useHFDigest bool) *sfv
 // DoDiff deep-compares two `runtime.Object`s and fails the `t`est with a useful message (showing
 // the diff) if they differ.
 func DeepEqualWithDiff(t *testing.T, expected, actual runtime.Object) {
+	t.Helper()
 	diff := cmp.Diff(expected, actual)
 	if diff != "" {
 		t.Fatal("Objects differ: -expected, +actual\n", diff)
