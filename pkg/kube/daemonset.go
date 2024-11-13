@@ -57,7 +57,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *
 
 	var priority int32 = 2000001000
 
-	return &appsv1.DaemonSet{
+	daemonset := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-ds",
 			Namespace: instance.Namespace,
@@ -126,4 +126,29 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *
 			},
 		},
 	}
+
+	if useHECToken {
+		daemonset.Spec.Template.Spec.InitContainers = []corev1.Container{
+			getInitContainer(),
+		}
+	}
+
+	return daemonset
+}
+
+func getInitContainer() corev1.Container {
+	initScript := `cp /tmp/splunk-hec-token/outputs.conf /tmp/splunk-config/outputs.conf
+chown 1000:1000 /tmp/splunk-config/outputs.conf`
+
+	initContainer := corev1.Container{
+		Name:  "init-config",
+		Image: "image-registry.openshift-image-registry.svc:5000/openshift/cli:latest",
+		Command: []string{
+			"/bin/bash",
+			"-c",
+			initScript,
+		},
+		VolumeMounts: getInitVolumeMounts(),
+	}
+	return initContainer
 }

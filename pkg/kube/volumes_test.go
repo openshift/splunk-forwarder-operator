@@ -307,6 +307,12 @@ func TestGetVolumes(t *testing.T) {
 						},
 					},
 				},
+				{
+					Name: "splunk-config",
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
 			},
 		},
 	}

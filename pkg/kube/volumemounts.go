@@ -14,7 +14,7 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) []c
 	volumeMounts := []corev1.VolumeMount{}
 	if useHECToken {
 		hecConfigMount := corev1.VolumeMount{
-			Name:      config.SplunkHECTokenSecretName,
+			Name:      "splunk-config",
 			MountPath: "/opt/splunkforwarder/etc/local",
 		}
 		volumeMounts = append(volumeMounts, hecConfigMount)
@@ -100,6 +100,19 @@ func GetHeavyForwarderVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev
 		{
 			Name:      "splunk-state",
 			MountPath: "/opt/splunk/var/lib",
+		},
+	}
+}
+
+func getInitVolumeMounts() []corev1.VolumeMount {
+	return []corev1.VolumeMount{
+		{
+			Name:      config.SplunkHECTokenSecretName,
+			MountPath: "/tmp/splunk-hec-token",
+		},
+		{
+			Name:      "splunk-config",
+			MountPath: "/tmp/splunk-config",
 		},
 	}
 }

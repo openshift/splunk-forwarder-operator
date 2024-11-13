@@ -56,7 +56,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 					PriorityClassName: expectedPriorityClassName,
 					Priority:          &expectedPriority,
 					NodeSelector: map[string]string{
-						"beta.kubernetes.io/os": "linux",
+						"kubernetes.io/os": "linux",
 					},
 
 					ServiceAccountName: "default",

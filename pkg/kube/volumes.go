@@ -70,15 +70,23 @@ func GetVolumes(mountHost, mountSecret, mountHECToken bool, instanceName string)
 	}
 
 	if mountHECToken {
-		volumes = append(volumes,
-			corev1.Volume{
+		hecVolumes := []corev1.Volume{
+			{
 				Name: config.SplunkHECTokenSecretName,
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
 						SecretName: config.SplunkHECTokenSecretName,
 					},
 				},
-			})
+			},
+			{
+				Name: "splunk-config",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			},
+		}
+		volumes = append(volumes, hecVolumes...)
 	} else if mountSecret {
 		volumes = append(volumes,
 			corev1.Volume{

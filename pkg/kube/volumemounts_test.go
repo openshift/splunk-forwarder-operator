@@ -126,7 +126,7 @@ func TestGetVolumeMounts(t *testing.T) {
 			},
 			want: []corev1.VolumeMount{
 				{
-					Name:      config.SplunkHECTokenSecretName,
+					Name:      "splunk-config",
 					MountPath: "/opt/splunkforwarder/etc/local",
 				},
 				{
