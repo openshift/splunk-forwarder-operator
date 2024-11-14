@@ -90,20 +90,18 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
-	// Fetch the Secret instance
-	instance := &corev1.Secret{}
-	err = r.Client.Get(context.TODO(), request.NamespacedName, instance)
+	secret := &corev1.Secret{}
+	err = r.Client.Get(context.TODO(), request.NamespacedName, secret)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Error(err, "Splunk Auth Secret was deleted, recreate it or delete the CRD, not restarting DaemonSet")
 			return reconcile.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
 	daemonSet := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: instance.Namespace}, daemonSet)
+	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: secret.Namespace}, daemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -112,7 +110,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	// We don't need to do anything if the DaemonSet was Created after the Secret
-	if daemonSet.CreationTimestamp.After(instance.CreationTimestamp.Time) {
+	if daemonSet.CreationTimestamp.After(secret.CreationTimestamp.Time) {
 		return reconcile.Result{}, nil
 	}
 
