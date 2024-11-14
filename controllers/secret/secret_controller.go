@@ -91,17 +91,19 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
 	secret := &corev1.Secret{}
-	err = r.Client.Get(ctx, request.NamespacedName, secret)
-	if err != nil {
-		if errors.IsNotFound(err) && request.Name == config.SplunkAuthSecretName {
-			reqLogger.Info("Legacy Splunk Auth Secret was deleted, not restarting DaemonSet")
-			return reconcile.Result{}, nil
+	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkHECTokenSecretName, Namespace: request.Namespace}, secret)
+	if errors.IsNotFound(err) {
+		reqLogger.Info("HEC secret not found, falling back to legacy mTLS authentication")
+		err = r.Client.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: config.SplunkAuthSecretName}, secret)
+		if err != nil {
+			return reconcile.Result{}, err
 		}
+	} else if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	currentDaemonSet := &appsv1.DaemonSet{}
-	err = r.Client.Get(ctx, types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: secret.Namespace}, currentDaemonSet)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: request.Namespace}, currentDaemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -114,21 +116,8 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, nil
 	}
 
-	useHECToken := false
-	hecToken := &corev1.Secret{}
-	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkHECTokenSecretName, Namespace: request.Namespace}, hecToken)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Info("HTTP Event Collector token not present, using mTLS authentication")
-		} else {
-			return reconcile.Result{}, err
-		}
-	} else {
-		log.Info("HTTP Event Collector token found, using HEC mode for Splunk Universal Forwarder")
-		useHECToken = true
-	}
-
-	newDaemonSet := kube.GenerateDaemonSet(sfCrd, useHECToken)
+	hecSecretPresent := secret.Name == config.SplunkHECTokenSecretName
+	newDaemonSet := kube.GenerateDaemonSet(sfCrd, hecSecretPresent)
 	if err := controllerutil.SetControllerReference(sfCrd, newDaemonSet, r.Scheme); err != nil {
 		return reconcile.Result{}, err
 	}
