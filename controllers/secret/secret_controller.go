@@ -94,7 +94,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	err = r.Client.Get(context.TODO(), request.NamespacedName, secret)
 	if err != nil {
 		if errors.IsNotFound(err) && request.Name == config.SplunkAuthSecretName {
-			reqLogger.Error(err, "Splunk Auth Secret was deleted, recreate it or delete the CRD, not restarting DaemonSet")
+			reqLogger.Info("Legacy Splunk Auth Secret was deleted, not restarting DaemonSet")
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
