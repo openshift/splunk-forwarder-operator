@@ -15,7 +15,7 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) []c
 	if useHECToken {
 		hecConfigMount := corev1.VolumeMount{
 			Name:      "splunk-config",
-			MountPath: "/opt/splunkforwarder/etc/local",
+			MountPath: "/opt/splunkforwarder/etc/system/local",
 		}
 		volumeMounts = append(volumeMounts, hecConfigMount)
 	} else {
