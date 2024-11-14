@@ -100,8 +100,8 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, err
 	}
 
-	daemonSet := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: secret.Namespace}, daemonSet)
+	currentDaemonSet := &appsv1.DaemonSet{}
+	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: secret.Namespace}, currentDaemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -110,13 +110,8 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	// We don't need to do anything if the DaemonSet was Created after the Secret
-	if daemonSet.CreationTimestamp.After(secret.CreationTimestamp.Time) {
+	if currentDaemonSet.CreationTimestamp.After(secret.CreationTimestamp.Time) {
 		return reconcile.Result{}, nil
-	}
-
-	err = r.Client.Delete(context.TODO(), daemonSet)
-	if err != nil {
-		return reconcile.Result{}, err
 	}
 
 	useHECToken := false
@@ -133,23 +128,19 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		useHECToken = true
 	}
 
-	// DaemonSet
-	daemonSet = kube.GenerateDaemonSet(sfCrd, useHECToken)
-	// Set SplunkForwarder instance as the owner and controller
-	if err := controllerutil.SetControllerReference(sfCrd, daemonSet, r.Scheme); err != nil {
+	newDaemonSet := kube.GenerateDaemonSet(sfCrd, useHECToken)
+	if err := controllerutil.SetControllerReference(sfCrd, newDaemonSet, r.Scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Check if this DaemonSet already exists
-	dsFound := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
-		err = r.Client.Create(context.TODO(), daemonSet)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-	} else if err != nil {
+	err = r.Client.Delete(context.TODO(), currentDaemonSet)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", newDaemonSet.Namespace, "DaemonSet.Name", newDaemonSet.Name)
+	err = r.Client.Create(context.TODO(), newDaemonSet)
+	if err != nil {
 		return reconcile.Result{}, err
 	}
 
