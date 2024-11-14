@@ -73,7 +73,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	listOpts := []client.ListOption{
 		client.InNamespace(request.Namespace),
 	}
-	err := r.Client.List(context.TODO(), sfCrds, listOpts...)
+	err := r.Client.List(ctx, sfCrds, listOpts...)
 	// Error getting CR
 	if err != nil {
 		return reconcile.Result{}, err
@@ -91,7 +91,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
 	secret := &corev1.Secret{}
-	err = r.Client.Get(context.TODO(), request.NamespacedName, secret)
+	err = r.Client.Get(ctx, request.NamespacedName, secret)
 	if err != nil {
 		if errors.IsNotFound(err) && request.Name == config.SplunkAuthSecretName {
 			reqLogger.Info("Legacy Splunk Auth Secret was deleted, not restarting DaemonSet")
@@ -101,7 +101,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	currentDaemonSet := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: secret.Namespace}, currentDaemonSet)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: secret.Namespace}, currentDaemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -133,13 +133,13 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, err
 	}
 
-	err = r.Client.Delete(context.TODO(), currentDaemonSet)
+	err = r.Client.Delete(ctx, currentDaemonSet)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", newDaemonSet.Namespace, "DaemonSet.Name", newDaemonSet.Name)
-	err = r.Client.Create(context.TODO(), newDaemonSet)
+	err = r.Client.Create(ctx, newDaemonSet)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
