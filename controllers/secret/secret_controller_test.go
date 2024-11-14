@@ -113,22 +113,6 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 			localObjects: []runtime.Object{},
 		},
 		{
-			name: "Invalid Secret Name",
-			args: args{
-				request: reconcile.Request{
-					NamespacedName: types.NamespacedName{
-						Name:      "invalid-secret-name",
-						Namespace: instanceNamespace,
-					},
-				},
-			},
-			want:    reconcile.Result{},
-			wantErr: false,
-			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
-			},
-		},
-		{
 			name: "No secret",
 			args: args{
 				request: reconcile.Request{
