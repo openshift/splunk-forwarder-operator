@@ -141,12 +141,10 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 	useHECToken := false
 	hecToken := &corev1.Secret{}
 	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkHECTokenSecretName, Namespace: request.Namespace}, hecToken)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			r.ReqLogger.Info("HTTP Event Collector token not present, using mTLS authentication")
-		} else {
-			return reconcile.Result{}, err
-		}
+	if errors.IsNotFound(err) {
+		r.ReqLogger.Info("HTTP Event Collector token not present, using mTLS authentication")
+	} else if err != nil {
+		return reconcile.Result{}, err
 	} else {
 		r.ReqLogger.Info("HTTP Event Collector token found, using HEC mode for Splunk Universal Forwarder")
 		useHECToken = true
