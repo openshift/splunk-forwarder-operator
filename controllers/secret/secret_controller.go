@@ -3,6 +3,7 @@ package secret
 import (
 	"context"
 	goerr "errors"
+	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,9 +28,11 @@ var log = logf.Log.WithName("controller_secret")
 // mySecretPredicate filters out any events not related to our Secret.
 func mySecretPredicate() predicate.Predicate {
 	return predicate.Funcs{
-		CreateFunc:  func(e event.CreateEvent) bool { return passes(e.Object) },
-		DeleteFunc:  func(e event.DeleteEvent) bool { return e.Object.GetName() == config.SplunkHECTokenSecretName },
-		UpdateFunc:  func(e event.UpdateEvent) bool { return passes(e.ObjectNew) },
+		CreateFunc: func(e event.CreateEvent) bool { return passes(e.Object) },
+		DeleteFunc: func(e event.DeleteEvent) bool { return e.Object.GetName() == config.SplunkHECTokenSecretName },
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return dataChanged(e.ObjectOld.(*corev1.Secret), e.ObjectNew.(*corev1.Secret))
+		},
 		GenericFunc: func(e event.GenericEvent) bool { return passes(e.Object) },
 	}
 }
@@ -45,6 +48,10 @@ func passes(o runtime.Object) bool {
 		return false
 	}
 	return s.GetName() == config.SplunkAuthSecretName || s.GetName() == config.SplunkHECTokenSecretName
+}
+
+func dataChanged(old, new *corev1.Secret) bool {
+	return !reflect.DeepEqual(old.Data, new.Data)
 }
 
 // blank assignment to verify that SecretReconciler implements reconcile.Reconciler
@@ -110,11 +117,6 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
 		}
-		return reconcile.Result{}, nil
-	}
-
-	// We don't need to do anything if the DaemonSet was Created after the Secret
-	if currentDaemonSet.CreationTimestamp.After(secret.CreationTimestamp.Time) {
 		return reconcile.Result{}, nil
 	}
 
