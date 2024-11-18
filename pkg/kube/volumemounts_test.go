@@ -127,7 +127,7 @@ func TestGetVolumeMounts(t *testing.T) {
 			want: []corev1.VolumeMount{
 				{
 					Name:      "splunk-config",
-					MountPath: "/opt/splunkforwarder/etc/local",
+					MountPath: "/opt/splunkforwarder/etc/system/local",
 				},
 				{
 					Name:      "osd-monitored-logs-local",
