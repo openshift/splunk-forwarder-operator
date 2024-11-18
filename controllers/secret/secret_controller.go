@@ -27,12 +27,9 @@ var log = logf.Log.WithName("controller_secret")
 // mySecretPredicate filters out any events not related to our Secret.
 func mySecretPredicate() predicate.Predicate {
 	return predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool { return passes(e.Object) },
-		DeleteFunc: func(e event.DeleteEvent) bool { return passes(e.Object) },
-		// UpdateFunc passes if *either* the new or old object is one we care about.
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return passes(e.ObjectOld) || passes(e.ObjectNew)
-		},
+		CreateFunc:  func(e event.CreateEvent) bool { return passes(e.Object) },
+		DeleteFunc:  func(e event.DeleteEvent) bool { return e.Object.GetName() == config.SplunkHECTokenSecretName },
+		UpdateFunc:  func(e event.UpdateEvent) bool { return passes(e.ObjectNew) },
 		GenericFunc: func(e event.GenericEvent) bool { return passes(e.Object) },
 	}
 }
