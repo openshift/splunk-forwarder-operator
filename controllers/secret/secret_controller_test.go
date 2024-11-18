@@ -190,7 +190,7 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 				Client: fakeClient,
 				Scheme: scheme.Scheme,
 			}
-			got, err := r.Reconcile(context.TODO(), tt.args.request)
+			got, err := r.Reconcile(context.Background(), tt.args.request)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SecretReconciler.Reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
