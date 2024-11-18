@@ -90,13 +90,18 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	secret := &corev1.Secret{}
 	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkHECTokenSecretName, Namespace: request.Namespace}, secret)
 	if errors.IsNotFound(err) {
-		reqLogger.Info("HEC secret not found, falling back to legacy mTLS authentication")
+		reqLogger.Info("HEC Token secret not found, falling back to legacy mTLS authentication")
 		err = r.Client.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: config.SplunkAuthSecretName}, secret)
-		if err != nil {
+		if errors.IsNotFound(err) {
+			reqLogger.Info("No Splunk auth secrets found, not restarting DaemonSet")
+			return reconcile.Result{}, nil
+		} else if err != nil {
 			return reconcile.Result{}, err
 		}
 	} else if err != nil {
 		return reconcile.Result{}, err
+	} else {
+		reqLogger.Info("Using HEC Token for Splunk authentication")
 	}
 
 	currentDaemonSet := &appsv1.DaemonSet{}
