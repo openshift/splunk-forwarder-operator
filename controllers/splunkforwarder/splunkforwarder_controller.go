@@ -138,8 +138,20 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 		}
 	}
 
+	useHECToken := false
+	hecToken := &corev1.Secret{}
+	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkHECTokenSecretName, Namespace: request.Namespace}, hecToken)
+	if errors.IsNotFound(err) {
+		r.ReqLogger.Info("HTTP Event Collector token not present, using mTLS authentication")
+	} else if err != nil {
+		return reconcile.Result{}, err
+	} else {
+		r.ReqLogger.Info("HTTP Event Collector token found, using HEC mode for Splunk Universal Forwarder")
+		useHECToken = true
+	}
+
 	// DaemonSet
-	daemonSet := kube.GenerateDaemonSet(instance)
+	daemonSet := kube.GenerateDaemonSet(instance, useHECToken)
 	// Set SplunkForwarder instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, daemonSet, r.Scheme); err != nil {
 		return reconcile.Result{}, err

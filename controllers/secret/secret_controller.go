@@ -3,6 +3,7 @@ package secret
 import (
 	"context"
 	goerr "errors"
+	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,10 +29,9 @@ var log = logf.Log.WithName("controller_secret")
 func mySecretPredicate() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool { return passes(e.Object) },
-		DeleteFunc: func(e event.DeleteEvent) bool { return passes(e.Object) },
-		// UpdateFunc passes if *either* the new or old object is one we care about.
+		DeleteFunc: func(e event.DeleteEvent) bool { return e.Object.GetName() == config.SplunkHECTokenSecretName },
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return passes(e.ObjectOld) || passes(e.ObjectNew)
+			return dataChanged(e.ObjectOld.(*corev1.Secret), e.ObjectNew.(*corev1.Secret))
 		},
 		GenericFunc: func(e event.GenericEvent) bool { return passes(e.Object) },
 	}
@@ -47,7 +47,11 @@ func passes(o runtime.Object) bool {
 		log.Error(nil, "Not a Secret (this should never happen)")
 		return false
 	}
-	return s.GetName() == config.SplunkAuthSecretName
+	return s.GetName() == config.SplunkAuthSecretName || s.GetName() == config.SplunkHECTokenSecretName
+}
+
+func dataChanged(old, new *corev1.Secret) bool {
+	return !reflect.DeepEqual(old.Data, new.Data)
 }
 
 // blank assignment to verify that SecretReconciler implements reconcile.Reconciler
@@ -73,7 +77,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	listOpts := []client.ListOption{
 		client.InNamespace(request.Namespace),
 	}
-	err := r.Client.List(context.TODO(), sfCrds, listOpts...)
+	err := r.Client.List(ctx, sfCrds, listOpts...)
 	// Error getting CR
 	if err != nil {
 		return reconcile.Result{}, err
@@ -90,20 +94,25 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
-	// Fetch the Secret instance
-	instance := &corev1.Secret{}
-	err = r.Client.Get(context.TODO(), request.NamespacedName, instance)
-	if err != nil {
+	secret := &corev1.Secret{}
+	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkHECTokenSecretName, Namespace: request.Namespace}, secret)
+	if errors.IsNotFound(err) {
+		reqLogger.Info("HEC Token secret not found, falling back to legacy mTLS authentication")
+		err = r.Client.Get(ctx, types.NamespacedName{Namespace: request.Namespace, Name: config.SplunkAuthSecretName}, secret)
 		if errors.IsNotFound(err) {
-			reqLogger.Error(err, "Splunk Auth Secret was deleted, recreate it or delete the CRD, not restarting DaemonSet")
+			reqLogger.Info("No Splunk auth secrets found, not restarting DaemonSet")
 			return reconcile.Result{}, nil
+		} else if err != nil {
+			return reconcile.Result{}, err
 		}
-		// Error reading the object - requeue the request.
+	} else if err != nil {
 		return reconcile.Result{}, err
+	} else {
+		reqLogger.Info("Using HEC Token for Splunk authentication")
 	}
 
-	daemonSet := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: instance.Namespace}, daemonSet)
+	currentDaemonSet := &appsv1.DaemonSet{}
+	err = r.Client.Get(ctx, types.NamespacedName{Name: sfCrd.Name + "-ds", Namespace: request.Namespace}, currentDaemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -111,33 +120,20 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, nil
 	}
 
-	// We don't need to do anything if the DaemonSet was Created after the Secret
-	if daemonSet.CreationTimestamp.After(instance.CreationTimestamp.Time) {
-		return reconcile.Result{}, nil
+	hecSecretPresent := secret.Name == config.SplunkHECTokenSecretName
+	newDaemonSet := kube.GenerateDaemonSet(sfCrd, hecSecretPresent)
+	if err := controllerutil.SetControllerReference(sfCrd, newDaemonSet, r.Scheme); err != nil {
+		return reconcile.Result{}, err
 	}
 
-	err = r.Client.Delete(context.TODO(), daemonSet)
+	err = r.Client.Delete(ctx, currentDaemonSet)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// DaemonSet
-	daemonSet = kube.GenerateDaemonSet(sfCrd)
-	// Set SplunkForwarder instance as the owner and controller
-	if err := controllerutil.SetControllerReference(sfCrd, daemonSet, r.Scheme); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	// Check if this DaemonSet already exists
-	dsFound := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
-		err = r.Client.Create(context.TODO(), daemonSet)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-	} else if err != nil {
+	reqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", newDaemonSet.Namespace, "DaemonSet.Name", newDaemonSet.Name)
+	err = r.Client.Create(ctx, newDaemonSet)
+	if err != nil {
 		return reconcile.Result{}, err
 	}
 

@@ -23,7 +23,7 @@ func forwarderPullSpec(instance *sfv1alpha1.SplunkForwarder) string {
 }
 
 // GenerateDaemonSet returns a daemonset that can be created with the oc client
-func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
+func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *appsv1.DaemonSet {
 
 	var runAsUID int64 = 0
 	var isPrivContainer bool = true
@@ -50,14 +50,14 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 	var volumes []corev1.Volume
 
 	if instance.Spec.UseHeavyForwarder {
-		volumes = GetVolumes(true, false, instance.Name)
+		volumes = GetVolumes(true, false, useHECToken, instance.Name)
 	} else {
-		volumes = GetVolumes(true, true, instance.Name)
+		volumes = GetVolumes(true, true, useHECToken, instance.Name)
 	}
 
 	var priority int32 = 2000001000
 
-	return &appsv1.DaemonSet{
+	daemonset := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-ds",
 			Namespace: instance.Namespace,
@@ -86,7 +86,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 					PriorityClassName: "system-node-critical",
 					Priority:          &priority,
 					NodeSelector: map[string]string{
-						"beta.kubernetes.io/os": "linux",
+						"kubernetes.io/os": "linux",
 					},
 
 					ServiceAccountName: "default",
@@ -113,7 +113,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 
 							Env: envVars,
 
-							VolumeMounts: GetVolumeMounts(instance),
+							VolumeMounts: GetVolumeMounts(instance, useHECToken),
 
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &isPrivContainer,
@@ -126,4 +126,29 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 			},
 		},
 	}
+
+	if useHECToken {
+		daemonset.Spec.Template.Spec.InitContainers = []corev1.Container{
+			getInitContainer(),
+		}
+	}
+
+	return daemonset
+}
+
+func getInitContainer() corev1.Container {
+	initScript := `cp /tmp/splunk-hec-token/outputs.conf /tmp/splunk-config/outputs.conf
+chown 1000:1000 /tmp/splunk-config/outputs.conf`
+
+	initContainer := corev1.Container{
+		Name:  "init-config",
+		Image: "image-registry.openshift-image-registry.svc:5000/openshift/cli:latest",
+		Command: []string{
+			"/bin/bash",
+			"-c",
+			initScript,
+		},
+		VolumeMounts: getInitVolumeMounts(),
+	}
+	return initContainer
 }

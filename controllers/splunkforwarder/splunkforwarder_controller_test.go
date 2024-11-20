@@ -25,6 +25,8 @@ const (
 	imageTag          = "0.0.1"
 )
 
+// TODO: tests should also check the reconciliation side-effects
+// ie. making sure objects get created or modified properly
 func testSplunkForwarderCR(useHeavyForwarder bool) *sfv1alpha1.SplunkForwarder {
 	ret := &sfv1alpha1.SplunkForwarder{
 		TypeMeta: metav1.TypeMeta{
@@ -54,6 +56,19 @@ func testSplunkForwarderSecret() *corev1.Secret {
 	ret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      config.SplunkAuthSecretName,
+			Namespace: instanceNamespace,
+			CreationTimestamp: metav1.Time{
+				Time: time.Now(),
+			},
+		},
+	}
+	return ret
+}
+
+func testSplunkHECSecret() *corev1.Secret {
+	ret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      config.SplunkHECTokenSecretName,
 			Namespace: instanceNamespace,
 			CreationTimestamp: metav1.Time{
 				Time: time.Now(),
@@ -175,6 +190,27 @@ func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
 				testSplunkForwarderCR(true),
 				testSplunkForwarderService(),
 				testSplunkForwarderSecret(),
+			},
+		},
+		{
+			name: "HEC secret present",
+			args: args{
+				request: reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      instanceName,
+						Namespace: instanceNamespace,
+					},
+				},
+			},
+			want: reconcile.Result{
+				Requeue: true,
+			},
+			wantErr: false,
+			localObjects: []runtime.Object{
+				testSplunkForwarderCR(false),
+				testSplunkForwarderService(),
+				testSplunkForwarderSecret(),
+				testSplunkHECSecret(),
 			},
 		},
 	}

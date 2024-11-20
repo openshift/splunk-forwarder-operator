@@ -62,6 +62,19 @@ func testSplunkForwarderSecret() *corev1.Secret {
 	return ret
 }
 
+func testSplunkForwarderHECSecret() *corev1.Secret {
+	ret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      config.SplunkHECTokenSecretName,
+			Namespace: instanceNamespace,
+			CreationTimestamp: metav1.Time{
+				Time: time.Now(),
+			},
+		},
+	}
+	return ret
+}
+
 func testSplunkForwarderDS() *appsv1.DaemonSet {
 	ret := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -98,22 +111,6 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 			want:         reconcile.Result{},
 			wantErr:      false,
 			localObjects: []runtime.Object{},
-		},
-		{
-			name: "Invalid Secret Name",
-			args: args{
-				request: reconcile.Request{
-					NamespacedName: types.NamespacedName{
-						Name:      "invalid-secret-name",
-						Namespace: instanceNamespace,
-					},
-				},
-			},
-			want:    reconcile.Result{},
-			wantErr: false,
-			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
-			},
 		},
 		{
 			name: "No secret",
@@ -166,6 +163,25 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 				testSplunkForwarderDS(),
 			},
 		},
+		{
+			name: "HEC Secret",
+			args: args{
+				request: reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      config.SplunkAuthSecretName,
+						Namespace: instanceNamespace,
+					},
+				},
+			},
+			want:    reconcile.Result{},
+			wantErr: false,
+			localObjects: []runtime.Object{
+				testSplunkForwarderCR(),
+				testSplunkForwarderSecret(),
+				testSplunkForwarderDS(),
+				testSplunkForwarderHECSecret(),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -174,7 +190,7 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 				Client: fakeClient,
 				Scheme: scheme.Scheme,
 			}
-			got, err := r.Reconcile(context.TODO(), tt.args.request)
+			got, err := r.Reconcile(context.Background(), tt.args.request)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SecretReconciler.Reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return

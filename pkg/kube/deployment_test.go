@@ -89,7 +89,7 @@ func expectedDeployment(instance *sfv1alpha1.SplunkForwarder) *appsv1.Deployment
 							VolumeMounts: GetHeavyForwarderVolumeMounts(instance),
 						},
 					},
-					Volumes: GetVolumes(false, true, "test"),
+					Volumes: GetVolumes(false, true, false, "test"),
 					SecurityContext: &corev1.PodSecurityContext{
 						RunAsUser: &expectedRunAsUserID,
 					},

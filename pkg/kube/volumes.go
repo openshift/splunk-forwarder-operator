@@ -7,7 +7,7 @@ import (
 
 // GetVolumes Returns an array of corev1.Volumes we want to attach
 // It contains configmaps, secrets, and the host mount
-func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.Volume {
+func GetVolumes(mountHost, mountSecret, mountHECToken bool, instanceName string) []corev1.Volume {
 	var hostPathDirectoryTypeForPtr = corev1.HostPathDirectory
 
 	volumes := []corev1.Volume{
@@ -69,7 +69,25 @@ func GetVolumes(mountHost bool, mountSecret bool, instanceName string) []corev1.
 			})
 	}
 
-	if mountSecret {
+	if mountHECToken {
+		hecVolumes := []corev1.Volume{
+			{
+				Name: config.SplunkHECTokenSecretName,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: config.SplunkHECTokenSecretName,
+					},
+				},
+			},
+			{
+				Name: "splunk-config",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			},
+		}
+		volumes = append(volumes, hecVolumes...)
+	} else if mountSecret {
 		volumes = append(volumes,
 			corev1.Volume{
 				Name: config.SplunkAuthSecretName,
