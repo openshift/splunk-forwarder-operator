@@ -6,4 +6,6 @@ const (
 
 	SplunkAuthSecretName     string = "splunk-auth"      // #nosec G101 -- This is a false positive
 	SplunkHECTokenSecretName string = "splunk-hec-token" // #nosec G101 -- This is a false positive
+
+	EnableOLMSkipRange = "true"
 )
