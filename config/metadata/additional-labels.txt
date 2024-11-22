@@ -1,0 +1,1 @@
+LABEL com.redhat.component="openshift-splunk-forwarder-operator"       io.k8s.description="..."       description="..."       distribution-scope="public"       name="openshift/splunk-forwarder-operator"       url="https://github.com/openshift/splunk-forwarder-operator"       vendor="Red Hat, Inc."       release="v0.0.0"       version="v0.0.0"

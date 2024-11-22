@@ -1,6 +1,6 @@
 FIPS_ENABLED=true
 
-export LATEST_IMAGE_TAG=image-v5.0.1
+export LATEST_IMAGE_TAG=image-v6.0.1
 
 include boilerplate/generated-includes.mk
 
