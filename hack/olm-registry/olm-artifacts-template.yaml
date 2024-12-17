@@ -853,7 +853,7 @@ objects:
                 limits:
                   cpu: 100m
                   memory: 256Mi
-              image: quay.io/app-sre/splunk-audit-exporter@sha256:38520a9078ac5e696a9441936d61221a066aa34fd81742efffb493d929e69c7c #0.1.168-f50a698
+              image: quay.io/app-sre/splunk-audit-exporter@sha256:92d4730185609c1c73883848b8d39cf0635b8de74fecb61f1999a1d21f6ee709 #0.1.173-64a2af5
               imagePullPolicy: Always
               securityContext:
                 privileged: true
