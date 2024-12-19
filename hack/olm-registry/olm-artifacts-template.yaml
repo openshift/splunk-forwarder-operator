@@ -350,9 +350,6 @@ objects:
       spec:
         image: quay.io/app-sre/splunk-forwarder
         imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
-        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:e4907f5eb8f62c36d547a4bef2965921d8bf23ff7730b92eca3352d14994d146
-        useHeavyForwarder: false
         splunkLicenseAccepted: true
         filters:
         - name: ignore_serviceaccount_users
@@ -441,9 +438,6 @@ objects:
       spec:
         image: quay.io/app-sre/splunk-forwarder
         imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
-        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:e4907f5eb8f62c36d547a4bef2965921d8bf23ff7730b92eca3352d14994d146
-        useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
@@ -501,9 +495,6 @@ objects:
         spec:
           image: quay.io/app-sre/splunk-forwarder
           imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
-          heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-          heavyForwarderDigest: sha256:e4907f5eb8f62c36d547a4bef2965921d8bf23ff7730b92eca3352d14994d146
-          useHeavyForwarder: false
           splunkLicenseAccepted: true
           splunkInputs:
             - path: /host/var/log/hypershift-osd-audit/*/audit.log
@@ -577,9 +568,6 @@ objects:
         spec:
           image: quay.io/app-sre/splunk-forwarder
           imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
-          heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-          heavyForwarderDigest: sha256:e4907f5eb8f62c36d547a4bef2965921d8bf23ff7730b92eca3352d14994d146
-          useHeavyForwarder: false
           splunkLicenseAccepted: true
           filters:
             - name: ignore_serviceaccount_users
@@ -660,9 +648,6 @@ objects:
       spec:
         image: quay.io/app-sre/splunk-forwarder
         imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
-        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:e4907f5eb8f62c36d547a4bef2965921d8bf23ff7730b92eca3352d14994d146
-        useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
         - index: rh_osd_cluster_audit
@@ -739,9 +724,6 @@ objects:
       spec:
         image: quay.io/app-sre/splunk-forwarder
         imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
-        heavyForwarderImage: quay.io/app-sre/splunk-heavyforwarder
-        heavyForwarderDigest: sha256:e4907f5eb8f62c36d547a4bef2965921d8bf23ff7730b92eca3352d14994d146
-        useHeavyForwarder: false
         splunkLicenseAccepted: true
         splunkInputs:
         - index: rh_osd_cluster_audit_stage

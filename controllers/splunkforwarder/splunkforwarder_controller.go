@@ -105,11 +105,6 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 	// Define a new ConfigMap object
 	// TODO(wshearn) - check instance.Spec.ClusterID, if it is empty look it up on the cluster.
 	configMaps := kube.GenerateConfigMaps(instance, request.NamespacedName, clusterid)
-	if instance.Spec.UseHeavyForwarder {
-		configMaps = append(configMaps, kube.GenerateInternalConfigMap(instance, request.NamespacedName))
-		configMaps = append(configMaps, kube.GenerateFilteringConfigMap(instance, request.NamespacedName))
-
-	}
 
 	for _, configmap := range configMaps {
 		// Set SplunkForwarder instance as the owner and controller
@@ -186,33 +181,15 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	deploymentFound := &appsv1.Deployment{}
 	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, deploymentFound)
-	if instance.Spec.UseHeavyForwarder {
-		if err != nil && errors.IsNotFound(err) {
-			r.ReqLogger.Info("Creating a new Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-			err = r.Client.Create(context.TODO(), deployment)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-		} else if err != nil {
+
+	if err == nil {
+		r.ReqLogger.Info("Deleting the Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
+		err = r.Client.Delete(context.TODO(), deploymentFound)
+		if err != nil {
 			return reconcile.Result{}, err
-		} else if instance.CreationTimestamp.After(deploymentFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(deploymentFound.GetAnnotations(), instance) {
-			err = r.Client.Delete(context.TODO(), deploymentFound)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-			// Requeue to create the deployment
-			return reconcile.Result{Requeue: true}, nil
 		}
-	} else { // The CR changed to not use the HF, so clean up the old deployment
-		if err == nil {
-			r.ReqLogger.Info("Deleting the Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-			err = r.Client.Delete(context.TODO(), deploymentFound)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-			// Requeue to create the deployment
-			return reconcile.Result{Requeue: true}, nil
-		}
+		// Requeue to create the deployment
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Service
@@ -224,34 +201,17 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	serviceFound := &corev1.Service{}
 	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, serviceFound)
-	if instance.Spec.UseHeavyForwarder {
-		if err != nil && errors.IsNotFound(err) {
-			r.ReqLogger.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-			err = r.Client.Create(context.TODO(), service)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-		} else if err != nil {
+
+	if err == nil {
+		r.ReqLogger.Info("Deleting the Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+		err = r.Client.Delete(context.TODO(), serviceFound)
+		if err != nil {
 			return reconcile.Result{}, err
-		} else if instance.CreationTimestamp.After(serviceFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(serviceFound.GetAnnotations(), instance) {
-			err = r.Client.Delete(context.TODO(), serviceFound)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-			// Requeue to create the service
-			return reconcile.Result{Requeue: true}, nil
 		}
-	} else { // The CR changed to not use the HF, so clean up the old service
-		if err == nil {
-			r.ReqLogger.Info("Deleting the Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-			err = r.Client.Delete(context.TODO(), serviceFound)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-			// Requeue to create the service
-			return reconcile.Result{Requeue: true}, nil
-		}
+		// Requeue to create the service
+		return reconcile.Result{Requeue: true}, nil
 	}
+
 
 	return ctrl.Result{}, nil
 }
