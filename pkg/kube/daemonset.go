@@ -47,13 +47,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *
 		},
 	}
 
-	var volumes []corev1.Volume
-
-	if instance.Spec.UseHeavyForwarder {
-		volumes = GetVolumes(true, false, useHECToken, instance.Name)
-	} else {
-		volumes = GetVolumes(true, true, useHECToken, instance.Name)
-	}
+	var volumes []corev1.Volume = GetVolumes(true, true, useHECToken, instance.Name)
 
 	var priority int32 = 2000001000
 

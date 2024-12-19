@@ -15,8 +15,6 @@ FORWARDER_IMAGE_TAG ?= 9.3.2-d8bb32809498-c43b7a7
 FORWARDER_NAME=splunk-forwarder
 FORWARDER_IMAGE_URI=$(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$(FORWARDER_NAME):$(FORWARDER_IMAGE_TAG)
 
-HEAVYFORWARDER_NAME=splunk-heavyforwarder
-HEAVYFORWARDER_IMAGE_URI=$(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$(HEAVYFORWARDER_NAME):$(FORWARDER_IMAGE_TAG)
 
 ## Convenience targets for local dev. Duplicates are for consistent naming.
 
@@ -28,7 +26,7 @@ push-operator: docker-push
 
 .PHONY: image-digests
 image-digests:
-	./hack/populate-image-digests.sh "$(FORWARDER_IMAGE_URI)" "$(HEAVYFORWARDER_IMAGE_URI)"
+	./hack/populate-image-digests.sh "$(FORWARDER_IMAGE_URI)"
 
 .PHONY: vuln-check
 vuln-check: build-operator

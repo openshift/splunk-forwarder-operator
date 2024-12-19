@@ -27,7 +27,7 @@ const (
 
 // TODO: tests should also check the reconciliation side-effects
 // ie. making sure objects get created or modified properly
-func testSplunkForwarderCR(useHeavyForwarder bool) *sfv1alpha1.SplunkForwarder {
+func testSplunkForwarderCR() *sfv1alpha1.SplunkForwarder {
 	ret := &sfv1alpha1.SplunkForwarder{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "SplunkForwarder",
@@ -41,7 +41,6 @@ func testSplunkForwarderCR(useHeavyForwarder bool) *sfv1alpha1.SplunkForwarder {
 			SplunkLicenseAccepted: true,
 			Image:                 image,
 			ImageTag:              imageTag,
-			UseHeavyForwarder:     useHeavyForwarder,
 			SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
 				{
 					Path: "/var/log/test",
@@ -132,7 +131,7 @@ func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
 			want:    reconcile.Result{},
 			wantErr: true,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(false),
+				testSplunkForwarderCR(),
 			},
 		},
 		{
@@ -150,44 +149,7 @@ func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
 			},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(false),
-				testSplunkForwarderService(),
-				testSplunkForwarderSecret(),
-			},
-		},
-		{
-			name: "Heavy forwarders",
-			args: args{
-				request: reconcile.Request{
-					NamespacedName: types.NamespacedName{
-						Name:      instanceName,
-						Namespace: instanceNamespace,
-					},
-				},
-			},
-			want:    reconcile.Result{},
-			wantErr: false,
-			localObjects: []runtime.Object{
-				testSplunkForwarderCR(true),
-				testSplunkForwarderSecret(),
-			},
-		},
-		{
-			name: "Heavy forwarders - Old Service",
-			args: args{
-				request: reconcile.Request{
-					NamespacedName: types.NamespacedName{
-						Name:      instanceName,
-						Namespace: instanceNamespace,
-					},
-				},
-			},
-			want: reconcile.Result{
-				Requeue: true,
-			},
-			wantErr: false,
-			localObjects: []runtime.Object{
-				testSplunkForwarderCR(true),
+				testSplunkForwarderCR(),
 				testSplunkForwarderService(),
 				testSplunkForwarderSecret(),
 			},
@@ -207,7 +169,7 @@ func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
 			},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(false),
+				testSplunkForwarderCR(),
 				testSplunkForwarderService(),
 				testSplunkForwarderSecret(),
 				testSplunkHECSecret(),
