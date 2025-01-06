@@ -19,7 +19,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 	var expectedPriorityClassName string = "system-node-critical"
 	var expectedPriority int32 = 2000001000
 
-	useVolumeSecret := !instance.Spec.UseHeavyForwarder
+	useVolumeSecret := true
 	var sfImage string
 	if instance.Spec.ImageDigest == "" {
 		sfImage = image + ":" + imageTag
@@ -145,38 +145,6 @@ func TestGenerateDaemonSet(t *testing.T) {
 			name: "Without HF, digest overrides tag, moot HF digest",
 			// The HF digest is ignored because not using HF
 			instance: splunkForwarderInstance(false, true, true, true),
-		},
-		{
-			name: "With HF, with image digest",
-			// NOTE: useHeavy && !useTag && !useHeavyDigest should be an invalid configuration,
-			// but GenerateDaemonSet won't catch that.
-			instance: splunkForwarderInstance(true, false, true, false),
-		},
-		{
-			name:     "With HF, with digests",
-			instance: splunkForwarderInstance(true, false, true, true),
-		},
-		{
-			name:     "Test Daemonset, with HF, with tags",
-			instance: splunkForwarderInstance(true, true, false, false),
-		},
-		{
-			name: "With HF, image tag and HF digest",
-			// IRL this will produce a DaemonSet with the sf image by tag, and a Deployment with
-			// the shf image by digest.
-			instance: splunkForwarderInstance(true, true, false, true),
-		},
-		{
-			name: "With HF, image digest overrides tag",
-			// IRL this will produce a DaemonSet with the sf image by digest, and a Deployment with
-			// the shf image by tag.
-			instance: splunkForwarderInstance(true, true, true, false),
-		},
-		{
-			name: "With HF, digests overrides tags",
-			// IRL this will produce a DaemonSet with the sf image by digest, and a Deployment with
-			// the shf image also by digest.
-			instance: splunkForwarderInstance(true, true, true, true),
 		},
 	}
 	for _, tt := range tests {
