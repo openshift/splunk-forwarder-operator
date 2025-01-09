@@ -22,51 +22,6 @@ func TestGetVolumeMounts(t *testing.T) {
 		want []corev1.VolumeMount
 	}{
 		{
-			name: "Using Heavy forwarder",
-			args: args{
-				instance: &sfv1alpha1.SplunkForwarder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
-					Spec: sfv1alpha1.SplunkForwarderSpec{
-						UseHeavyForwarder: true,
-					},
-				},
-			},
-			want: []corev1.VolumeMount{
-				{
-					Name:      "test-internalsplunk",
-					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/default",
-				},
-				{
-					Name:      "test-internalsplunk",
-					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/local",
-				},
-				{
-					Name:      "test-internalsplunk",
-					MountPath: "/opt/splunkforwarder/etc/apps/splunkauth/metadata",
-				},
-				{
-					Name:      "osd-monitored-logs-local",
-					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/local",
-				},
-				{
-					Name:      "osd-monitored-logs-metadata",
-					MountPath: "/opt/splunkforwarder/etc/apps/osd_monitored_logs/metadata",
-				},
-				{
-					Name:      "splunk-state",
-					MountPath: "/opt/splunkforwarder/var/lib",
-				},
-				{
-					Name:             "host",
-					MountPath:        "/host",
-					MountPropagation: &mountPropagationMode,
-					ReadOnly:         true,
-				},
-			},
-		},
-		{
 			name: "Don't use heaver forwarder",
 			args: args{
 				instance: &sfv1alpha1.SplunkForwarder{
@@ -74,7 +29,6 @@ func TestGetVolumeMounts(t *testing.T) {
 						Name: "test",
 					},
 					Spec: sfv1alpha1.SplunkForwarderSpec{
-						UseHeavyForwarder: false,
 					},
 				},
 			},
@@ -119,7 +73,6 @@ func TestGetVolumeMounts(t *testing.T) {
 						Name: "test",
 					},
 					Spec: sfv1alpha1.SplunkForwarderSpec{
-						UseHeavyForwarder: false,
 					},
 				},
 				useHECToken: true,
@@ -154,64 +107,6 @@ func TestGetVolumeMounts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetVolumeMounts(tt.args.instance, tt.args.useHECToken); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetVolumeMounts() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGetHeavyForwarderVolumeMounts(t *testing.T) {
-	type args struct {
-		instance *sfv1alpha1.SplunkForwarder
-	}
-	tests := []struct {
-		name string
-		args args
-		want []corev1.VolumeMount
-	}{
-		{
-			name: "Test Heavy Forwarder Mounts",
-			args: args{
-				instance: &sfv1alpha1.SplunkForwarder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
-					Spec: sfv1alpha1.SplunkForwarderSpec{
-						UseHeavyForwarder: true,
-					},
-				},
-			},
-			want: []corev1.VolumeMount{
-				{
-					Name:      config.SplunkAuthSecretName,
-					MountPath: "/opt/splunk/etc/apps/splunkauth/default",
-				},
-				{
-					Name:      config.SplunkAuthSecretName,
-					MountPath: "/opt/splunk/etc/apps/splunkauth/local",
-				},
-				{
-					Name:      config.SplunkAuthSecretName,
-					MountPath: "/opt/splunk/etc/apps/splunkauth/metadata",
-				},
-				{
-					Name:      "test-hfconfig",
-					MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/local",
-				},
-				{
-					Name:      "test-hfconfig",
-					MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/metadata",
-				},
-				{
-					Name:      "splunk-state",
-					MountPath: "/opt/splunk/var/lib",
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := GetHeavyForwarderVolumeMounts(tt.args.instance); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetHeavyForwarderVolumeMounts() = %v, want %v", got, tt.want)
 			}
 		})
 	}

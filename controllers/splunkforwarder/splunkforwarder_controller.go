@@ -172,26 +172,6 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Deployment
-	deployment := kube.GenerateDeployment(instance)
-	// Set SplunkForwarder instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, deployment, r.Scheme); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	deploymentFound := &appsv1.Deployment{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, deploymentFound)
-
-	if err == nil {
-		r.ReqLogger.Info("Deleting the Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-		err = r.Client.Delete(context.TODO(), deploymentFound)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		// Requeue to create the deployment
-		return reconcile.Result{Requeue: true}, nil
-	}
-
 	// Service
 	service := kube.GenerateService(instance)
 	// Set SplunkForwarder instance as the owner and controller

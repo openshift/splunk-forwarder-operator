@@ -20,9 +20,6 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) []c
 		volumeMounts = append(volumeMounts, hecConfigMount)
 	} else {
 		forwarderConfig := config.SplunkAuthSecretName
-		if instance.Spec.UseHeavyForwarder {
-			forwarderConfig = instance.Name + "-internalsplunk"
-		}
 		splunkConfigMounts := []corev1.VolumeMount{
 			// Splunk Forwarder Certificate Mounts
 			{
@@ -67,41 +64,6 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) []c
 	}
 	volumeMounts = append(volumeMounts, defaultMounts...)
 	return volumeMounts
-}
-
-// GetHeavyForwarderVolumeMounts returns []corev1.VolumeMount that tells where each secret, and configmap gets mounted in the container
-func GetHeavyForwarderVolumeMounts(instance *sfv1alpha1.SplunkForwarder) []corev1.VolumeMount {
-	return []corev1.VolumeMount{
-		// Splunk Forwarder Certificate Mounts
-		{
-			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunk/etc/apps/splunkauth/default",
-		},
-		{
-			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunk/etc/apps/splunkauth/local",
-		},
-		{
-			Name:      config.SplunkAuthSecretName,
-			MountPath: "/opt/splunk/etc/apps/splunkauth/metadata",
-		},
-
-		// Inputs and Props Transform Mount
-		{
-			Name:      instance.Name + "-hfconfig",
-			MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/local",
-		},
-		{
-			Name:      instance.Name + "-hfconfig",
-			MountPath: "/opt/splunk/etc/apps/osd_monitored_logs/metadata",
-		},
-
-		// State Mount (https://www.splunk.com/en_us/blog/tips-and-tricks/what-is-this-fishbucket-thing.html)
-		{
-			Name:      "splunk-state",
-			MountPath: "/opt/splunk/var/lib",
-		},
-	}
 }
 
 func getInitVolumeMounts() []corev1.VolumeMount {
