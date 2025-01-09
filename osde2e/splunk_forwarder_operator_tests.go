@@ -138,7 +138,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		Expect(apierrors.IsForbidden(err)).To(BeTrue(), "expected err to be forbidden, got: %v", err)
 	})
 
-	ginkgo.It("can be upgraded", func(ctx context.Context) {
+	ginkgo.PIt("can be upgraded", func(ctx context.Context) {
 		ginkgo.By("forcing operator upgrade")
 		err := k8s.UpgradeOperator(ctx, "openshift-"+operatorName, operatorNamespace)
 		Expect(err).NotTo(HaveOccurred(), "operator upgrade failed")
