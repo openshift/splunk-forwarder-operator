@@ -117,34 +117,15 @@ func TestGenerateDaemonSet(t *testing.T) {
 		useHECToken bool
 	}{
 		// TODO: The following configurations should be invalid and produce a predictable error:
-		// - splunkForwarderInstance(any, false, false, any)
+		// - splunkForwarderInstance(false, false)
 		//   (Can't make sf pull spec when neither tag nor digest is present.)
 		{
-			name:     "Without HF, with image digest",
-			instance: splunkForwarderInstance(false, false, true, false),
+			name:     "Test Daemonset with image digest",
+			instance: splunkForwarderInstance(true),
 		},
 		{
-			name: "Without HF, with digests",
-			// The HF digest is ignored because not using HF
-			instance: splunkForwarderInstance(false, false, true, true),
-		},
-		{
-			name:     "Test Daemonset without HF, with tags",
-			instance: splunkForwarderInstance(false, true, false, false),
-		},
-		{
-			name: "Test Daemonset without HF, with tags and moot HF digest",
-			// The HF digest is ignored because not using HF
-			instance: splunkForwarderInstance(false, true, false, true),
-		},
-		{
-			name:     "Without HF, digest overrides tag",
-			instance: splunkForwarderInstance(false, true, true, false),
-		},
-		{
-			name: "Without HF, digest overrides tag, moot HF digest",
-			// The HF digest is ignored because not using HF
-			instance: splunkForwarderInstance(false, true, true, true),
+			name:     "Test Daemonset with tags",
+			instance: splunkForwarderInstance(false),
 		},
 	}
 	for _, tt := range tests {
