@@ -1406,6 +1406,59 @@ objects:
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
+    name: splunk-hec-token-fips-stg
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: NotIn
+          values:
+            - "management-cluster"
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "staging"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: api.openshift.com/legal-entity-id
+          operator: NotIn
+          values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+        - key: hive.openshift.io/cluster-region
+          operator: NotIn
+          values:
+            - "cn-north-1"
+            - "cn-northwest-1"
+        - key: api.openshift.com/fedramp
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/fips-enabled-itn-2025-00017
+          operator: In
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    secretMappings:
+    - sourceRef:
+        name: splunk-hec-token-stg
+        namespace: splunk-forwarder-operator
+      targetRef:
+        name: splunk-hec-token
+        namespace: openshift-security
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
     name: splunk-hec-token-sss-stg
     namespace: splunk-forwarder-operator
   spec:
@@ -1508,3 +1561,57 @@ objects:
       targetRef:
         name: splunk-hec-token
         namespace: openshift-security
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-hec-token-fips
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: NotIn
+          values:
+            - "management-cluster"
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "production"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: api.openshift.com/legal-entity-id
+          operator: NotIn
+          values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+        - key: hive.openshift.io/cluster-region
+          operator: NotIn
+          values:
+            - "cn-north-1"
+            - "cn-northwest-1"
+        - key: api.openshift.com/fedramp
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/fips-enabled-itn-2025-00017
+          operator: In
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    secretMappings:
+    - sourceRef:
+        name: splunk-hec-token-supportex-23207
+        namespace: splunk-forwarder-operator
+      targetRef:
+        name: splunk-hec-token
+        namespace: openshift-security
+
