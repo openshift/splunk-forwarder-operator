@@ -31,7 +31,7 @@ func mySecretPredicate() predicate.Predicate {
 		CreateFunc: func(e event.CreateEvent) bool { return passes(e.Object) },
 		DeleteFunc: func(e event.DeleteEvent) bool { return e.Object.GetName() == config.SplunkHECTokenSecretName },
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return dataChanged(e.ObjectOld.(*corev1.Secret), e.ObjectNew.(*corev1.Secret))
+			return passes(e.ObjectOld) && dataChanged(e.ObjectOld.(*corev1.Secret), e.ObjectNew.(*corev1.Secret))
 		},
 		GenericFunc: func(e event.GenericEvent) bool { return passes(e.Object) },
 	}
