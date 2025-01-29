@@ -645,10 +645,6 @@ objects:
           operator: In
           values:
             - "true"
-        - key: api.openshift.com/noalerts
-          operator: NotIn
-          values:
-            - "true"
     resourceApplyMode: Sync
     resources:
       - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
