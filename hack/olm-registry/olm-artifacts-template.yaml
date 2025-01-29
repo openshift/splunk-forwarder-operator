@@ -621,6 +621,158 @@ objects:
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
+    name: splunk-forwarder-operator-cr-fr-hs-stg-sss
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: In
+          values:
+            - "management-cluster"
+        - key: api.openshift.com/environment
+          operator: In
+          values: ["stage", "staging"]
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: api.openshift.com/fedramp
+          operator: In
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
+          splunkLicenseAccepted: true
+          splunkInputs:
+            - path: /host/var/log/hypershift-osd-audit/*/audit.log
+              index: rh_osd_hypershift_audit_stage
+              whiteList: \.log$
+              sourceType: _json
+            - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+              index: rh_osd_debug_node_stage
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/log/osd-audit/audit.log
+              index: rh_osd_cluster_audit_stage
+              whiteList: \.log$
+              sourceType: _json
+            - path: /host/var/log/audit/audit.log
+              index: rh_osd_selinux_stage
+              whiteList: \.log$
+              sourceType: linux_audit
+            - path: /host/var/log/ovn/acl-audit-log.log
+              index: rh_osd_cluster_audit_stage
+              sourceType: linux_audit
+              whiteList: \.log$
+            - index: rh_osd_suricata_stage
+              path: /host/var/log/eve-*.json
+              sourceType: _json
+              whiteList: \.json$
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-forwarder-operator-cr-fr-hs-sss
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: In
+          values:
+            - "management-cluster"
+        - key: api.openshift.com/environment
+          operator: In
+          values:
+            - "production"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: api.openshift.com/fedramp
+          operator: In
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
+          splunkLicenseAccepted: true
+          filters:
+            - name: ignore_serviceaccount_users
+              filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+            - name: ignore_system_node_users
+              filter: '"user":{"username":"system:node:[^"]+"'
+            - name: ignore_chatty_system_users
+              filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+            - name: ignore_well_known_oauth_endpoint
+              filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+            - name: ignore_livez_health_check
+              filter: '"requestURI":"/livez"'
+          splunkInputs:
+            - path: /host/var/log/hypershift-osd-audit/*/audit.log
+              index: rh_osd_hypershift_audit
+              whiteList: \.log$
+              sourceType: _json
+            - path: /host/var/log/osd-audit/audit.log
+              index: rh_osd_cluster_audit
+              whiteList: \.log$
+              sourceType: _json
+            - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+              index: rh_osd_debug_node_stage
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+              index: rh_osd_pod_creation
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+              index: rh_osd_malware_scan
+              whiteList: \.log$
+              sourceType: openshift:debug
+            - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
+              index: rh_osd_backplane_prod
+              sourceType: _json
+              whiteList: \.log$
+            - path: /host/var/log/audit/audit.log
+              index: rh_osd_selinux
+              whiteList: \.log$
+              sourceType: linux_audit
+            - path: /host/var/log/ovn/acl-audit-log.log
+              index: rh_osd_cluster_audit
+              sourceType: linux_audit
+              whiteList: \.log$
+            - index: rh_osd_suricata
+              path: /host/var/log/eve-*.json
+              sourceType: _json
+              whiteList: \.json$
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
     name: splunk-forwarder-operator-cr-fr-sss
     namespace: splunk-forwarder-operator
   spec:
@@ -630,6 +782,10 @@ objects:
           operator: In
           values:
             - "true"
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: NotIn
+          values:
+            - "management-cluster"
         - key: api.openshift.com/fedramp
           operator: In
           values:
@@ -638,6 +794,14 @@ objects:
           operator: In
           values:
             - "production"
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
@@ -649,6 +813,17 @@ objects:
         image: quay.io/app-sre/splunk-forwarder
         imageDigest: sha256:ee36e2f76856b262fb19096c0bba04fcf7e4399c7819d914d9b8554f119ab42a
         splunkLicenseAccepted: true
+        filters:
+        - name: ignore_serviceaccount_users
+          filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+        - name: ignore_system_node_users
+          filter: '"user":{"username":"system:node:[^"]+"'
+        - name: ignore_chatty_system_users
+          filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+        - name: ignore_well_known_oauth_endpoint
+          filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+        - name: ignore_livez_health_check
+          filter: '"requestURI":"/livez"'
         splunkInputs:
         - index: rh_osd_cluster_audit
           path: /host/var/log/osd-audit/audit.log
@@ -663,7 +838,7 @@ objects:
           sourceType: openshift:debug
           whiteList: \.log$
         - index: rh_osd_debug_node
-          path: /host/var/log/pods/default_ip-*-debug_*/container-*/*.log
+          path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
           sourceType: openshift:debug
           whiteList: \.log$
         - index: rh_osd_selinux
@@ -707,6 +882,10 @@ objects:
           operator: In
           values:
             - "true"
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: NotIn
+          values:
+            - "management-cluster"
         - key: api.openshift.com/fedramp
           operator: In
           values:
@@ -714,6 +893,14 @@ objects:
         - key: api.openshift.com/environment
           operator: In
           values: ["stage", "staging"]
+        - key: api.openshift.com/noalerts
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-managed.openshift.io/noalerts
+          operator: NotIn
+          values:
+            - "true"
     resourceApplyMode: Sync
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
