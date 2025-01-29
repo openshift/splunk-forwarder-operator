@@ -649,10 +649,6 @@ objects:
           operator: NotIn
           values:
             - "true"
-        - key: ext-managed.openshift.io/noalerts
-          operator: NotIn
-          values:
-            - "true"
     resourceApplyMode: Sync
     resources:
       - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
