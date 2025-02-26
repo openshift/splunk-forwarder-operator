@@ -284,14 +284,6 @@ objects:
                 labels:
                   severity: warning
 
-    secretMappings:
-    - sourceRef:
-        name: splunk-auth
-        namespace: splunk-forwarder-operator
-      targetRef:
-        name: splunk-auth
-        namespace: openshift-security
-
     secretReferences:
     - source:
         name: splunk-auth
@@ -1686,4 +1678,71 @@ objects:
         namespace: splunk-forwarder-operator
       targetRef:
         name: splunk-hec-token
+        namespace: openshift-security
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-auth-region-global
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: hive.openshift.io/cluster-region
+          operator: NotIn
+          values:
+            - "cn-north-1"
+            - "cn-northwest-1"
+        - key: api.openshift.com/fedramp
+          operator: NotIn
+          values:
+            - "true"
+        - key: ext-hypershift.openshift.io/regional-ocm
+          operator: NotIn
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    secretMappings:
+    - sourceRef:
+        name: splunk-auth
+        namespace: splunk-forwarder-operator
+      targetRef:
+        name: splunk-auth
+        namespace: openshift-security
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-auth-region-ase1
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: ext-hypershift.openshift.io/cluster-type
+          operator: In
+          values:
+            - "management-cluster"
+        - key: hive.openshift.io/cluster-region
+          operator: In
+          values:
+            - "ap-southeast-1"
+        - key: ext-hypershift.openshift.io/regional-ocm
+          operator: In
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    secretMappings:
+    - sourceRef:
+        name: osd-ase1-splunk-auth
+        namespace: splunk-forwarder-operator
+      targetRef:
+        name: splunk-auth
         namespace: openshift-security
