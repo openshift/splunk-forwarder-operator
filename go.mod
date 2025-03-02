@@ -1,6 +1,8 @@
 module github.com/openshift/splunk-forwarder-operator
 
-go 1.17
+go 1.23
+
+toolchain go1.23.6
 
 require (
 	github.com/onsi/ginkgo/v2 v2.9.5
@@ -87,5 +89,5 @@ require (
 
 replace (
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50
-	sigs.k8s.io/json => sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6
+	sigs.k8s.io/json => sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8
 )
