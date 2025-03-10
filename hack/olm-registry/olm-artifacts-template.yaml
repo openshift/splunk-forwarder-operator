@@ -1730,6 +1730,7 @@ objects:
           operator: In
           values:
             - "management-cluster"
+            - "service-cluster"
         - key: hive.openshift.io/cluster-region
           operator: In
           values:
