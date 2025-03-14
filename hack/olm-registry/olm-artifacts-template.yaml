@@ -1598,6 +1598,7 @@ objects:
           operator: NotIn
           values:
             - "management-cluster"
+            - "service-cluster"
         - key: api.openshift.com/environment
           operator: In
           values:
@@ -1647,6 +1648,7 @@ objects:
           operator: NotIn
           values:
             - "management-cluster"
+            - "service-cluster"
         - key: api.openshift.com/environment
           operator: In
           values:
