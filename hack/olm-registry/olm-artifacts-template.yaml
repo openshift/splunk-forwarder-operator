@@ -1749,3 +1749,28 @@ objects:
       targetRef:
         name: splunk-auth
         namespace: openshift-security
+
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    name: splunk-auth-fedramp
+    namespace: splunk-forwarder-operator
+  spec:
+    clusterDeploymentSelector:
+      matchExpressions:
+        - key: api.openshift.com/managed
+          operator: In
+          values:
+            - "true"
+        - key: api.openshift.com/fedramp
+          operator: In
+          values:
+            - "true"
+    resourceApplyMode: Sync
+    secretMappings:
+    - sourceRef:
+        name: splunk-auth
+        namespace: splunk-forwarder-operator
+      targetRef:
+        name: splunk-auth
+        namespace: openshift-security
