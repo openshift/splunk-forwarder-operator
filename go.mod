@@ -1,6 +1,8 @@
 module github.com/openshift/splunk-forwarder-operator
 
-go 1.17
+go 1.23.0
+
+toolchain go1.23.8
 
 require (
 	github.com/onsi/ginkgo/v2 v2.9.5
@@ -54,7 +56,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
