@@ -118,15 +118,11 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 	})
 
-	sf := makeMinimalSplunkforwarder(testsplunkforwarder)
-
-	ginkgo.It("admin should be able to create SplunkForwarders CR", func(ctx context.Context) {
+	ginkgo.It("admin should be able to create and delete SplunkForwarders CR", func(ctx context.Context) {
+		sf := makeMinimalSplunkforwarder(testsplunkforwarder)
 		err := k8s.WithNamespace(operatorNamespace).Create(ctx, &sf)
 		Expect(err).NotTo(HaveOccurred())
-	})
-
-	ginkgo.It("admin should be able to delete SplunkForwarders CR", func(ctx context.Context) {
-		err := k8s.Delete(ctx, &sf)
+		err = k8s.WithNamespace(operatorNamespace).Delete(ctx, &sf)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
