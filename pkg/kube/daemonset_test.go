@@ -13,11 +13,13 @@ import (
 // Parameters;
 // - sfInstance: SplunkForwarder instance under test.
 func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
-	var expectedRunAsUID int64 = 0
-	var expectedIsPrivContainer bool = true
-	var expectedTerminationGracePeriodSeconds int64 = 10
-	var expectedPriorityClassName string = "system-node-critical"
-	var expectedPriority int32 = 2000001000
+	var (
+		expectedRunAsUID                      int64 = 0
+		expectedTerminationGracePeriodSeconds int64 = 10
+		expectedPriority                      int32 = 2000001000
+	)
+	expectedIsPrivContainer := true
+	expectedPriorityClassName := "system-node-critical"
 
 	useVolumeSecret := true
 	var sfImage string

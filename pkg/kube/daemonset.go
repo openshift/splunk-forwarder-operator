@@ -25,14 +25,17 @@ func forwarderPullSpec(instance *sfv1alpha1.SplunkForwarder) string {
 // GenerateDaemonSet returns a daemonset that can be created with the oc client
 func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *appsv1.DaemonSet {
 
-	var runAsUID int64 = 0
-	var isPrivContainer bool = true
-	var terminationGracePeriodSeconds int64 = 10
-	var licenseAccepted string = "no"
+	var (
+		runAsUID                      int64 = 0
+		terminationGracePeriodSeconds int64 = 10
+		priority                      int32 = 2000001000
+	)
+	isPrivContainer := true
+	licenseAccepted := "no"
 	if instance.Spec.SplunkLicenseAccepted {
 		licenseAccepted = "yes"
 	}
-	var envVars = []corev1.EnvVar{
+	envVars := []corev1.EnvVar{
 		{
 			Name:  "SPLUNK_ACCEPT_LICENSE",
 			Value: licenseAccepted,
@@ -47,9 +50,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *
 		},
 	}
 
-	var volumes []corev1.Volume = GetVolumes(true, true, useHECToken, instance.Name)
-
-	var priority int32 = 2000001000
+	volumes := GetVolumes(true, true, useHECToken, instance.Name)
 
 	daemonset := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
