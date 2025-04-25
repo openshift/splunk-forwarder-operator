@@ -83,7 +83,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, err
 	}
 	if len(sfCrds.Items) > 1 {
-		return reconcile.Result{}, goerr.New("More than one CR in namespace")
+		return reconcile.Result{}, goerr.New("more than one CR in namespace")
 	}
 
 	// Our CR does not exist in this namespace, just ignore and continue
