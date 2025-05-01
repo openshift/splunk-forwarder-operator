@@ -82,7 +82,7 @@ require (
 	golang.org/x/net v0.33.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	k8s.io/api v0.27.2
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f
+	k8s.io/kube-openapi c8a335a9a2ff
 )
 
 replace (
