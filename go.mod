@@ -7,7 +7,7 @@ require (
 	github.com/onsi/gomega v1.27.7
 	github.com/openshift/operator-custom-metrics v0.5.0
 	github.com/openshift/osde2e-common v0.0.0-20230828192052-1b1a774e2df6
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.58.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.58.0
 	k8s.io/apimachinery v0.27.2
 	k8s.io/client-go v0.27.2
