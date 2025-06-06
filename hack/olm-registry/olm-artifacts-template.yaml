@@ -745,10 +745,6 @@ objects:
               index: rh_osd_malware_scan
               whiteList: \.log$
               sourceType: openshift:debug
-            - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
-              index: rh_osd_backplane_prod
-              sourceType: _json
-              whiteList: \.log$
             - path: /host/var/log/audit/audit.log
               index: rh_osd_selinux
               whiteList: \.log$
@@ -848,6 +844,10 @@ objects:
         - index: rh_osd_sshguard
           path: /host/var/log/auth.log
           sourceType: linux_audit
+          whiteList: \.log$
+        - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/mount/backplane-audit.log
+          index: rh_osd_backplane_prod
+          sourceType: _json
           whiteList: \.log$
         - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
           index: rh_osd_backplane_prod
