@@ -849,6 +849,10 @@ objects:
           index: rh_osd_backplane_prod
           sourceType: _json
           whiteList: \.log$
+        - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
+          index: rh_osd_backplane_prod
+          sourceType: _json
+          whiteList: \.log$
         - index: rh_osd_goalert_audit
           path: /host/var/log/pods/goalert_goalert-*/goalert/*.log
           sourceType: log
