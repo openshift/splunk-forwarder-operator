@@ -14,7 +14,7 @@ discover_digest_for_image() {
     skopeo inspect docker://${img} | jq -r .Digest
 }
 
-[[ $# -eq 2 ]] || usage
+[[ $# -eq 1 ]] || usage
 
 f_img=$1
 
