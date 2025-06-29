@@ -188,8 +188,8 @@ github.com/onsi/gomega v1.27.7/go.mod h1:1p8OOlwo2iUUDsHnOrjE5UKYJ+e3W8eQ3qSlRah
 github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50 h1:pg/cKeyO01QHvZNM8dvqVutf6shn+H1ZVPi83uyGil8=
 github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50/go.mod h1:F/eU6jgr6Q2VhMu1mSpMmygxAELd7+BUxs3NHZ25jV4=
 github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
-github.com/openshift/operator-custom-metrics v0.5.0 h1:iRZ6e3HvGSxw1dZgnY5emEN6fg9u/OhHfEC+u3ovhSE=
-github.com/openshift/operator-custom-metrics v0.5.0/go.mod h1:garCvCZK9l0RS0vCcz5anKsJSU60XgizYXllbMjRW5M=
+github.com/openshift/operator-custom-metrics v0.5.1 h1:1pk4YMUV+cmqfV0f2fyxY62cl7Gc76kwudJT+EdcfYM=
+github.com/openshift/operator-custom-metrics v0.5.1/go.mod h1:0dYDHi/ubKRWzsC9MmW6bRMdBgo1QSOuAh3GupTe0Sw=
 github.com/openshift/osde2e-common v0.0.0-20230828192052-1b1a774e2df6 h1:aYc2LFk/Ued/HaivX7FuUXxJ6HwVdeqS/HyfOVFnl8A=
 github.com/openshift/osde2e-common v0.0.0-20230828192052-1b1a774e2df6/go.mod h1:bkreMB6T7SoOuEceXyXCvMHF4/9augfiWsixGaQ/Yo0=
 github.com/operator-framework/operator-lib v0.11.0 h1:eYzqpiOfq9WBI4Trddisiq/X9BwCisZd3rIzmHRC9Z8=
