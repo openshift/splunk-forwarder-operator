@@ -35,7 +35,7 @@ metadata:
   name: example-splunkforwarder
 spec:
   image: dockerimageurl
-  imageDigest: sha256:389611ed5de22bb45c8c58c3c36f583ebd86bd448d3a7d46df28acc0f45dd1f3
+  imageDigest: sha256:d15e4f80964276a0b0a08d41f2b55d1fad55137074706acd8d565841c2fbb471
   splunkLicenseAccepted: true
   clusterID: optional-cluster-name
   splunkInputs:
@@ -52,11 +52,11 @@ spec:
 The `image` and `imageDigest` are for the splunk-forwarder image.
 (The CRD supports `imageTag`, but this is deprecated in favor of `imageDigest`.)
 
-To use the current version, `9.4.3-237ebbd22314-4780c1e`, specify the following:
+To use the current version, `9.4.3-237ebbd22314-81b759e`, specify the following:
 - For [splunk-forwarder](https://quay.io/repository/app-sre/splunk-forwarder?tag=8.2.5-77015bc7a462-f4d16f7):
   ```yaml
   image: quay.io/app-sre/splunk-forwarder
-  imageDigest: sha256:389611ed5de22bb45c8c58c3c36f583ebd86bd448d3a7d46df28acc0f45dd1f3
+  imageDigest: sha256:d15e4f80964276a0b0a08d41f2b55d1fad55137074706acd8d565841c2fbb471
   ```
 
 ## Upgrading Splunk Universal Forwarder
