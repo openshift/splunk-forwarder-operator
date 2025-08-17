@@ -2,7 +2,7 @@ module github.com/openshift/splunk-forwarder-operator
 
 go 1.23.9
 
-toolchain go1.24.3
+toolchain go1.25.0
 
 require (
 	github.com/onsi/ginkgo/v2 v2.9.5
