@@ -79,7 +79,7 @@ require (
 require (
 	github.com/go-logr/logr v1.2.4
 	github.com/google/go-cmp v0.6.0
-	github.com/openshift/api v3.9.1-0.20190424152011-77b8897ec79a+incompatible
+	github.com/openshift/api 3d5bf11af6e6
 	github.com/operator-framework/operator-lib v0.11.0
 	golang.org/x/net v0.33.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
@@ -88,6 +88,6 @@ require (
 )
 
 replace (
-	github.com/openshift/api => github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50
+	github.com/openshift/api => github.com/openshift/api 3d5bf11af6e6
 	sigs.k8s.io/json => sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6
 )
