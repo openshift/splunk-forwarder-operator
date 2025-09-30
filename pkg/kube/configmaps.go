@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	configv1 "github.com/openshift/api/config/v1"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,7 +12,7 @@ import (
 )
 
 // GenerateConfigMaps generates config maps based on the values in our CRD
-func GenerateConfigMaps(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName, clusterid string) []*corev1.ConfigMap {
+func GenerateConfigMaps(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName, clusterid string, proxyConfig *configv1.Proxy) []*corev1.ConfigMap {
 	ret := []*corev1.ConfigMap{}
 
 	metadataCM := &corev1.ConfigMap{
@@ -104,6 +105,31 @@ TRUNCATE = %d
 	}
 
 	ret = append(ret, localCM)
+
+	if proxyConfig != nil {
+		proxyConfigMap := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      instance.Name + "-proxy",
+				Namespace: namespacedName.Namespace,
+				Labels: map[string]string{
+					"app": namespacedName.Name,
+				},
+				Annotations: map[string]string{
+					"genVersion": strconv.FormatInt(instance.Generation, 10),
+				},
+			},
+			Data: map[string]string{
+				"server.conf": fmt.Sprintf(`
+[proxyConfig]
+http_proxy = %s
+https_proxy = %s
+no_proxy = %s
+`, proxyConfig.Spec.HTTPProxy, proxyConfig.Spec.HTTPSProxy, proxyConfig.Spec.NoProxy),
+			},
+		}
+
+		ret = append(ret, proxyConfigMap)
+	} // proxyXonfig != nil
 
 	return ret
 }

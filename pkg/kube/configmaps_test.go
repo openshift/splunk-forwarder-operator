@@ -129,7 +129,7 @@ TRUNCATE = %d
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GenerateConfigMaps(tt.args.instance, tt.args.namespacedName, tt.args.clusterid); !reflect.DeepEqual(got, tt.want) {
+			if got := GenerateConfigMaps(tt.args.instance, tt.args.namespacedName, tt.args.clusterid, nil); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GenerateConfigMaps() = %v, want %v", got, tt.want)
 			}
 		})

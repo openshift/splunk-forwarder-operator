@@ -121,7 +121,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 	}
 
 	hecSecretPresent := secret.Name == config.SplunkHECTokenSecretName
-	newDaemonSet := kube.GenerateDaemonSet(sfCrd, hecSecretPresent)
+	newDaemonSet := kube.GenerateDaemonSet(sfCrd, hecSecretPresent, nil)
 	if err := controllerutil.SetControllerReference(sfCrd, newDaemonSet, r.Scheme); err != nil {
 		return reconcile.Result{}, err
 	}
