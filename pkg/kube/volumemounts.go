@@ -39,7 +39,7 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool, pro
 		volumeMounts = append(volumeMounts, splunkConfigMounts...)
 	}
 
-	if proxyConfig != nil {
+	if proxyConfig != nil && (proxyConfig.Spec.HTTPProxy != "" || proxyConfig.Spec.HTTPSProxy != "") {
 		proxyConfigMount := corev1.VolumeMount{
 			Name:      instance.Name + "-proxy",
 			MountPath: "/opt/splunkforwarder/etc/system/local", // !!MAY BREAK!!

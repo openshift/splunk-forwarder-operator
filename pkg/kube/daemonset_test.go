@@ -159,6 +159,34 @@ func TestGenerateDaemonSet(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:     "Test Daemonset with image digest and empty proxy",
+			instance: splunkForwarderInstance(true),
+			proxyConfig: &configv1.Proxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.ProxySpec{
+					HTTPProxy:  "",
+					HTTPSProxy: "",
+					NoProxy:    "",
+				},
+			},
+		},
+		{
+			name:     "Test Daemonset with tags and empty proxy",
+			instance: splunkForwarderInstance(false),
+			proxyConfig: &configv1.Proxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.ProxySpec{
+					HTTPProxy:  "",
+					HTTPSProxy: "",
+					NoProxy:    "",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 
