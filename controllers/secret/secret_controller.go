@@ -5,6 +5,7 @@ import (
 	goerr "errors"
 	"reflect"
 
+	configv1 "github.com/openshift/api/config/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -120,8 +121,14 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 		return reconcile.Result{}, nil
 	}
 
+	proxyConfig := &configv1.Proxy{}
+	err = r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, proxyConfig)
+	if err != nil {
+		proxyConfig = nil
+	}
+
 	hecSecretPresent := secret.Name == config.SplunkHECTokenSecretName
-	newDaemonSet := kube.GenerateDaemonSet(sfCrd, hecSecretPresent, nil)
+	newDaemonSet := kube.GenerateDaemonSet(sfCrd, hecSecretPresent, proxyConfig)
 	if err := controllerutil.SetControllerReference(sfCrd, newDaemonSet, r.Scheme); err != nil {
 		return reconcile.Result{}, err
 	}
