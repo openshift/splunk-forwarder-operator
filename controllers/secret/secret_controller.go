@@ -123,8 +123,10 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 
 	proxyConfig := &configv1.Proxy{}
 	err = r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, proxyConfig)
-	if err != nil || (proxyConfig.Spec.HTTPProxy == "" && proxyConfig.Spec.HTTPSProxy == "") {
+	if !errors.IsNotFound(err) || (proxyConfig.Spec.HTTPProxy == "" && proxyConfig.Spec.HTTPSProxy == "") {
 		proxyConfig = nil
+	} else if err != nil {
+		return reconcile.Result{}, err
 	}
 
 	hecSecretPresent := secret.Name == config.SplunkHECTokenSecretName

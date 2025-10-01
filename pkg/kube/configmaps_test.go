@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	configv1 "github.com/openshift/api/config/v1"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -131,6 +132,145 @@ TRUNCATE = %d
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GenerateConfigMaps(tt.args.instance, tt.args.namespacedName, tt.args.clusterid, nil); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GenerateConfigMaps() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateProxyConfigMap(t *testing.T) {
+	var testInstance = &sfv1alpha1.SplunkForwarder{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       instanceName,
+			Namespace:  instanceNamespace,
+			Generation: 10,
+		},
+		Spec: sfv1alpha1.SplunkForwarderSpec{},
+	}
+	type args struct {
+		instance       *sfv1alpha1.SplunkForwarder
+		namespacedName types.NamespacedName
+		proxyConfig    *configv1.Proxy
+	}
+	tests := []struct {
+		name string
+		args args
+		want *corev1.ConfigMap
+	}{
+		{
+			name: "Test Invalid proxy",
+			args: args{
+				instance:       testInstance,
+				namespacedName: types.NamespacedName{Namespace: instanceNamespace, Name: instanceName},
+				proxyConfig: &configv1.Proxy{
+					Spec: configv1.ProxySpec{
+						HTTPProxy:  "",
+						HTTPSProxy: "",
+						NoProxy:    "127.0.0.1, localhost",
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "Test Http proxy",
+			args: args{
+				instance:       testInstance,
+				namespacedName: types.NamespacedName{Namespace: instanceNamespace, Name: instanceName},
+				proxyConfig: &configv1.Proxy{
+					Spec: configv1.ProxySpec{
+						HTTPProxy: "example.com",
+						NoProxy:   "127.0.0.1, localhost",
+					},
+				},
+			},
+			want: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      instanceName + "-proxy",
+					Namespace: instanceNamespace,
+					Labels: map[string]string{
+						"app": instanceName,
+					},
+					Annotations: map[string]string{
+						"genVersion": "10",
+					},
+				},
+				Data: map[string]string{
+					"server.conf": `[proxyConfig]
+http_proxy = example.com
+no_proxy = 127.0.0.1, localhost
+`,
+				},
+			},
+		},
+		{
+			name: "Test Https proxy",
+			args: args{
+				instance:       testInstance,
+				namespacedName: types.NamespacedName{Namespace: instanceNamespace, Name: instanceName},
+				proxyConfig: &configv1.Proxy{
+					Spec: configv1.ProxySpec{
+						HTTPSProxy: "https://example.com",
+						NoProxy:    "127.0.0.1, localhost",
+					},
+				},
+			},
+			want: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      instanceName + "-proxy",
+					Namespace: instanceNamespace,
+					Labels: map[string]string{
+						"app": instanceName,
+					},
+					Annotations: map[string]string{
+						"genVersion": "10",
+					},
+				},
+				Data: map[string]string{
+					"server.conf": `[proxyConfig]
+https_proxy = https://example.com
+no_proxy = 127.0.0.1, localhost
+`,
+				},
+			},
+		},
+		{
+			name: "Test Http and Https proxy",
+			args: args{
+				instance:       testInstance,
+				namespacedName: types.NamespacedName{Namespace: instanceNamespace, Name: instanceName},
+				proxyConfig: &configv1.Proxy{
+					Spec: configv1.ProxySpec{
+						HTTPProxy:  "http://example.com",
+						HTTPSProxy: "https://example.com",
+						NoProxy:    "127.0.0.1, localhost",
+					},
+				},
+			},
+			want: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      instanceName + "-proxy",
+					Namespace: instanceNamespace,
+					Labels: map[string]string{
+						"app": instanceName,
+					},
+					Annotations: map[string]string{
+						"genVersion": "10",
+					},
+				},
+				Data: map[string]string{
+					"server.conf": `[proxyConfig]
+http_proxy = http://example.com
+https_proxy = https://example.com
+no_proxy = 127.0.0.1, localhost
+`,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GenerateProxyConfigMap(tt.args.instance, tt.args.namespacedName, tt.args.proxyConfig); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GenerateInternalConfigMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}

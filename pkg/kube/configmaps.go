@@ -106,30 +106,46 @@ TRUNCATE = %d
 
 	ret = append(ret, localCM)
 
-	if proxyConfig != nil {
-		proxyConfigMap := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      instance.Name + "-proxy",
-				Namespace: namespacedName.Namespace,
-				Labels: map[string]string{
-					"app": namespacedName.Name,
-				},
-				Annotations: map[string]string{
-					"genVersion": strconv.FormatInt(instance.Generation, 10),
-				},
-			},
-			Data: map[string]string{
-				"server.conf": fmt.Sprintf(`
-[proxyConfig]
-http_proxy = %s
-https_proxy = %s
-no_proxy = %s
-`, proxyConfig.Spec.HTTPProxy, proxyConfig.Spec.HTTPSProxy, proxyConfig.Spec.NoProxy),
-			},
-		}
+	proxyCM := GenerateProxyConfigMap(instance, namespacedName, proxyConfig)
+	if proxyCM != nil {
+		ret = append(ret, proxyCM)
+	}
 
-		ret = append(ret, proxyConfigMap)
-	} // proxyXonfig != nil
+	return ret
+}
+
+// GenerateProxyConfigMap generates a configmap that defines the cluster wide proxy to use for splunk forwarder
+func GenerateProxyConfigMap(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName, proxyConfig *configv1.Proxy) *corev1.ConfigMap {
+	if proxyConfig == nil || (proxyConfig.Spec.HTTPProxy == "" && proxyConfig.Spec.HTTPSProxy == "") {
+		return nil
+	}
+
+	serverconf := "[proxyConfig]\n"
+	if proxyConfig.Spec.HTTPProxy != "" {
+		serverconf += "http_proxy = " + proxyConfig.Spec.HTTPProxy + "\n"
+	}
+	if proxyConfig.Spec.HTTPSProxy != "" {
+		serverconf += "https_proxy = " + proxyConfig.Spec.HTTPSProxy + "\n"
+	}
+	if proxyConfig.Spec.NoProxy != "" {
+		serverconf += "no_proxy = " + proxyConfig.Spec.NoProxy + "\n"
+	}
+
+	ret := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + "-proxy",
+			Namespace: namespacedName.Namespace,
+			Labels: map[string]string{
+				"app": namespacedName.Name,
+			},
+			Annotations: map[string]string{
+				"genVersion": strconv.FormatInt(instance.Generation, 10),
+			},
+		},
+		Data: map[string]string{
+			"server.conf": serverconf,
+		},
+	}
 
 	return ret
 }
