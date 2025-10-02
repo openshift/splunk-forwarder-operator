@@ -3,6 +3,7 @@ package kube
 import (
 	"testing"
 
+	configv1 "github.com/openshift/api/config/v1"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -12,7 +13,7 @@ import (
 // daemonSetInstance produces (a pointer to) an expected DaemonSet produced by GenerateDaemonSet.
 // Parameters;
 // - sfInstance: SplunkForwarder instance under test.
-func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
+func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder, proxyConfig *configv1.Proxy) *appsv1.DaemonSet {
 	var (
 		expectedRunAsUID                      int64 = 0
 		expectedTerminationGracePeriodSeconds int64 = 10
@@ -97,7 +98,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 								},
 							},
 
-							VolumeMounts: GetVolumeMounts(instance, false),
+							VolumeMounts: GetVolumeMounts(instance, false, proxyConfig),
 
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &expectedIsPrivContainer,
@@ -117,6 +118,7 @@ func TestGenerateDaemonSet(t *testing.T) {
 		name        string
 		instance    *sfv1alpha1.SplunkForwarder
 		useHECToken bool
+		proxyConfig *configv1.Proxy
 	}{
 		// TODO: The following configurations should be invalid and produce a predictable error:
 		// - splunkForwarderInstance(false, false)
@@ -129,11 +131,68 @@ func TestGenerateDaemonSet(t *testing.T) {
 			name:     "Test Daemonset with tags",
 			instance: splunkForwarderInstance(false),
 		},
+		{
+			name:     "Test Daemonset with image digest and proxy",
+			instance: splunkForwarderInstance(true),
+			proxyConfig: &configv1.Proxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.ProxySpec{
+					HTTPProxy:  "",
+					HTTPSProxy: "example.com",
+					NoProxy:    "127.0.0.1",
+				},
+			},
+		},
+		{
+			name:     "Test Daemonset with tags and proxy",
+			instance: splunkForwarderInstance(false),
+			proxyConfig: &configv1.Proxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.ProxySpec{
+					HTTPProxy:  "",
+					HTTPSProxy: "example.com",
+					NoProxy:    "127.0.0.1",
+				},
+			},
+		},
+		{
+			name:     "Test Daemonset with image digest and empty proxy",
+			instance: splunkForwarderInstance(true),
+			proxyConfig: &configv1.Proxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.ProxySpec{
+					HTTPProxy:  "",
+					HTTPSProxy: "",
+					NoProxy:    "",
+				},
+			},
+		},
+		{
+			name:     "Test Daemonset with tags and empty proxy",
+			instance: splunkForwarderInstance(false),
+			proxyConfig: &configv1.Proxy{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.ProxySpec{
+					HTTPProxy:  "",
+					HTTPSProxy: "",
+					NoProxy:    "",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
-			expected := expectedDaemonSet(tt.instance)
-			actual := GenerateDaemonSet(tt.instance, tt.useHECToken)
+			expected := expectedDaemonSet(tt.instance, tt.proxyConfig)
+			actual := GenerateDaemonSet(tt.instance, tt.useHECToken, tt.proxyConfig)
 			DeepEqualWithDiff(t, expected, actual)
 		})
 	}
