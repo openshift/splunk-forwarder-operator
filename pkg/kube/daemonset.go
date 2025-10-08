@@ -3,7 +3,6 @@ package kube
 import (
 	"strconv"
 
-	configv1 "github.com/openshift/api/config/v1"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -24,7 +23,7 @@ func forwarderPullSpec(instance *sfv1alpha1.SplunkForwarder) string {
 }
 
 // GenerateDaemonSet returns a daemonset that can be created with the oc client
-func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool, proxyConfig *configv1.Proxy) *appsv1.DaemonSet {
+func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *appsv1.DaemonSet {
 
 	var (
 		runAsUID                      int64 = 0
@@ -109,7 +108,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool, p
 
 							Env: envVars,
 
-							VolumeMounts: GetVolumeMounts(instance, useHECToken, proxyConfig),
+							VolumeMounts: GetVolumeMounts(instance, useHECToken),
 
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &isPrivContainer,
