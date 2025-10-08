@@ -1,7 +1,6 @@
 package kube
 
 import (
-	configv1 "github.com/openshift/api/config/v1"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
 	corev1 "k8s.io/api/core/v1"
@@ -9,7 +8,7 @@ import (
 
 // GetVolumeMounts returns []corev1.VolumeMount that tells where each secret, configmap, and host mount
 // gets mounted in the container
-func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool, proxyConfig *configv1.Proxy) []corev1.VolumeMount {
+func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) []corev1.VolumeMount {
 	mountPropagationMode := corev1.MountPropagationHostToContainer
 
 	volumeMounts := []corev1.VolumeMount{}
@@ -38,15 +37,6 @@ func GetVolumeMounts(instance *sfv1alpha1.SplunkForwarder, useHECToken bool, pro
 		}
 		volumeMounts = append(volumeMounts, splunkConfigMounts...)
 	}
-
-	if proxyConfig != nil && (proxyConfig.Spec.HTTPProxy != "" || proxyConfig.Spec.HTTPSProxy != "") {
-		proxyConfigMount := corev1.VolumeMount{
-			Name:      instance.Name + "-proxy",
-			MountPath: "/opt/splunkforwarder/etc/system/local", // !!MAY BREAK!!
-		}
-		volumeMounts = append(volumeMounts, proxyConfigMount)
-	}
-
 	defaultMounts := []corev1.VolumeMount{
 		// Inputs Mount
 		{
