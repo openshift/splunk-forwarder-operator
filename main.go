@@ -97,7 +97,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	// Become the leader before proceeding
 	// This doesn't work locally, so only perform it when running on-cluster
