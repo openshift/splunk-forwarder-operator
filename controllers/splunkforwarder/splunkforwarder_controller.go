@@ -104,7 +104,7 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 	// Get cluster proxy config here
 	proxyConfig := &configv1.Proxy{}
 	err = r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, proxyConfig)
-	if !errors.IsNotFound(err) || (proxyConfig.Spec.HTTPProxy == "" && proxyConfig.Spec.HTTPSProxy == "") {
+	if errors.IsNotFound(err) || (proxyConfig.Spec.HTTPProxy == "" && proxyConfig.Spec.HTTPSProxy == "") {
 		proxyConfig = nil
 	} else if err != nil {
 		return reconcile.Result{}, err
