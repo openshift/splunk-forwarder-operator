@@ -343,7 +343,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+        imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
         splunkLicenseAccepted: true
         filters:
         - name: ignore_serviceaccount_users
@@ -431,7 +431,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+        imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
         splunkLicenseAccepted: true
         splunkInputs:
         - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
@@ -488,7 +488,7 @@ objects:
           namespace: openshift-security
         spec:
           image: quay.io/app-sre/splunk-forwarder
-          imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+          imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
           splunkLicenseAccepted: true
           splunkInputs:
             - path: /host/var/log/hypershift-osd-audit/*/audit.log
@@ -561,7 +561,7 @@ objects:
           namespace: openshift-security
         spec:
           image: quay.io/app-sre/splunk-forwarder
-          imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+          imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
           splunkLicenseAccepted: true
           filters:
             - name: ignore_serviceaccount_users
@@ -648,7 +648,7 @@ objects:
           namespace: openshift-security
         spec:
           image: quay.io/app-sre/splunk-forwarder
-          imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+          imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
           splunkLicenseAccepted: true
           splunkInputs:
             - path: /host/var/log/hypershift-osd-audit/*/audit.log
@@ -713,7 +713,7 @@ objects:
           namespace: openshift-security
         spec:
           image: quay.io/app-sre/splunk-forwarder
-          imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+          imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
           splunkLicenseAccepted: true
           filters:
             - name: ignore_serviceaccount_users
@@ -801,7 +801,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+        imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
         splunkLicenseAccepted: true
         filters:
         - name: ignore_serviceaccount_users
@@ -904,7 +904,7 @@ objects:
         namespace: openshift-security
       spec:
         image: quay.io/app-sre/splunk-forwarder
-        imageDigest: sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+        imageDigest: sha256:fe950b580166a730ac53f7c81dd93eebcb163a2cc842590aeceb40a67ec12522
         splunkLicenseAccepted: true
         splunkInputs:
         - index: rh_osd_cluster_audit_stage
