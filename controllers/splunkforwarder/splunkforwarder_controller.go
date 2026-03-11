@@ -192,7 +192,6 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-
 	return ctrl.Result{}, nil
 }
 
@@ -200,5 +199,8 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 func (r *SplunkForwarderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&sfv1alpha1.SplunkForwarder{}).
+		Owns(&corev1.ConfigMap{}).
+		Owns(&appsv1.DaemonSet{}).
+		Owns(&corev1.Service{}).
 		Complete(r)
 }
