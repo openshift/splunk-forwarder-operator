@@ -86,3 +86,5 @@ tags
 saas-splunk-forwarder-operator-bundle/
 ### IDE ###
 .idea/
+# Compiled operator binary
+splunk-forwarder-operator
