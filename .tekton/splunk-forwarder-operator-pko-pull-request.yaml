@@ -13,7 +13,7 @@ metadata:
     appstudio.openshift.io/application: splunk-forwarder-operator
     appstudio.openshift.io/component: splunk-forwarder-operator-pko
     pipelines.appstudio.openshift.io/type: build
-  name: splunk-forwarder-operator-pko-on-pull_request
+  name: splunk-forwarder-operator-pko-on-pull-request
   namespace: splunk-forwarder-operator-tenant
 spec:
   params:
