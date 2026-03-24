@@ -1,0 +1,13 @@
+FROM scratch
+
+LABEL com.redhat.component="openshift-splunk-forwarder-operator" \
+      io.k8s.description="splunk-forwarder-operator Operator for OpenShift Dedicated" \
+      description="splunk-forwarder-operator Operator for OpenShift Dedicated" \
+      distribution-scope="public" \
+      name="openshift/splunk-forwarder-operator" \
+      url="https://github.com/openshift/splunk-forwarder-operator" \
+      vendor="Red Hat, Inc." \
+      release="v0.0.0" \
+      version="v0.0.0"
+
+COPY * /package/

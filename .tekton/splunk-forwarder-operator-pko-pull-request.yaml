@@ -5,16 +5,15 @@ metadata:
     build.appstudio.openshift.io/repo: https://github.com/openshift/splunk-forwarder-operator?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
-    pipelinesascode.tekton.dev/cancel-in-progress: 'false'
+    pipelinesascode.tekton.dev/cancel-in-progress: 'true'
     pipelinesascode.tekton.dev/max-keep-runs: '3'
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch
       == "master"
-  creationTimestamp: null
   labels:
     appstudio.openshift.io/application: splunk-forwarder-operator
-    appstudio.openshift.io/component: splunk-forwarder-operator-e2e
+    appstudio.openshift.io/component: splunk-forwarder-operator-pko
     pipelines.appstudio.openshift.io/type: build
-  name: splunk-forwarder-operator-e2e-on-push
+  name: splunk-forwarder-operator-pko-on-pull-request
   namespace: splunk-forwarder-operator-tenant
 spec:
   params:
@@ -23,13 +22,17 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/splunk-forwarder-operator-tenant/openshift/splunk-forwarder-operator-e2e:{{revision}}
+    value: quay.io/redhat-user-workloads/splunk-forwarder-operator-tenant/openshift/splunk-forwarder-operator-pko:on-pr-{{revision}}
   - name: dockerfile
-    value: test/e2e/Dockerfile
+    value: build/Dockerfile.pko
   - name: path-context
-    value: .
+    value: deploy_pko
+  - name: skip-preflight-cert-check
+    value: true
+  - name: image-expires-after
+    value: 3d
   taskRunTemplate:
-    serviceAccountName: build-pipeline-splunk-forwarder-operator-e2e
+    serviceAccountName: build-pipeline-splunk-forwarder-operator-pko
   workspaces:
   - name: git-auth
     secret:
