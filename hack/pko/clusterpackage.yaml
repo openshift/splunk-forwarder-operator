@@ -3,6 +3,8 @@ kind: Template
 parameters:
   - name: CHANNEL
     required: false
+  - name: OPERATOR_IMAGE
+    required: true
   - name: PKO_IMAGE
     required: true
   - name: IMAGE_TAG
@@ -14,23 +16,49 @@ parameters:
   - name: REPO_NAME
     value: splunk-forwarder-operator
     required: true
+  - name: OPERATOR_NAME
+    value: splunk-forwarder-operator
+    required: true
+  - name: ALERTS_SKIP_LEGALENTITY_IDS
+    value: '["none"]'
+  - name: EVENT_FORWARD_TARGET_CLUSTERS
+    value: '["none"]'
 metadata:
   name: selectorsyncset-template
 objects:
+  # SSS: Operator install — ClusterPackage
   - apiVersion: hive.openshift.io/v1
     kind: SelectorSyncSet
     metadata:
-      labels:
-        managed.openshift.io/gitHash: ${IMAGE_TAG}
-        managed.openshift.io/gitRepoName: ${REPO_NAME}
-        managed.openshift.io/osd: "true"
-      name: splunk-forwarder-operator-stage
+      annotations:
+        component-display-name: Splunk Forwarder Operator
+        component-name: ${OPERATOR_NAME}
+        telemeter-query: csv_succeeded{_id="$CLUSTER_ID",name=~"${OPERATOR_NAME}.*",exported_namespace=~"openshift-.*",namespace="openshift-operator-lifecycle-manager"} == 1
+      name: splunk-forwarder-operator-sss-stage
+      namespace: splunk-forwarder-operator
     spec:
       clusterDeploymentSelector:
         matchLabels:
           api.openshift.com/managed: "true"
       resourceApplyMode: Sync
       resources:
+        - apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: ${NAMESPACE}
+            annotations:
+              openshift.io/node-selector: ''
+        - apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: openshift-security
+            annotations:
+              openshift.io/node-selector: ''
+            labels:
+              pod-security.kubernetes.io/enforce: 'privileged'
+              pod-security.kubernetes.io/audit: 'privileged'
+              pod-security.kubernetes.io/warn: 'privileged'
+              openshift.io/cluster-monitoring: "true"
         - apiVersion: package-operator.run/v1alpha1
           kind: ClusterPackage
           metadata:
@@ -39,3 +67,2003 @@ objects:
               package-operator.run/collision-protection: IfNoController
           spec:
             image: ${PKO_IMAGE}:${IMAGE_TAG}
+            config:
+              image: ${OPERATOR_IMAGE}:${IMAGE_TAG}
+              namespace: ${NAMESPACE}
+        - apiVersion: monitoring.coreos.com/v1
+          kind: PrometheusRule
+          metadata:
+            name: splunk-forwarder-component-unhealthy
+            namespace: openshift-security
+          spec:
+            groups:
+              - name: splunk-forwarder
+                rules:
+                  - alert: SplunkForwarderComponentUnhealthy
+                    annotations:
+                      message: One or more Splunk Forwarder Components are reporting unhealthy. This issue can impact log forwarding to Splunk, leading to log data loss.
+                    expr: splunk_forwarder_component_unhealthy > 0
+                    for: 15m
+                    labels:
+                      severity: warning
+      secretReferences:
+      - source:
+          name: splunk-auth
+          namespace: splunk-forwarder-operator
+        target:
+          name: splunk-auth
+          namespace: openshift-security
+
+  # SSS: SplunkForwarder CR — production (non-management, non-fedramp, non-china)
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: NotIn
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "production"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/legal-entity-id
+            operator: NotIn
+            values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+          - key: hive.openshift.io/cluster-region
+            operator: NotIn
+            values:
+              - "cn-north-1"
+              - "cn-northwest-1"
+          - key: api.openshift.com/fedramp
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+          splunkLicenseAccepted: true
+          filters:
+          - name: ignore_serviceaccount_users
+            filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+          - name: ignore_system_node_users
+            filter: '"user":{"username":"system:node:[^"]+"'
+          - name: ignore_chatty_system_users
+            filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+          - name: ignore_well_known_oauth_endpoint
+            filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+          - name: ignore_livez_health_check
+            filter: '"requestURI":"/livez"'
+          splunkInputs:
+          - path: /host/var/log/osd-audit/audit.log
+            index: openshift_managed_audit
+            whiteList: \.log$
+            sourceType: _json
+          - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+            index: openshift_managed_debug_node
+            whiteList: \.log$
+            sourceType: openshift:debug
+          - path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+            index: openshift_managed_pod_creation
+            whiteList: \.log$
+            sourceType: openshift:debug
+          - path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+            index: openshift_managed_malware_scan
+            whiteList: \.log$
+            sourceType: openshift:debug
+          - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
+            index: openshift_managed_backplane_prod
+            sourceType: _json
+            whiteList: \.log$
+          - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/mount/backplane-audit.log
+            index: openshift_managed_backplane_prod
+            sourceType: _json
+            whiteList: \.log$
+
+  # SSS: SplunkForwarder CR — staging (non-management, non-fedramp, non-china)
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-stg-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: NotIn
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "staging"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/legal-entity-id
+            operator: NotIn
+            values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+          - key: hive.openshift.io/cluster-region
+            operator: NotIn
+            values:
+              - "cn-north-1"
+              - "cn-northwest-1"
+          - key: api.openshift.com/fedramp
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+          splunkLicenseAccepted: true
+          splunkInputs:
+          - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+            index: openshift_managed_debug_node
+            whiteList: \.log$
+            sourceType: openshift:debug
+          - path: /host/var/log/osd-audit/audit.log
+            index: openshift_managed_audit_stage
+            whiteList: \.log$
+            sourceType: _json
+
+  # SSS: SplunkForwarder CR — HyperShift management-cluster staging
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-hs-stg-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: In
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "staging"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/legal-entity-id
+            operator: NotIn
+            values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+          - key: hive.openshift.io/cluster-region
+            operator: NotIn
+            values:
+              - "cn-north-1"
+              - "cn-northwest-1"
+          - key: api.openshift.com/fedramp
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+        - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+          kind: SplunkForwarder
+          metadata:
+            name: splunkforwarder
+            namespace: openshift-security
+          spec:
+            image: quay.io/app-sre/splunk-forwarder
+            imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+            splunkLicenseAccepted: true
+            splunkInputs:
+              - path: /host/var/log/hypershift-osd-audit/*/audit.log
+                index: openshift_managed_hypershift_audit_stage
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+                index: openshift_managed_debug_node
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/log/osd-audit/audit.log
+                index: openshift_managed_audit_stage
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/audit/audit.log
+                index: openshift_managed_hypershift_selinux_stage
+                whiteList: \.log$
+                sourceType: linux_audit
+              - path: /host/var/log/ovn/acl-audit-log.log
+                index: openshift_managed_audit_stage
+                sourceType: linux_audit
+                whiteList: \.log$
+              - index: openshift_managed_hypershift_suricata_stage
+                path: /host/var/log/eve-*.json
+                sourceType: _json
+                whiteList: \.json$
+
+  # SSS: SplunkForwarder CR — HyperShift management-cluster production
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-hs-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: In
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "production"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/legal-entity-id
+            operator: NotIn
+            values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+          - key: hive.openshift.io/cluster-region
+            operator: NotIn
+            values:
+              - "cn-north-1"
+              - "cn-northwest-1"
+          - key: api.openshift.com/fedramp
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+        - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+          kind: SplunkForwarder
+          metadata:
+            name: splunkforwarder
+            namespace: openshift-security
+          spec:
+            image: quay.io/app-sre/splunk-forwarder
+            imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+            splunkLicenseAccepted: true
+            filters:
+              - name: ignore_serviceaccount_users
+                filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+              - name: ignore_system_node_users
+                filter: '"user":{"username":"system:node:[^"]+"'
+              - name: ignore_chatty_system_users
+                filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+              - name: ignore_well_known_oauth_endpoint
+                filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+              - name: ignore_livez_health_check
+                filter: '"requestURI":"/livez"'
+            splunkInputs:
+              - path: /host/var/log/hypershift-osd-audit/*/audit.log
+                index: openshift_managed_hypershift_audit
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/osd-audit/audit.log
+                index: openshift_managed_audit
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+                index: openshift_managed_debug_node
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+                index: openshift_managed_pod_creation
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+                index: openshift_managed_malware_scan
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
+                index: openshift_managed_backplane_prod
+                sourceType: _json
+                whiteList: \.log$
+              - path: /host/var/log/audit/audit.log
+                index: openshift_managed_hypershift_selinux
+                whiteList: \.log$
+                sourceType: linux_audit
+              - path: /host/var/log/ovn/acl-audit-log.log
+                index: openshift_managed_audit
+                sourceType: linux_audit
+                whiteList: \.log$
+              - index: openshift_managed_hypershift_suricata
+                path: /host/var/log/eve-*.json
+                sourceType: _json
+                whiteList: \.json$
+
+  # SSS: SplunkForwarder CR — FedRAMP HyperShift management-cluster staging
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-fr-hs-stg-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: In
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values: ["stage", "staging"]
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/fedramp
+            operator: In
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+        - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+          kind: SplunkForwarder
+          metadata:
+            name: splunkforwarder
+            namespace: openshift-security
+          spec:
+            image: quay.io/app-sre/splunk-forwarder
+            imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+            splunkLicenseAccepted: true
+            splunkInputs:
+              - path: /host/var/log/hypershift-osd-audit/*/audit.log
+                index: rh_osd_hypershift_audit_stage
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+                index: rh_osd_debug_node_stage
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/log/osd-audit/audit.log
+                index: rh_osd_cluster_audit_stage
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/audit/audit.log
+                index: rh_osd_selinux_stage
+                whiteList: \.log$
+                sourceType: linux_audit
+              - path: /host/var/log/ovn/acl-audit-log.log
+                index: rh_osd_cluster_audit_stage
+                sourceType: linux_audit
+                whiteList: \.log$
+              - index: rh_osd_suricata_stage
+                path: /host/var/log/eve-*.json
+                sourceType: _json
+                whiteList: \.json$
+
+  # SSS: SplunkForwarder CR — FedRAMP HyperShift management-cluster production
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-fr-hs-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: In
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "production"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/fedramp
+            operator: In
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+        - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+          kind: SplunkForwarder
+          metadata:
+            name: splunkforwarder
+            namespace: openshift-security
+          spec:
+            image: quay.io/app-sre/splunk-forwarder
+            imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+            splunkLicenseAccepted: true
+            filters:
+              - name: ignore_serviceaccount_users
+                filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+              - name: ignore_system_node_users
+                filter: '"user":{"username":"system:node:[^"]+"'
+              - name: ignore_chatty_system_users
+                filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+              - name: ignore_well_known_oauth_endpoint
+                filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+              - name: ignore_livez_health_check
+                filter: '"requestURI":"/livez"'
+            splunkInputs:
+              - path: /host/var/log/hypershift-osd-audit/*/audit.log
+                index: rh_osd_hypershift_audit
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/osd-audit/audit.log
+                index: rh_osd_cluster_audit
+                whiteList: \.log$
+                sourceType: _json
+              - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+                index: rh_osd_debug_node_stage
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+                index: rh_osd_pod_creation
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+                index: rh_osd_malware_scan
+                whiteList: \.log$
+                sourceType: openshift:debug
+              - path: /host/var/log/audit/audit.log
+                index: rh_osd_selinux
+                whiteList: \.log$
+                sourceType: linux_audit
+              - path: /host/var/log/ovn/acl-audit-log.log
+                index: rh_osd_cluster_audit
+                sourceType: linux_audit
+                whiteList: \.log$
+              - index: rh_osd_suricata
+                path: /host/var/log/eve-*.json
+                sourceType: _json
+                whiteList: \.json$
+
+  # SSS: SplunkForwarder CR — FedRAMP non-HyperShift production
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-fr-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: NotIn
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/fedramp
+            operator: In
+            values:
+              - "true"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "production"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+          splunkLicenseAccepted: true
+          filters:
+          - name: ignore_serviceaccount_users
+            filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+          - name: ignore_system_node_users
+            filter: '"user":{"username":"system:node:[^"]+"'
+          - name: ignore_chatty_system_users
+            filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+          - name: ignore_well_known_oauth_endpoint
+            filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+          - name: ignore_livez_health_check
+            filter: '"requestURI":"/livez"'
+          splunkInputs:
+          - index: rh_osd_cluster_audit
+            path: /host/var/log/osd-audit/audit.log
+            sourceType: _json
+            whiteList: \.log$
+          - index: rh_osd_pod_creation
+            path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+            sourceType: openshift:debug
+            whiteList: \.log$
+          - index: rh_osd_malware_scan
+            path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+            sourceType: openshift:debug
+            whiteList: \.log$
+          - index: rh_osd_debug_node
+            path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
+            sourceType: openshift:debug
+            whiteList: \.log$
+          - index: rh_osd_selinux
+            path: /host/var/log/audit/audit.log
+            sourceType: linux_audit
+            whiteList: \.log$
+          - index: rh_osd_suricata
+            path: /host/var/log/eve-*.json
+            sourceType: _json
+            whiteList: \.json$
+          - index: rh_osd_fail2ban
+            path: /host/var/log/fail2ban.log
+            sourceType: linux_audit
+            whiteList: \.log$
+          - index: rh_osd_sshguard
+            path: /host/var/log/auth.log
+            sourceType: linux_audit
+            whiteList: \.log$
+          - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/mount/backplane-audit.log
+            index: rh_osd_backplane_prod
+            sourceType: _json
+            whiteList: \.log$
+          - path: /host/var/lib/kubelet/pods/*/volumes/kubernetes.io~*/pvc-*/backplane-audit.log
+            index: rh_osd_backplane_prod
+            sourceType: _json
+            whiteList: \.log$
+          - index: rh_osd_goalert_audit
+            path: /host/var/log/pods/goalert_goalert-*/goalert/*.log
+            sourceType: log
+            whiteList: \.log$
+          - index: rh_osd_keycloak_prod
+            path: /host/var/log/pods/keycloak_keycloak-*/keycloak/*.log
+            sourceType: log
+            whiteList: \.log$
+
+  # SSS: SplunkForwarder CR — FedRAMP non-HyperShift staging
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-cr-fr-stg-sss-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: NotIn
+            values:
+              - "management-cluster"
+          - key: api.openshift.com/fedramp
+            operator: In
+            values:
+              - "true"
+          - key: api.openshift.com/environment
+            operator: In
+            values: ["stage", "staging"]
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      resources:
+      - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
+        kind: SplunkForwarder
+        metadata:
+          name: splunkforwarder
+          namespace: openshift-security
+        spec:
+          image: quay.io/app-sre/splunk-forwarder
+          imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
+          splunkLicenseAccepted: true
+          splunkInputs:
+          - index: rh_osd_cluster_audit_stage
+            path: /host/var/log/osd-audit/audit.log
+            sourceType: _json
+            whiteList: \.log$
+          - index: rh_osd_pod_creation_stage
+            path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+            sourceType: openshift:debug
+            whiteList: \.log$
+          - index: rh_osd_malware_scan_stage
+            path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+            sourceType: openshift:debug
+            whiteList: \.log$
+          - index: rh_osd_debug_node_stage
+            path: /host/var/log/pods/default_ip-*-debug_*/container-*/*.log
+            sourceType: openshift:debug
+            whiteList: \.log$
+          - index: rh_osd_selinux_stage
+            path: /host/var/log/audit/audit.log
+            sourceType: linux_audit
+            whiteList: \.log$
+          - index: rh_osd_suricata_stage
+            path: /host/var/log/eve-*.json
+            sourceType: _json
+            whiteList: \.json$
+          - index: rh_osd_fail2ban_stage
+            path: /host/var/log/fail2ban.log
+            sourceType: linux_audit
+            whiteList: \.log$
+          - index: rh_osd_sshguard_stage
+            path: /host/var/log/auth.log
+            sourceType: linux_audit
+            whiteList: \.log$
+          - index: rh_osd_keycloak_stage
+            path: /host/var/log/pods/keycloak_keycloak-*/keycloak/*.log
+            sourceType: log
+            whiteList: \.log$
+
+  # SSS: Audit profile rules patch (OCP 4.9/4.10/4.11)
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-audit-profile-rules-stage
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: hive.openshift.io/version-major-minor
+            operator: In
+            values:
+              - "4.9"
+              - "4.10"
+              - "4.11"
+      patches:
+      - apiVersion: config.openshift.io/v1
+        applyMode: AlwaysApply
+        kind: APIServer
+        name: cluster
+        patch: '{"spec":{"audit":{"customRules":[{"group":"system:serviceaccounts:openshift-ingress","profile":"Default"}]}}}'
+        patchType: merge
+
+  # SSS: Audit policy — patch + DaemonSet, Services, ServiceMonitors, Roles
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-audit-policy-stage
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      patches:
+      - apiVersion: config.openshift.io/v1
+        applyMode: AlwaysApply
+        kind: APIServer
+        name: cluster
+        patch: '{"spec":{"audit":{"profile":"WriteRequestBodies"}}}'
+        patchType: merge
+      resources:
+      - apiVersion: apps/v1
+        kind: DaemonSet
+        metadata: &id002
+          labels: &id001
+            app: audit-exporter
+          name: audit-exporter
+          namespace: openshift-security
+        spec:
+          selector:
+            matchLabels: *id001
+          template:
+            metadata: *id002
+            spec:
+              automountServiceAccountToken: false
+              containers:
+              - name: audit-exporter
+                command:
+                - /bin/audit-exporter
+                - --log-file=/var/log/osd-audit/audit.log
+                - --tls-cert-file=/certs/tls.crt
+                - --tls-private-key-file=/certs/tls.key
+                resources:
+                  requests:
+                    memory: 256Mi
+                  limits:
+                    cpu: 100m
+                    memory: 256Mi
+                image: quay.io/app-sre/splunk-audit-exporter@sha256:798113f5c79248bc24418ff0d149058c04e5eaa35ea7b4ff42a1e6983a37d24a # 0.1.213-118042f
+                imagePullPolicy: Always
+                securityContext:
+                  privileged: true
+                  runAsUser: 0
+                volumeMounts:
+                - mountPath: /config
+                  name: config
+                - mountPath: /var/log
+                  name: logs
+                - mountPath: /certs
+                  name: tls-certs-secret
+                  readOnly: true
+              nodeSelector:
+                node-role.kubernetes.io/master: ''
+              restartPolicy: Always
+              ports:
+              - containerPort: 9090
+                name: metrics
+                protocol: TCP
+              terminationGracePeriodSeconds: 5
+              tolerations:
+              - operator: Exists
+              volumes:
+              - name: config
+                configMap:
+                  name: osd-audit-policy
+              - name: tls-certs-secret
+                secret:
+                  secretName: audit-exporter-certs
+              - name: logs
+                hostPath:
+                  type: Directory
+                  path: /var/log
+      - apiVersion: v1
+        kind: Service
+        metadata:
+          labels:
+            app: audit-exporter
+          name: audit-exporter
+          namespace: openshift-security
+          annotations:
+            service.beta.openshift.io/serving-cert-secret-name: audit-exporter-certs
+        spec:
+          ports:
+            - name: metrics
+              port: 9090
+              protocol: TCP
+              targetPort: 9090
+          selector:
+            app: audit-exporter
+          sessionAffinity: None
+          type: ClusterIP
+      - apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: audit-exporter
+          namespace: openshift-security
+        spec:
+          endpoints:
+            - path: /metrics
+              port: metrics
+              scheme: https
+              tlsConfig:
+                caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+                serverName: audit-exporter.openshift-security.svc
+          namespaceSelector: {}
+          selector:
+            matchLabels:
+              app: audit-exporter
+      - apiVersion: v1
+        kind: Service
+        metadata:
+          labels:
+            name: splunk-forwarder
+          name: splunk-forwarder
+          namespace: openshift-security
+        spec:
+          ports:
+            - name: metrics
+              port: 8090
+              protocol: TCP
+              targetPort: 8090
+          selector:
+            name: splunk-forwarder
+          sessionAffinity: None
+          type: ClusterIP
+      - apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: splunk-forwarder
+          namespace: openshift-security
+        spec:
+          endpoints:
+            - path: /metrics
+              port: metrics
+              scheme: http
+          namespaceSelector: {}
+          selector:
+            matchLabels:
+              name: splunk-forwarder
+      - apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: prometheus-k8s
+          namespace: openshift-security
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: Role
+          name: prometheus-k8s
+        subjects:
+          - kind: ServiceAccount
+            name: prometheus-k8s
+            namespace: openshift-monitoring
+      - apiVersion: rbac.authorization.k8s.io/v1
+        kind: Role
+        metadata:
+          name: prometheus-k8s
+          namespace: openshift-security
+        rules:
+          - apiGroups: [""]
+            resources: ["services", "endpoints", "pods", "servicemonitors"]
+            verbs: ["get", "list", "watch"]
+
+  # SSS: splunk-hec-token secret mapping — staging
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-hec-token-stg-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: NotIn
+            values:
+              - "management-cluster"
+              - "service-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "staging"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/legal-entity-id
+            operator: NotIn
+            values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+          - key: hive.openshift.io/cluster-region
+            operator: NotIn
+            values:
+              - "cn-north-1"
+              - "cn-northwest-1"
+          - key: api.openshift.com/fedramp
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      secretMappings:
+      - sourceRef:
+          name: splunk-hec-token-stg
+          namespace: splunk-forwarder-operator
+        targetRef:
+          name: splunk-hec-token
+          namespace: openshift-security
+
+  # SSS: splunk-hec-token secret mapping — production
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-hec-token-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: NotIn
+            values:
+              - "management-cluster"
+              - "service-cluster"
+          - key: api.openshift.com/environment
+            operator: In
+            values:
+              - "production"
+          - key: api.openshift.com/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-managed.openshift.io/noalerts
+            operator: NotIn
+            values:
+              - "true"
+          - key: api.openshift.com/legal-entity-id
+            operator: NotIn
+            values: ${{ALERTS_SKIP_LEGALENTITY_IDS}}
+          - key: hive.openshift.io/cluster-region
+            operator: NotIn
+            values:
+              - "cn-north-1"
+              - "cn-northwest-1"
+          - key: api.openshift.com/fedramp
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      secretMappings:
+      - sourceRef:
+          name: splunk-hec-token-supportex-23207
+          namespace: splunk-forwarder-operator
+        targetRef:
+          name: splunk-hec-token
+          namespace: openshift-security
+
+  # SSS: splunk-auth secret mapping — global (non-china, non-fedramp, non-regional-ocm)
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-auth-region-global-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: hive.openshift.io/cluster-region
+            operator: NotIn
+            values:
+              - "cn-north-1"
+              - "cn-northwest-1"
+          - key: api.openshift.com/fedramp
+            operator: NotIn
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/regional-ocm
+            operator: NotIn
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      secretMappings:
+      - sourceRef:
+          name: splunk-auth
+          namespace: splunk-forwarder-operator
+        targetRef:
+          name: splunk-auth
+          namespace: openshift-security
+
+  # SSS: splunk-auth secret mapping — ap-southeast-1 regional OCM
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-auth-region-ase1-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: ext-hypershift.openshift.io/cluster-type
+            operator: In
+            values:
+              - "management-cluster"
+              - "service-cluster"
+          - key: hive.openshift.io/cluster-region
+            operator: In
+            values:
+              - "ap-southeast-1"
+          - key: ext-hypershift.openshift.io/regional-ocm
+            operator: In
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      secretMappings:
+      - sourceRef:
+          name: osd-ase1-splunk-auth
+          namespace: splunk-forwarder-operator
+        targetRef:
+          name: splunk-auth
+          namespace: openshift-security
+
+  # SSS: splunk-auth secret mapping — FedRAMP
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-auth-fedramp-stage
+      namespace: splunk-forwarder-operator
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: api.openshift.com/fedramp
+            operator: In
+            values:
+              - "true"
+      resourceApplyMode: Sync
+      secretMappings:
+      - sourceRef:
+          name: splunk-auth
+          namespace: splunk-forwarder-operator
+        targetRef:
+          name: splunk-auth
+          namespace: openshift-security
+
+  # SSS: Audit policy ConfigMap (standard clusters, non-event-forwarding)
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-audit-policy-cm-stage
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: api.openshift.com/id
+            operator: NotIn
+            values: ${{EVENT_FORWARD_TARGET_CLUSTERS}}
+      resourceApplyMode: Sync
+      resources:
+      - apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: osd-audit-policy
+          namespace: openshift-security
+        data:
+          policy.yaml: |
+            rules:
+            # drop leases, tokenreviews, subjectaccessreviews, user self-lookup (~500k/day)
+            - level: None
+              resources:
+              - group: coordination.k8s.io
+                resources: ['leases']
+              - group: authentication.k8s.io
+                resources: ['tokenreviews']
+              - group: oauth.openshift.io
+                resources: ['tokenreviews']
+              - group: user.openshift.io
+                resourceNames: ['~']
+                resources: ['users']
+              - group: authorization.k8s.io
+                resources:
+                - subjectaccessreviews
+                - selfsubjectaccessreviews
+            # drop node & control plane read events (~750k/day)
+            - level: None
+              users:
+              - system:apiserver
+              - system:kube-apiserver
+              - system:kube-scheduler
+              - system:kube-controller-manager
+              verbs:
+              - get
+              - head
+              - list
+              - watch
+            # drop control plane configmap leases leader updates (~50k/day)
+            - level: None
+              users:
+              - system:kube-scheduler
+              - system:kube-controller-manager
+              namespaces:
+              - openshift-kube-*
+              - kube-system
+              resources:
+              - resources: ['configmaps']
+              verbs: ['update']
+            # drop common non-resource read requests (~15k/day)
+            - level: None
+              nonResourceURLs:
+              - /
+              - /api*
+              - /healthz*
+              - /livez*
+              - /openapi/v2*
+              - /readyz*
+              - /version
+              - /.well-known*
+              verbs: ['get','head','options']
+            # forward system:admin list/get secrets at metadata level
+            - level: Metadata
+              users: ['system:admin']
+              resources:
+              - resources: ['secrets']
+              verbs: ['get','watch','list']
+            # drop other system:admin read events
+            - level: None
+              users: ['system:admin']
+              verbs: ['get','watch','list']
+            # forward all other system:admin activity
+            - level: Request
+              users: ['system:admin']
+            # drop backplane cronjob events before rule 7 (TODO: these jobs somewhere else)
+            - level: None
+              users:
+              - system:serviceaccount:openshift-backplane-srep:osd-delete-ownerrefs-serviceaccounts
+              - system:serviceaccount:openshift-backplane:osd-delete-backplane-serviceaccounts
+            # forward backplane activity
+            - level: RequestResponse
+              userGroups: ['system:serviceaccounts:openshift-backplane-*']
+            # drop openshift-* and kube-* serviceaccount read events (~5M/day)
+            - level: None
+              userGroups:
+              - system:serviceaccounts:openshift-*
+              - system:serviceaccounts:kube-*
+              verbs:
+              - get
+              - list
+              - watch
+            # drop events from marketplace, pruning and build tests (~80k/day)
+            - level: None
+              namespaces:
+              - openshift-build-test
+              - openshift-build-test-*
+              - openshift-marketplace
+              - openshift-sre-pruning
+            # drop control plane cronjob activity within -openshift
+            - level: None
+              users:
+              - system:apiserver
+              - system:node:*
+              - system:kube-controller-manager
+              - system:kube-scheduler
+              - system:serviceaccount:kube-system:*
+              resources:
+              - resources:
+                - endpoints
+                - pods/binding
+                - serviceaccounts/token
+              - group: discovery.k8s.io
+                resources: ['endpointslices']
+              verbs: ['create','update']
+            # forward resources we wish to monitor
+            - level: Request
+              resources:
+              - group: compliance.openshift.io
+                resources: ['compliancecheckresults']
+              - group: secscan.quay.redhat.com
+                resources: ['imagemanifestvulns']
+              - group: hive.openshift.io
+                resources: ['clusterdeployments']
+              verbs:
+              - create
+              - update
+              - patch
+            - level: Request
+              users:
+              - system:serviceaccount:openshift-file-integrity:file-integrity-daemon
+              resources:
+              - resources: ['configmaps']
+              namespaces: ["openshift-file-integrity"]
+              verbs:
+              - create
+              - update
+              - patch
+            # drop resource status updates (~100k/day)
+            - level: None
+              resources:
+              - resources: ['*/status']
+              - group: apps
+                resources: ['*/status']
+              - group: batch
+                resources: ['*/status']
+              - group: velero.io
+                resources: ['*/status']
+              - group: autoscaling
+                resources: ['*/status']
+              - group: operators.coreos.com
+                resources: ['*/status']
+              - group: config.openshift.io
+                resources: ['*/status', 'clusteroperators/status']
+              - group: quota.openshift.io
+                resources: ['clusterresourcequotas/status']
+              - group: managed.openshift.io
+                resources: ['subjectpermissions/status']
+              - group: apiserver.openshift.io
+                resources: ['apirequestcounts/status']
+              - group: controlplane.operator.openshift.io
+                resources: ['podnetworkconnectivitychecks/status']
+            # drop olm updates (~50k/day)
+            - level: None
+              groups: ['system:serviceaccounts:openshift-operator-lifecycle-manager']
+              resources:
+              - resources: ['namespaces','configmaps']
+              - group: apps
+                resources: ['deployments']
+              - group: rbac.authorization.k8s.io
+                resources: ['clusterroles']
+              - group: operators.coreos.com
+                resources:
+                - operatorgroups
+                - clusterserviceversions
+              verbs:
+              - create
+              - update
+              - patch
+            # drop update secret from cmo & prom within openshift-* namespaces (~3k/day)
+            - level: None
+              users:
+              - system:serviceaccount:openshift-monitoring:cluster-monitoring-operator
+              - system:serviceaccount:openshift-monitoring:prometheus-operator
+              namespaces: ['openshift-*']
+              resources:
+              - resources: ['secrets']
+              verbs: ['update']
+            # drop update route from console-operator (~10k/day)
+            - level: None
+              users: ['system:serviceaccount:openshift-console-operator:console-operator']
+              namespaces: ['openshift-console']
+              resources:
+              - group: route.openshift.io
+                resourceNames: ['console','downloads']
+                resources: ['routes','routes/status']
+              verbs: ['update','patch']
+            # drop clusterrole aggregation updates (~5k/day)
+            - level: None
+              users: ['system:serviceaccount:kube-system:clusterrole-aggregation-controller']
+              resources:
+              - group: rbac.authorization.k8s.io
+                resources: ['clusterroles']
+              verbs: ['update','patch']
+            # drop console route updates from cvo (~50k/day)
+            - level: None
+              userGroups:
+              - system:serviceaccounts:openshift-cluster-version
+              - system:serviceaccounts:openshift-console-operator
+              - system:serviceaccounts:openshift-console
+              resources:
+              - group: route.openshift.io
+                resources: ['routes']
+              verbs: ['update','patch']
+            # drop routine serviceaccount image activity
+            - level: None
+              groups: ['system:serviceaccounts']
+              resources:
+              - group: image.openshift.io
+                resources: ['*']
+            # drop openshift ns templates & imagestream and imagestreamimports
+            - level: None
+              userGroups:
+              - system:serviceaccounts:openshift-cluster-samples-operator
+              - system:serviceaccounts:openshift-cluster-version
+              - system:serviceaccounts:openshift-infra
+              namespaces: ['openshift']
+              resources:
+              - resources: ['templates']
+                group: template.openshift.io
+              - group: image.openshift.io
+                resources:
+                - imagestreams
+                - imagestreamimports
+              verbs: ['create','update']
+            # drop events.events.k8s.io
+            - level: None
+              resources:
+              - group: events.k8s.io
+                resources: ['events']
+            # drop noisy namespace reads
+            - level: None
+              resources:
+              - group: console.openshift.io
+                resources: ['consoleyamlsamples','consoleexternalloglinks','consolenotifications','consolequickstarts','consolelinks']
+              - group: helm.openshift.io
+                resources: ['helmchartrepositories']
+              - group: storage.k8s.io
+                resources: ['storageclasses']
+              - group: storage.k8s.io
+                resources: ['storageclasses']
+              - group: project.openshift.io
+                resources: ['projects']
+              - group: config.openshift.io
+                resources: ['clusterversions']
+              verbs: ['get', 'head', 'list', 'watch']
+            # drop browser storage updates from the console
+            - level: None
+              namespaces: ['openshift-console-user-settings']
+              resources:
+              - resources: ['configmaps']
+            # drop cco pod-identity-webhook cert requests (BZ2023906)
+            - level: None
+              users: ['system:serviceaccount:openshift-cloud-credential-operator:pod-identity-webhook']
+              resources:
+              - group: certificates.k8s.io
+                resources: ['certificatesigningrequests']
+              verbs: ['create']
+            # reduce token deletions to metadata
+            - level: Metadata
+              resources:
+              - group: oauth.openshift.io
+                resources: ['oauthaccesstokens','oauthauthorizetokens']
+              verbs: ['delete','deletecollection']
+            # field redactions
+            redactions:
+            # tokens in request objects
+            - group: authentication.k8s.io
+              resources:
+              - tokenreviews
+              fields:
+                spec:
+                  token: replace
+            # tokens in response objects
+            - resources:
+              - serviceaccounts
+              fields:
+                status:
+                  token: replace
+            # tokens in object names
+            - group: oauth.openshift.io
+              resources: ['oauthaccesstokens','oauthauthorizetokens']
+              fields:
+                metadata:
+                  name: replace
+                authorizeToken: replace
+                details:
+                  authorizeToken: replace
+                state: replace
+            # tokens in annotations & other observed token misuse
+            - fields:
+                metadata:
+                  annotations: remove
+                spec:
+                  httpSecret: replace
+                  tokenSecret: replace
+                  externalStorage: {onboardingTicket: replace}
+                connectorData: replace
+                objects: {data: replace}
+                parameters: {value: replace}
+                prometheus: {prom_token: replace}
+                data:
+                  black-box-config.yaml: replace
+            # remove certs from certificate signing requests
+            - group: certificates.k8s.io
+              resources:
+              - certificatesigningrequests
+              - certificatesigningrequests/status
+              fields:
+                spec:
+                  request: replace
+                status:
+                  certificate: replace
+            # remove certs and keys from routes (BZ2073220)
+            - group: route.openshift.io
+              resources:
+              - routes
+              - routes/status
+              fields:
+                spec:
+                  tls:
+                    key: replace
+                    certificate: replace
+                    caCertificate: replace
+                    destinationCACertificate: replace
+            # remove injected cabundles from webhook
+            - group: admissionregistration.k8s.io
+              resources:
+              - validatingwebhookconfigurations
+              - mutatingwebhookconfigurations
+              fields:
+                webhooks:
+                  clientConfig:
+                    caBundle: remove
+            # remove certs and binary data from configmaps
+            - resources:
+              - configmaps
+              fields:
+                binaryData: replace
+                data:
+                  ca.crt: replace
+                  ca-bundle.crt: replace
+                  service-ca.crt: replace
+                  client-ca: replace
+                  client-ca-file: replace
+                  requestheader-client-ca-file: replace
+            # remove machineconfig file source data, including bootstrap token
+            - group: machineconfiguration.openshift.io
+              resources:
+              - machineconfigs
+              - controllerconfigs
+              fields:
+                spec:
+                  rootCAData: replace
+                  config:
+                    passwd: replace
+                    storage:
+                      files:
+                        contents:
+                          source: replace
+                  kubeAPIServerServingCAData: replace
+            # we only really want the cve and severity counts from these
+            - group: secscan.quay.redhat.com
+              resources: ['imagemanifestvulns']
+              fields:
+                metadata:
+                  labels: remove
+                spec:
+                  features: remove
+                status:
+                  affectedPods: remove
+                  lastUpdate: remove
+            # remove object data and parameter values from processed templates
+            - resources: ['processedtemplates']
+              fields:
+                objects: replace
+                parameters: {value: replace}
+            # redact env var values from pods and controller specs
+            - resources: ['pods']
+              fields:
+                spec: &podSpec
+                  containers: &envSpec
+                    env: {value: replace}
+                  initContainers: *envSpec
+                  ephemeralContainers: *envSpec
+            - fields:
+                spec:
+                  template: {spec: *podSpec}
+                  pod_spec: *podSpec
+            # remove certain fields from metadata and status
+            - fields:
+                metadata:
+                  annotations:
+                    control-plane.alpha.kubernetes.io/leader: remove
+                    kubectl.kubernetes.io/last-applied-configuration: remove
+                  generation: remove
+                  uid: remove
+                  selfLink: remove
+                  managedFields: remove
+                  resourceVersion: remove
+                  creationTimestamp: remove
+                status:
+                  conditions: remove
+                  components: remove
+                  relatedObjects: remove
+                  lastSyncTimestamp: remove
+                  storageBucket:
+                    lastSyncTimestamp: remove
+            exposeAsMetric:
+              - eventSelector:
+                  user:
+                    username:
+                      NotIn: ["system:*"]
+                  verb:
+                    In: ["delete", "update", "patch"]
+                  objectReference:
+                    name:
+                      In: ["sre-*", "*openshift.io"]
+                    resource:
+                      In: ["validatingwebhookconfigurations"]
+                  responseStatus:
+                    code:
+                      NotIn: ["403"]
+                alert: NonSystemChangeValidationWebhookConfiguration
+              - eventSelector:
+                    user:
+                      username:
+                        NotIn: ["system:*"]
+                    verb:
+                      In: ["create"]
+                    objectReference:
+                      resource:
+                        In: ["ingresscontrollers"]
+                    responseStatus:
+                      code:
+                        NotIn: ["403"]
+                alert: UserCreatedIngressControllerDetected
+
+  # Duplicates splunk-forwarder-operator-audit-policy-cm but does not drop events
+  # Workaround to investigate etcd issues caused by high event counts (SREP-2511)
+  - apiVersion: hive.openshift.io/v1
+    kind: SelectorSyncSet
+    metadata:
+      name: splunk-forwarder-operator-audit-policy-cm-event-forwarding-stage
+    spec:
+      clusterDeploymentSelector:
+        matchExpressions:
+          - key: api.openshift.com/managed
+            operator: In
+            values:
+              - "true"
+          - key: api.openshift.com/id
+            operator: In
+            values: ${{EVENT_FORWARD_TARGET_CLUSTERS}}
+      resourceApplyMode: Sync
+      resources:
+      - apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: osd-audit-policy
+          namespace: openshift-security
+        data:
+          policy.yaml: |
+            rules:
+            # drop leases, tokenreviews, subjectaccessreviews, user self-lookup (~500k/day)
+            - level: None
+              resources:
+              - group: coordination.k8s.io
+                resources: ['leases']
+              - group: authentication.k8s.io
+                resources: ['tokenreviews']
+              - group: oauth.openshift.io
+                resources: ['tokenreviews']
+              - group: user.openshift.io
+                resourceNames: ['~']
+                resources: ['users']
+              - group: authorization.k8s.io
+                resources:
+                - subjectaccessreviews
+                - selfsubjectaccessreviews
+            # drop node & control plane read events (~750k/day)
+            - level: None
+              users:
+              - system:apiserver
+              - system:kube-apiserver
+              - system:kube-scheduler
+              - system:kube-controller-manager
+              verbs:
+              - get
+              - head
+              - list
+              - watch
+            # drop control plane configmap leases leader updates (~50k/day)
+            - level: None
+              users:
+              - system:kube-scheduler
+              - system:kube-controller-manager
+              namespaces:
+              - openshift-kube-*
+              - kube-system
+              resources:
+              - resources: ['configmaps']
+              verbs: ['update']
+            # drop common non-resource read requests (~15k/day)
+            - level: None
+              nonResourceURLs:
+              - /
+              - /api*
+              - /healthz*
+              - /livez*
+              - /openapi/v2*
+              - /readyz*
+              - /version
+              - /.well-known*
+              verbs: ['get','head','options']
+            # forward system:admin list/get secrets at metadata level
+            - level: Metadata
+              users: ['system:admin']
+              resources:
+              - resources: ['secrets']
+              verbs: ['get','watch','list']
+            # drop other system:admin read events
+            - level: None
+              users: ['system:admin']
+              verbs: ['get','watch','list']
+            # forward all other system:admin activity
+            - level: Request
+              users: ['system:admin']
+            # drop backplane cronjob events before rule 7 (TODO: these jobs somewhere else)
+            - level: None
+              users:
+              - system:serviceaccount:openshift-backplane-srep:osd-delete-ownerrefs-serviceaccounts
+              - system:serviceaccount:openshift-backplane:osd-delete-backplane-serviceaccounts
+            # forward backplane activity
+            - level: RequestResponse
+              userGroups: ['system:serviceaccounts:openshift-backplane-*']
+            # drop openshift-* and kube-* serviceaccount read events (~5M/day)
+            - level: None
+              userGroups:
+              - system:serviceaccounts:openshift-*
+              - system:serviceaccounts:kube-*
+              verbs:
+              - get
+              - list
+              - watch
+            # drop events from marketplace, pruning and build tests (~80k/day)
+            - level: None
+              namespaces:
+              - openshift-build-test
+              - openshift-build-test-*
+              - openshift-marketplace
+              - openshift-sre-pruning
+            # drop control plane cronjob activity within -openshift
+            - level: None
+              users:
+              - system:apiserver
+              - system:node:*
+              - system:kube-controller-manager
+              - system:kube-scheduler
+              - system:serviceaccount:kube-system:*
+              resources:
+              - resources:
+                - endpoints
+                - pods/binding
+                - serviceaccounts/token
+              - group: discovery.k8s.io
+                resources: ['endpointslices']
+              verbs: ['create','update']
+            # forward resources we wish to monitor
+            - level: Request
+              resources:
+              - group: compliance.openshift.io
+                resources: ['compliancecheckresults']
+              - group: secscan.quay.redhat.com
+                resources: ['imagemanifestvulns']
+              - group: hive.openshift.io
+                resources: ['clusterdeployments']
+              verbs:
+              - create
+              - update
+              - patch
+            - level: Request
+              users:
+              - system:serviceaccount:openshift-file-integrity:file-integrity-daemon
+              resources:
+              - resources: ['configmaps']
+              namespaces: ["openshift-file-integrity"]
+              verbs:
+              - create
+              - update
+              - patch
+            # drop resource status updates (~100k/day)
+            - level: None
+              resources:
+              - resources: ['*/status']
+              - group: apps
+                resources: ['*/status']
+              - group: batch
+                resources: ['*/status']
+              - group: velero.io
+                resources: ['*/status']
+              - group: autoscaling
+                resources: ['*/status']
+              - group: operators.coreos.com
+                resources: ['*/status']
+              - group: config.openshift.io
+                resources: ['*/status', 'clusteroperators/status']
+              - group: quota.openshift.io
+                resources: ['clusterresourcequotas/status']
+              - group: managed.openshift.io
+                resources: ['subjectpermissions/status']
+              - group: apiserver.openshift.io
+                resources: ['apirequestcounts/status']
+              - group: controlplane.operator.openshift.io
+                resources: ['podnetworkconnectivitychecks/status']
+            # drop olm updates (~50k/day)
+            - level: None
+              groups: ['system:serviceaccounts:openshift-operator-lifecycle-manager']
+              resources:
+              - resources: ['namespaces','configmaps']
+              - group: apps
+                resources: ['deployments']
+              - group: rbac.authorization.k8s.io
+                resources: ['clusterroles']
+              - group: operators.coreos.com
+                resources:
+                - operatorgroups
+                - clusterserviceversions
+              verbs:
+              - create
+              - update
+              - patch
+            # drop update secret from cmo & prom within openshift-* namespaces (~3k/day)
+            - level: None
+              users:
+              - system:serviceaccount:openshift-monitoring:cluster-monitoring-operator
+              - system:serviceaccount:openshift-monitoring:prometheus-operator
+              namespaces: ['openshift-*']
+              resources:
+              - resources: ['secrets']
+              verbs: ['update']
+            # drop update route from console-operator (~10k/day)
+            - level: None
+              users: ['system:serviceaccount:openshift-console-operator:console-operator']
+              namespaces: ['openshift-console']
+              resources:
+              - group: route.openshift.io
+                resourceNames: ['console','downloads']
+                resources: ['routes','routes/status']
+              verbs: ['update','patch']
+            # drop clusterrole aggregation updates (~5k/day)
+            - level: None
+              users: ['system:serviceaccount:kube-system:clusterrole-aggregation-controller']
+              resources:
+              - group: rbac.authorization.k8s.io
+                resources: ['clusterroles']
+              verbs: ['update','patch']
+            # drop console route updates from cvo (~50k/day)
+            - level: None
+              userGroups:
+              - system:serviceaccounts:openshift-cluster-version
+              - system:serviceaccounts:openshift-console-operator
+              - system:serviceaccounts:openshift-console
+              resources:
+              - group: route.openshift.io
+                resources: ['routes']
+              verbs: ['update','patch']
+            # drop routine serviceaccount image activity
+            - level: None
+              groups: ['system:serviceaccounts']
+              resources:
+              - group: image.openshift.io
+                resources: ['*']
+            # drop openshift ns templates & imagestream and imagestreamimports
+            - level: None
+              userGroups:
+              - system:serviceaccounts:openshift-cluster-samples-operator
+              - system:serviceaccounts:openshift-cluster-version
+              - system:serviceaccounts:openshift-infra
+              namespaces: ['openshift']
+              resources:
+              - resources: ['templates']
+                group: template.openshift.io
+              - group: image.openshift.io
+                resources:
+                - imagestreams
+                - imagestreamimports
+              verbs: ['create','update']
+            # drop noisy namespace reads
+            - level: None
+              resources:
+              - group: console.openshift.io
+                resources: ['consoleyamlsamples','consoleexternalloglinks','consolenotifications','consolequickstarts','consolelinks']
+              - group: helm.openshift.io
+                resources: ['helmchartrepositories']
+              - group: storage.k8s.io
+                resources: ['storageclasses']
+              - group: storage.k8s.io
+                resources: ['storageclasses']
+              - group: project.openshift.io
+                resources: ['projects']
+              - group: config.openshift.io
+                resources: ['clusterversions']
+              verbs: ['get', 'head', 'list', 'watch']
+            # drop browser storage updates from the console
+            - level: None
+              namespaces: ['openshift-console-user-settings']
+              resources:
+              - resources: ['configmaps']
+            # drop cco pod-identity-webhook cert requests (BZ2023906)
+            - level: None
+              users: ['system:serviceaccount:openshift-cloud-credential-operator:pod-identity-webhook']
+              resources:
+              - group: certificates.k8s.io
+                resources: ['certificatesigningrequests']
+              verbs: ['create']
+            # reduce token deletions to metadata
+            - level: Metadata
+              resources:
+              - group: oauth.openshift.io
+                resources: ['oauthaccesstokens','oauthauthorizetokens']
+              verbs: ['delete','deletecollection']
+            # field redactions
+            redactions:
+            # tokens in request objects
+            - group: authentication.k8s.io
+              resources:
+              - tokenreviews
+              fields:
+                spec:
+                  token: replace
+            # tokens in response objects
+            - resources:
+              - serviceaccounts
+              fields:
+                status:
+                  token: replace
+            # tokens in object names
+            - group: oauth.openshift.io
+              resources: ['oauthaccesstokens','oauthauthorizetokens']
+              fields:
+                metadata:
+                  name: replace
+                authorizeToken: replace
+                details:
+                  authorizeToken: replace
+                state: replace
+            # tokens in annotations & other observed token misuse
+            - fields:
+                metadata:
+                  annotations: remove
+                spec:
+                  httpSecret: replace
+                  tokenSecret: replace
+                  externalStorage: {onboardingTicket: replace}
+                connectorData: replace
+                objects: {data: replace}
+                parameters: {value: replace}
+                prometheus: {prom_token: replace}
+                data:
+                  black-box-config.yaml: replace
+            # remove certs from certificate signing requests
+            - group: certificates.k8s.io
+              resources:
+              - certificatesigningrequests
+              - certificatesigningrequests/status
+              fields:
+                spec:
+                  request: replace
+                status:
+                  certificate: replace
+            # remove certs and keys from routes (BZ2073220)
+            - group: route.openshift.io
+              resources:
+              - routes
+              - routes/status
+              fields:
+                spec:
+                  tls:
+                    key: replace
+                    certificate: replace
+                    caCertificate: replace
+                    destinationCACertificate: replace
+            # remove injected cabundles from webhook
+            - group: admissionregistration.k8s.io
+              resources:
+              - validatingwebhookconfigurations
+              - mutatingwebhookconfigurations
+              fields:
+                webhooks:
+                  clientConfig:
+                    caBundle: remove
+            # remove certs and binary data from configmaps
+            - resources:
+              - configmaps
+              fields:
+                binaryData: replace
+                data:
+                  ca.crt: replace
+                  ca-bundle.crt: replace
+                  service-ca.crt: replace
+                  client-ca: replace
+                  client-ca-file: replace
+                  requestheader-client-ca-file: replace
+            # remove machineconfig file source data, including bootstrap token
+            - group: machineconfiguration.openshift.io
+              resources:
+              - machineconfigs
+              - controllerconfigs
+              fields:
+                spec:
+                  rootCAData: replace
+                  config:
+                    passwd: replace
+                    storage:
+                      files:
+                        contents:
+                          source: replace
+                  kubeAPIServerServingCAData: replace
+            # we only really want the cve and severity counts from these
+            - group: secscan.quay.redhat.com
+              resources: ['imagemanifestvulns']
+              fields:
+                metadata:
+                  labels: remove
+                spec:
+                  features: remove
+                status:
+                  affectedPods: remove
+                  lastUpdate: remove
+            # remove object data and parameter values from processed templates
+            - resources: ['processedtemplates']
+              fields:
+                objects: replace
+                parameters: {value: replace}
+            # redact env var values from pods and controller specs
+            - resources: ['pods']
+              fields:
+                spec: &podSpec
+                  containers: &envSpec
+                    env: {value: replace}
+                  initContainers: *envSpec
+                  ephemeralContainers: *envSpec
+            - fields:
+                spec:
+                  template: {spec: *podSpec}
+                  pod_spec: *podSpec
+            # remove certain fields from metadata and status
+            - fields:
+                metadata:
+                  annotations:
+                    control-plane.alpha.kubernetes.io/leader: remove
+                    kubectl.kubernetes.io/last-applied-configuration: remove
+                  generation: remove
+                  uid: remove
+                  selfLink: remove
+                  managedFields: remove
+                  resourceVersion: remove
+                  creationTimestamp: remove
+                status:
+                  conditions: remove
+                  components: remove
+                  relatedObjects: remove
+                  lastSyncTimestamp: remove
+                  storageBucket:
+                    lastSyncTimestamp: remove
+            exposeAsMetric:
+              - eventSelector:
+                  user:
+                    username:
+                      NotIn: ["system:*"]
+                  verb:
+                    In: ["delete", "update", "patch"]
+                  objectReference:
+                    name:
+                      In: ["sre-*", "*openshift.io"]
+                    resource:
+                      In: ["validatingwebhookconfigurations"]
+                  responseStatus:
+                    code:
+                      NotIn: ["403"]
+                alert: NonSystemChangeValidationWebhookConfiguration
+              - eventSelector:
+                    user:
+                      username:
+                        NotIn: ["system:*"]
+                    verb:
+                      In: ["create"]
+                    objectReference:
+                      resource:
+                        In: ["ingresscontrollers"]
+                    responseStatus:
+                      code:
+                        NotIn: ["403"]
+                alert: UserCreatedIngressControllerDetected

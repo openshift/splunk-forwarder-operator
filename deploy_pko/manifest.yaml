@@ -32,5 +32,21 @@ spec:
         image:
           description: Operator image to deploy
           type: string
-          default: None
-        type: object
+        namespace:
+          description: Namespace to deploy the operator into
+          type: string
+      required:
+      - image
+      - namespace
+      type: object
+test:
+  template:
+  - name: default
+    context:
+      package:
+        metadata:
+          name: splunk-forwarder-operator
+          namespace: openshift-splunk-forwarder-operator
+      config:
+        image: quay.io/app-sre/splunk-forwarder-operator:test
+        namespace: openshift-splunk-forwarder-operator
