@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: splunk-forwarder-operator
+  name: openshift-splunk-forwarder-operator
   annotations:
     package-operator.run/phase: rbac
     package-operator.run/collision-protection: IfNoController
@@ -10,41 +10,42 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
   - secrets
   verbs:
-  - list
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - list
-  - get
-  - update
-  - create
-  - delete
+  - '*'
 - apiGroups:
   - apps
   resources:
+  - deployments
   - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
   verbs:
   - get
   - create
-  - list
+- apiGroups:
+  - apps
+  resourceNames:
+  - splunk-forwarder-operator
+  resources:
+  - deployments/finalizers
+  verbs:
   - update
-  - delete
 - apiGroups:
-  - splunkforwarders.splunkforwarder.managed.openshift.io
+  - splunkforwarder.managed.openshift.io
   resources:
   - '*'
   verbs:
   - '*'
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - infrastructures
-  verbs:
-  - get
-  - list
-  - watch

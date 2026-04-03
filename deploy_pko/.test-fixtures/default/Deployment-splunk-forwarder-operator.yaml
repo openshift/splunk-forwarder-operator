@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: splunk-forwarder-operator
-  namespace: {{ .config.namespace }}
+  namespace: openshift-splunk-forwarder-operator
   annotations:
     package-operator.run/phase: deploy
     package-operator.run/collision-protection: IfNoController
@@ -31,7 +31,7 @@ spec:
         operator: Exists
       containers:
       - name: splunk-forwarder-operator
-        image: '{{ .config.image }}'
+        image: 'quay.io/app-sre/splunk-forwarder-operator:test'
         command:
         - splunk-forwarder-operator
         imagePullPolicy: Always

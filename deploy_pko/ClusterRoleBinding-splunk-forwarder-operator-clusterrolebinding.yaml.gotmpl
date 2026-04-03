@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: splunk-forwarder-operator-clusterrolebinding
+  annotations:
+    package-operator.run/phase: rbac
+    package-operator.run/collision-protection: IfNoController
+subjects:
+- kind: ServiceAccount
+  name: splunk-forwarder-operator
+  namespace: {{ .config.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: splunk-forwarder-operator
