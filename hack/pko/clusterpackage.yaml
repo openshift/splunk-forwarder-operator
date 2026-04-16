@@ -1580,6 +1580,14 @@ objects:
                   lastSyncTimestamp: remove
                   storageBucket:
                     lastSyncTimestamp: remove
+            # redact manifests data from ManifestWork objects deployed to service-clusters
+            - group: work.open-cluster-management.io
+              resources:
+              - manifestworks
+              fields:
+                spec:
+                  workload:
+                    manifests: replace
             exposeAsMetric:
               - eventSelector:
                   user:
@@ -2038,6 +2046,14 @@ objects:
                   lastSyncTimestamp: remove
                   storageBucket:
                     lastSyncTimestamp: remove
+            # redact manifests data from ManifestWork objects deployed to service-clusters
+            - group: work.open-cluster-management.io
+              resources:
+              - manifestworks
+              fields:
+                spec:
+                  workload:
+                    manifests: replace
             exposeAsMetric:
               - eventSelector:
                   user:
