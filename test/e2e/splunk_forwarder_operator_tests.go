@@ -38,10 +38,7 @@ var (
 	dedicatedAdminSplunkForwarder = "osde2e-dedicated-admin-splunkforwarder-x"
 	operatorNamespace             = "openshift-splunk-forwarder-operator"
 	operatorLockFile              = "splunk-forwarder-operator-lock"
-	securityNamespace             = "openshift-security"
-	securitySFDaemonSet           = "splunkforwarder-ds"
 	clusterID                     string
-	originalSecurityDS            *appsv1.DaemonSet
 )
 
 // Blocking SplunkForwarder Signal
@@ -62,7 +59,6 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		Expect(clusterID).ShouldNot(BeEmpty(), "OCM_CLUSTER_ID is required but not set")
 
 		// PKO's ClusterPackage already configures SCC access - no need to modify
-		ginkgo.By("SCC access already configured by PKO ClusterPackage")
 	})
 
 	ginkgo.AfterAll(func(ctx context.Context) {
@@ -75,7 +71,6 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		Expect(err).Should(BeNil(), "namespace %s not found", operatorNamespace)
 
 		// PKO only creates ClusterRoles and ClusterRoleBindings (no namespace-scoped RBAC)
-		ginkgo.By("skipping namespace-scoped role/rolebinding checks for PKO")
 
 		ginkgo.By("checking the clusterrole exists")
 		var clusterRoles rbacv1.ClusterRoleList
@@ -102,8 +97,6 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		assertions.EventuallyConfigMap(ctx, k8s, operatorLockFile, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(Not(BeNil()), "configmap %s should exist", operatorLockFile)
 
 		// PKO does not use ClusterServiceVersion - it uses ClusterPackages instead
-		ginkgo.By("skipping CSV check for PKO (uses ClusterPackage instead)")
-
 	})
 
 	ginkgo.It("creates ConfigMaps and DaemonSet when CR is created", func(ctx context.Context) {
