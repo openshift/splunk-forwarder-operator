@@ -18,10 +18,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
@@ -65,18 +61,10 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		clusterID = os.Getenv("OCM_CLUSTER_ID")
 		Expect(clusterID).ShouldNot(BeEmpty(), "OCM_CLUSTER_ID is required but not set")
 
-		ginkgo.By("granting default service account access to splunkforwarder SCC")
-		err = grantSCCAccess(ctx, k8s, operatorNamespace)
-		Expect(err).ShouldNot(HaveOccurred(), "unable to grant SCC access for testing")
+		// PKO's ClusterPackage already configures SCC access - no need to modify
 	})
 
 	ginkgo.AfterAll(func(ctx context.Context) {
-		ginkgo.By("revoking default service account access from splunkforwarder SCC")
-		err := revokeSCCAccess(ctx, k8s, operatorNamespace)
-		if err != nil {
-			ginkgo.GinkgoLogr.Error(err, "failed to revoke SCC access")
-		}
-
 		ginkgo.By("cleaning up test secrets")
 		cleanupTestSecrets(ctx, k8s, operatorNamespace)
 	})
@@ -85,17 +73,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		err := k8s.Get(ctx, operatorNamespace, operatorNamespace, &corev1.Namespace{})
 		Expect(err).Should(BeNil(), "namespace %s not found", operatorNamespace)
 
-		ginkgo.By("checking the role exists")
-		var roles rbacv1.RoleList
-		err = k8s.WithNamespace(operatorNamespace).List(ctx, &roles)
-		Expect(err).ShouldNot(HaveOccurred(), "failed to list roles")
-		Expect(&roles).Should(ContainItemWithPrefix(rolePrefix), "unable to find roles with prefix %s", rolePrefix)
-
-		ginkgo.By("checking the rolebinding exists")
-		var rolebindings rbacv1.RoleBindingList
-		err = k8s.List(ctx, &rolebindings)
-		Expect(err).ShouldNot(HaveOccurred(), "failed to list rolebindings")
-		Expect(&rolebindings).Should(ContainItemWithPrefix(rolePrefix), "unable to find rolebindings with prefix %s", rolePrefix)
+		// PKO only creates ClusterRoles and ClusterRoleBindings (no namespace-scoped RBAC)
 
 		ginkgo.By("checking the clusterrole exists")
 		var clusterRoles rbacv1.ClusterRoleList
@@ -121,29 +99,13 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		ginkgo.By("checking the operator lock file config map exists")
 		assertions.EventuallyConfigMap(ctx, k8s, operatorLockFile, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(Not(BeNil()), "configmap %s should exist", operatorLockFile)
 
-		ginkgo.By("checking the operator CSV has Succeeded")
-		restConfig, _ := ctrlconfig.GetConfig()
-		dynamicClient, err := dynamic.NewForConfig(restConfig)
-		Expect(err).ShouldNot(HaveOccurred(), "failed to configure Dynamic client")
-		Eventually(func() bool {
-			csvList, err := dynamicClient.Resource(
-				schema.GroupVersionResource{
-					Group:    "operators.coreos.com",
-					Version:  "v1alpha1",
-					Resource: "clusterserviceversions",
-				},
-			).Namespace(operatorNamespace).List(ctx, metav1.ListOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Failed to retrieve CSV from namespace %s", operatorNamespace)
-			for _, csv := range csvList.Items {
-				specName, _, _ := unstructured.NestedFieldCopy(csv.Object, "spec", "displayName")
-				statusPhase, _, _ := unstructured.NestedFieldCopy(csv.Object, "status", "phase")
-				if statusPhase == "Succeeded" && specName == operatorName {
-					return true
-				}
-			}
-			return false
-		}).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(BeTrue(), "CSV %s should exist and have Succeeded status", operatorName)
+		ginkgo.By("verifying production splunkforwarder DaemonSet exists in openshift-security")
+		var prodDS appsv1.DaemonSet
+		err = k8s.Get(ctx, securitySFDaemonSet, securityNamespace, &prodDS)
+		Expect(err).Should(BeNil(), "production DaemonSet %s should exist in %s namespace", securitySFDaemonSet, securityNamespace)
+		Expect(prodDS.Status.NumberReady).Should(BeNumerically(">", 0), "production DaemonSet should have at least one ready pod")
 
+		// PKO does not use ClusterServiceVersion - it uses ClusterPackages instead
 	})
 
 	ginkgo.It("creates ConfigMaps and DaemonSet when CR is created", func(ctx context.Context) {
