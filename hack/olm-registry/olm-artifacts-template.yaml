@@ -34,7 +34,7 @@ objects:
     clusterDeploymentSelector:
       matchLabels:
         api.openshift.com/managed: "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
     - apiVersion: v1
       kind: Namespace
@@ -334,7 +334,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
@@ -422,7 +422,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
@@ -479,7 +479,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
       - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
         kind: SplunkForwarder
@@ -552,7 +552,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
       - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
         kind: SplunkForwarder
@@ -639,7 +639,7 @@ objects:
           operator: In
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
       - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
         kind: SplunkForwarder
@@ -704,7 +704,7 @@ objects:
           operator: In
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
       - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
         kind: SplunkForwarder
@@ -792,7 +792,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
@@ -895,7 +895,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
     - apiVersion: splunkforwarder.managed.openshift.io/v1alpha1
       kind: SplunkForwarder
@@ -980,7 +980,7 @@ objects:
           operator: In
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     patches:
     - apiVersion: config.openshift.io/v1
       applyMode: AlwaysApply
@@ -1181,7 +1181,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     secretMappings:
     - sourceRef:
         name: splunk-hec-token-stg
@@ -1231,7 +1231,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     secretMappings:
     - sourceRef:
         name: splunk-hec-token-supportex-23207
@@ -1265,7 +1265,7 @@ objects:
           operator: NotIn
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     secretMappings:
     - sourceRef:
         name: splunk-auth
@@ -1299,7 +1299,7 @@ objects:
           operator: In
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     secretMappings:
     - sourceRef:
         name: osd-ase1-splunk-auth
@@ -1324,7 +1324,7 @@ objects:
           operator: In
           values:
             - "true"
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     secretMappings:
     - sourceRef:
         name: splunk-auth
@@ -1347,7 +1347,7 @@ objects:
         - key: api.openshift.com/id
           operator: NotIn
           values: ${{EVENT_FORWARD_TARGET_CLUSTERS}}
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
     - apiVersion: v1
       kind: ConfigMap
@@ -1818,7 +1818,7 @@ objects:
         - key: api.openshift.com/id
           operator: In
           values: ${{EVENT_FORWARD_TARGET_CLUSTERS}}
-    resourceApplyMode: Sync
+    resourceApplyMode: Upsert
     resources:
     - apiVersion: v1
       kind: ConfigMap
