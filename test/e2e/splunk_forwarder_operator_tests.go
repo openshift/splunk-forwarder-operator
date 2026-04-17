@@ -38,7 +38,10 @@ var (
 	dedicatedAdminSplunkForwarder = "osde2e-dedicated-admin-splunkforwarder-x"
 	operatorNamespace             = "openshift-splunk-forwarder-operator"
 	operatorLockFile              = "splunk-forwarder-operator-lock"
+	securityNamespace             = "openshift-security"
+	securitySFDaemonSet           = "splunkforwarder-ds"
 	clusterID                     string
+	originalSecurityDS            *appsv1.DaemonSet
 )
 
 // Blocking SplunkForwarder Signal
@@ -95,6 +98,12 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 		ginkgo.By("checking the operator lock file config map exists")
 		assertions.EventuallyConfigMap(ctx, k8s, operatorLockFile, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(Not(BeNil()), "configmap %s should exist", operatorLockFile)
+
+		ginkgo.By("verifying production splunkforwarder DaemonSet exists in openshift-security")
+		var prodDS appsv1.DaemonSet
+		err = k8s.Get(ctx, securitySFDaemonSet, securityNamespace, &prodDS)
+		Expect(err).Should(BeNil(), "production DaemonSet %s should exist in %s namespace", securitySFDaemonSet, securityNamespace)
+		Expect(prodDS.Status.NumberReady).Should(BeNumerically(">", 0), "production DaemonSet should have at least one ready pod")
 
 		// PKO does not use ClusterServiceVersion - it uses ClusterPackages instead
 	})
