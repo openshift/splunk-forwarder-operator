@@ -157,6 +157,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 		// TODO: Temporarily commented out for integration testing
 		// Integration clusters don't have the full production setup (secrets, SCC permissions, etc.)
+		// Follow-up work to address this will be tracked in HCMSEC-3314
 		// ginkgo.By("verifying DaemonSet pods become ready")
 		// Eventually(func() bool {
 		// 	k8s.Get(ctx, dsName, operatorNamespace, &ds)
@@ -390,6 +391,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 		// TODO: Temporarily commented out for integration testing
 		// Integration clusters don't have the full production setup (secrets, SCC permissions, etc.)
+		// Follow-up work to address this will be tracked in HCMSEC-3314
 		// ginkgo.By("verifying DaemonSet pods start successfully with HEC configuration")
 		// Eventually(func() bool {
 		// 	k8s.Get(ctx, dsName, operatorNamespace, &ds)
@@ -574,6 +576,7 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 
 		// TODO: Temporarily commented out for integration testing
 		// Integration clusters don't have the full production setup (secrets, SCC permissions, etc.)
+		// Follow-up work to address this will be tracked in HCMSEC-3314
 		// ginkgo.By("verifying DaemonSet pods become ready after recreation")
 		// Eventually(func() bool {
 		// 	k8s.Get(ctx, dsName, operatorNamespace, &ds)
