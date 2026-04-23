@@ -1588,6 +1588,9 @@ objects:
                 spec:
                   workload:
                     manifests: replace
+                status:
+                  resourceStatus:
+                    manifests: replace
             exposeAsMetric:
               - eventSelector:
                   user:
@@ -2053,6 +2056,9 @@ objects:
               fields:
                 spec:
                   workload:
+                    manifests: replace
+                status:
+                  resourceStatus:
                     manifests: replace
             exposeAsMetric:
               - eventSelector:
