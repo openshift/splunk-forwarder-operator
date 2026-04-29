@@ -53,7 +53,7 @@ The `image` and `imageDigest` are for the splunk-forwarder image.
 (The CRD supports `imageTag`, but this is deprecated in favor of `imageDigest`.)
 
 To use the current version, `10.2.0-d749cb17ea65-d12f202`, specify the following:
-- For [splunk-forwarder](https://quay.io/repository/app-sre/splunk-forwarder?tag=8.2.5-77015bc7a462-f4d16f7):
+- For [splunk-forwarder-images](https://quay.io/repository/redhat-services-prod/openshift/splunk-forwarder-images):
   ```yaml
   image: quay.io/redhat-services-prod/openshift/splunk-forwarder-images
   imageDigest: sha256:e400fcba1cccfa503e93127fd914a8b262857abdc72b0c6eade9b911ac9939ab
