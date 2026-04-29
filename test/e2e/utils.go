@@ -53,7 +53,7 @@ func makeSplunkforwarderWithIndex(name, namespace, path, index, sourcetype strin
 		},
 		Spec: sfv1alpha1.SplunkForwarderSpec{
 			SplunkLicenseAccepted: true,
-			Image:                 "quay.io/app-sre/splunk-forwarder",
+			Image:                 "quay.io/redhat-services-prod/openshift/splunk-forwarder-images",
 			ImageTag:              "latest",
 			SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
 				{

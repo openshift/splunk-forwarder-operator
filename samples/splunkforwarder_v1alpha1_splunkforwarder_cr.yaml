@@ -3,7 +3,7 @@ kind: SplunkForwarder
 metadata:
   name: example-splunkforwarder
 spec:
-  image: quay.io/app-sre/splunk-forwarder
+  image: quay.io/redhat-services-prod/openshift/splunk-forwarder-images
   imageDigest: sha256:2452a3f01e840661ee1194777ed5a9185ceaaa9ec7329ed364fa2f02be22a701
   splunkLicenseAccepted: true
   clusterID: mycluster
