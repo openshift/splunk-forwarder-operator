@@ -31,8 +31,7 @@ var (
 	k8s            *openshift.Client
 	deploymentName = "splunk-forwarder-operator"
 	operatorName   = "splunk-forwarder-operator"
-	serviceNames   = []string{"splunk-forwarder-operator-metrics",
-		"splunk-forwarder-operator-catalog"}
+	serviceNames   = []string{"splunk-forwarder-operator-metrics"}
 	rolePrefix                    = "splunk-forwarder-operator"
 	testSplunkForwarder           = "osde2e-splunkforwarder-test-2"
 	dedicatedAdminSplunkForwarder = "osde2e-dedicated-admin-splunkforwarder-x"
