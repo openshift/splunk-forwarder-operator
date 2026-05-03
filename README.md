@@ -112,3 +112,4 @@ export OPERATOR_NAMESPACE=openshift-splunk-forwarder-operator
 export WATCH_NAMESPACE=""
 export OSDK_FORCE_RUN_MODE="local"
 ```
+
