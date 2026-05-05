@@ -32,6 +32,7 @@ rules:
     resources:
       - clusterserviceversions
       - subscriptions
+      - catalogsources
     verbs:
       - list
       - get
@@ -83,15 +84,14 @@ spec:
             - |
               #!/bin/sh
               set -euxo pipefail
-              # CUSTOMIZE: Update the label selector for your operator
-              # Example pattern: operators.coreos.com/OPERATOR_NAME.NAMESPACE
-              oc -n openshift-splunk-forwarder-operator delete csv -l "operators.coreos.com/splunk-forwarder-operator.openshift-splunk-forwarder-operator" || true
-              
-              # CUSTOMIZE: Add any additional cleanup logic here
-              # Examples:
-              # - Delete subscriptions
-              # - Delete operator groups
-              # - Clean up custom resources
+              # Delete CSV
+              oc -n openshift-splunk-forwarder-operator delete csv -l "operators.coreos.com/splunk-forwarder-operator.openshift-splunk-forwarder-operator" --ignore-not-found=true
+
+              # Delete Subscription
+              oc -n openshift-splunk-forwarder-operator delete subscription openshift-splunk-forwarder-operator --ignore-not-found=true
+
+              # Delete CatalogSource
+              oc -n openshift-splunk-forwarder-operator delete catalogsource splunk-forwarder-operator-catalog --ignore-not-found=true
           resources:
             requests:
               cpu: 100m
