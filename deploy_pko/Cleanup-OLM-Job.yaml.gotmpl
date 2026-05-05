@@ -83,15 +83,14 @@ spec:
             - |
               #!/bin/sh
               set -euxo pipefail
-              # CUSTOMIZE: Update the label selector for your operator
-              # Example pattern: operators.coreos.com/OPERATOR_NAME.NAMESPACE
+              # Delete CSV
               oc -n {{ .config.namespace }} delete csv -l "operators.coreos.com/splunk-forwarder-operator.{{ .config.namespace }}" || true
-              
-              # CUSTOMIZE: Add any additional cleanup logic here
-              # Examples:
-              # - Delete subscriptions
-              # - Delete operator groups
-              # - Clean up custom resources
+
+              # Delete Subscription
+              oc -n {{ .config.namespace }} delete subscription openshift-splunk-forwarder-operator || true
+
+              # Delete CatalogSource
+              oc -n {{ .config.namespace }} delete catalogsource splunk-forwarder-operator-catalog || true
           resources:
             requests:
               cpu: 100m
