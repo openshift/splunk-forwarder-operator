@@ -87,11 +87,11 @@ spec:
               # Delete CSV
               oc -n openshift-splunk-forwarder-operator delete csv -l "operators.coreos.com/splunk-forwarder-operator.openshift-splunk-forwarder-operator" --ignore-not-found=true
 
-              # Delete Subscription
-              oc -n openshift-splunk-forwarder-operator delete subscription openshift-splunk-forwarder-operator --ignore-not-found=true
+              # Delete Subscription (specify API group to avoid ambiguity with OCM subscriptions)
+              oc -n openshift-splunk-forwarder-operator delete subscription.operators.coreos.com openshift-splunk-forwarder-operator --ignore-not-found=true
 
-              # Delete CatalogSource
-              oc -n openshift-splunk-forwarder-operator delete catalogsource splunk-forwarder-operator-catalog --ignore-not-found=true
+              # Delete CatalogSource (specify API group for consistency)
+              oc -n openshift-splunk-forwarder-operator delete catalogsource.operators.coreos.com splunk-forwarder-operator-catalog --ignore-not-found=true
           resources:
             requests:
               cpu: 100m
