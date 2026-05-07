@@ -83,14 +83,14 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "unable to list clusterrolebindings")
 		Expect(&clusterRoleBindings).Should(ContainItemWithPrefix(rolePrefix), "unable to find clusterrolebinding with prefix %s", rolePrefix)
 
+		ginkgo.By("checking the deployment exists and is available")
+		assertions.EventuallyDeployment(ctx, k8s, deploymentName, operatorNamespace)
+
 		ginkgo.By("checking the services exist")
 		for _, serviceName := range serviceNames {
 			err = k8s.Get(ctx, serviceName, operatorNamespace, &corev1.Service{})
 			Expect(err).Should(BeNil(), "unable to get service %s/%s", operatorNamespace, serviceName)
 		}
-
-		ginkgo.By("checking the deployment exists and is available")
-		assertions.EventuallyDeployment(ctx, k8s, deploymentName, operatorNamespace)
 
 		ginkgo.By("checking the operator lock file config map exists")
 		assertions.EventuallyConfigMap(ctx, k8s, operatorLockFile, operatorNamespace).WithTimeout(time.Duration(300)*time.Second).WithPolling(time.Duration(30)*time.Second).Should(Not(BeNil()), "configmap %s should exist", operatorLockFile)
