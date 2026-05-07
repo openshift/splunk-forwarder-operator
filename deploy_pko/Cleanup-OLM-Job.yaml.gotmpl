@@ -33,6 +33,7 @@ rules:
       - clusterserviceversions
       - subscriptions
       - catalogsources
+      - operatorgroups
     verbs:
       - list
       - get
@@ -92,6 +93,9 @@ spec:
 
               # Delete CatalogSource (specify API group for consistency)
               oc -n {{ .config.namespace }} delete catalogsource.operators.coreos.com splunk-forwarder-operator-catalog --ignore-not-found=true
+
+              # Delete OperatorGroup (specify API group for consistency)
+              oc -n {{ .config.namespace }} delete operatorgroup.operators.coreos.com splunk-forwarder-operator-og --ignore-not-found=true
           resources:
             requests:
               cpu: 100m
