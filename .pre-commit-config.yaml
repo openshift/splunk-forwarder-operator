@@ -1,5 +1,5 @@
 # =============================================================================
-# Pre-Commit Hooks — splunk-forwarder-operator
+# Tier 1 — Common Pre-Commit Hooks for OSD Operators
 # SREP-4485 | Golden rules: SREP-4450
 # =============================================================================
 #
@@ -40,30 +40,27 @@
 repos:
 
   # ---------------------------------------------------------------------------
-  # 1. FILE HYGIENE  |  target < 1s  |  auto-fix  |  golden rules 3, 8, 9
+  # 1. FILE HYGIENE + YAML SYNTAX  |  target < 2s  |  auto-fix + error
+  #    - check-merge-conflict: detects unresolved merge markers
+  #    - trailing-whitespace:  removes trailing spaces (auto-fix)
+  #    - end-of-file-fixer:    ensures single EOF newline (auto-fix)
+  #    - check-yaml:           validates YAML syntax in deploy/ manifests;
+  #                            mirrors ci/prow/lint: olm-deploy-yaml-validate
   # ---------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0                          # pinned immutable tag (golden rule 15)
+    rev: v5.0.0                          # pinned immutable tag
     hooks:
-      - id: check-merge-conflict         # error: merge markers must never exist
-      - id: trailing-whitespace          # auto-fix: removes trailing spaces
+      - id: check-merge-conflict
+      - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-      - id: end-of-file-fixer            # auto-fix: ensures single EOF newline
-
-  # ---------------------------------------------------------------------------
-  # 2. YAML SYNTAX  |  target < 2s  |  error  |  golden rules 3, 10
-  #    Mirrors ci/prow/lint: olm-deploy-yaml-validate (yaml.safe_load_all)
-  # ---------------------------------------------------------------------------
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
+      - id: end-of-file-fixer
       - id: check-yaml
         name: YAML syntax (deploy/)
         files: ^deploy/.*\.ya?ml$
         args: [--allow-multiple-documents]
 
   # ---------------------------------------------------------------------------
-  # 3. SECRETS DETECTION  |  target < 5s  |  always blocking  |  golden rules 3, 12
+  # 2. SECRETS DETECTION  |  target < 5s  |  always blocking
   #    Scans all file types (YAML, shell, config) — gosec covers Go only.
   #    High-confidence findings block; configure .gitleaks.toml for allowlist.
   # ---------------------------------------------------------------------------
@@ -73,9 +70,9 @@ repos:
       - id: gitleaks
 
   # ---------------------------------------------------------------------------
-  # 4. STATIC ANALYSIS  |  target < 15s cached  |  error  |  golden rules 3, 5, 10
+  # 3. STATIC ANALYSIS  |  target < 15s cached  |  error
   #    Mirrors ci/prow/lint: go-check exactly (same version + config as CI).
-  #    Linter config detail: boilerplate/openshift/golang-osd-operator/golangci.yml
+  #    Linter config: boilerplate/openshift/golang-osd-operator/golangci.yml
   # ---------------------------------------------------------------------------
   - repo: https://github.com/golangci/golangci-lint
     rev: v2.0.2                          # pinned immutable tag — must match CI (golden rule 15)
@@ -97,10 +94,10 @@ repos:
     hooks:
 
       # -----------------------------------------------------------------------
-      # 5. COMPILE CHECK  |  target < 10s cached  |  error  |  golden rules 3, 4
+      # 4. COMPILE CHECK  |  target < 10s cached  |  error
       #    Catches import cycles and type errors before golangci-lint runs.
+      #    Note: go build ./... writes no binary to the repo (compile check only).
       #    Fix: resolve compilation errors reported by go build.
-      #    Timeout: 30s (2x per-hook limit for macOS/slow cache warm-up)
       # -----------------------------------------------------------------------
       - id: go-build
         name: go build
@@ -110,27 +107,28 @@ repos:
         pass_filenames: false
 
       # -----------------------------------------------------------------------
-      # 6. DEPENDENCY DRIFT  |  target < 10s  |  error  |  golden rules 3, 5, 8
+      # 5. DEPENDENCY DRIFT  |  target < 10s  |  error
       #    Detects uncommitted go.mod/go.sum changes after go mod tidy.
       #    Fix: run 'go mod tidy' and stage go.mod and go.sum.
-      #    Timeout: 60s (2x per-hook limit; first run may download modules)
       # -----------------------------------------------------------------------
       - id: go-mod-tidy
         name: go mod tidy
         language: system
         entry: bash -c 'T=$(command -v timeout || command -v gtimeout || echo); ${T:+$T 60s} go mod tidy && git diff --exit-code go.mod go.sum'
-        files: go\.(mod|sum)$
+        files: '(\.go$|go\.(mod|sum)$)'
+        exclude: '^vendor/'
         pass_filenames: false
 
       # -----------------------------------------------------------------------
-      # 7. RBAC WILDCARD CHECK  |  target < 5s  |  always blocking  |  golden rules 3, 12
-      #    Rejects verbs: ["*"] or resources: ["*"] in deploy/ YAML manifests.
-      #    Critical for AI-generated RBAC — agents over-provision by default.
-      #    Fix: replace wildcard with explicit verbs and resource names.
+      # 6. RBAC WILDCARD CHECK  |  target < 5s  |  warn-only (blocking after cleanup)
+      #    Rejects wildcard RBAC in deploy/ manifests (verbs/resources: ["*"]
+      #    or multi-line - '*' format). Logic lives in standard.mk target
+      #    'rbac-wildcard-check' for readability and reuse.
+      #    Fix: replace wildcards with explicit verbs and resource names.
       # -----------------------------------------------------------------------
       - id: rbac-wildcard-check
         name: RBAC wildcard permissions
         language: system
-        entry: "python3 -c \"import sys,glob;violations=[(f,n,l.rstrip()) for f in glob.glob('deploy/*.yaml')+glob.glob('deploy/*.yml') for lines in [list(enumerate(open(f),1))] for i,(n,l) in enumerate(lines) if l.strip().lstrip('- ').strip(chr(39)+chr(34))=='*' and any(lines[j][1].strip() in ('verbs:','resources:') for j in range(max(0,i-5),i))];[print(v[0]+'|'+str(v[1])+'|'+v[2]) for v in violations];sys.exit(int(bool(violations)))\""
+        entry: bash -c 'make rbac-wildcard-check'
         files: ^deploy/.*\.ya?ml$
         pass_filenames: false
