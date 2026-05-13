@@ -24,8 +24,8 @@ const (
 // - useDigest: If true, the ImageDigest field is set.
 func splunkForwarderInstance(useDigest bool) *sfv1alpha1.SplunkForwarder {
 	spec := sfv1alpha1.SplunkForwarderSpec{
-		SplunkLicenseAccepted:  true,
-		Image:                  image,
+		SplunkLicenseAccepted: true,
+		Image:                 image,
 	}
 	if useDigest {
 		spec.ImageDigest = imageDigest

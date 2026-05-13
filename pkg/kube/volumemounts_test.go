@@ -28,8 +28,7 @@ func TestGetVolumeMounts(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test",
 					},
-					Spec: sfv1alpha1.SplunkForwarderSpec{
-					},
+					Spec: sfv1alpha1.SplunkForwarderSpec{},
 				},
 			},
 			want: []corev1.VolumeMount{
@@ -72,8 +71,7 @@ func TestGetVolumeMounts(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test",
 					},
-					Spec: sfv1alpha1.SplunkForwarderSpec{
-					},
+					Spec: sfv1alpha1.SplunkForwarderSpec{},
 				},
 				useHECToken: true,
 			},

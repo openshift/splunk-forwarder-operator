@@ -68,7 +68,7 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	// Fetch the SplunkForwarder instance
 	instance := &sfv1alpha1.SplunkForwarder{}
-	err := r.Client.Get(context.TODO(), request.NamespacedName, instance)
+	err := r.Client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -82,7 +82,7 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	// See if our Secret exists
 	secFound := &corev1.Secret{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: config.SplunkAuthSecretName, Namespace: request.Namespace}, secFound)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: config.SplunkAuthSecretName, Namespace: request.Namespace}, secFound)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -92,7 +92,7 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 		clusterid = instance.Spec.ClusterID
 	} else {
 		configFound := &configv1.Infrastructure{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: "cluster"}, configFound)
+		err = r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, configFound)
 		if err != nil {
 			r.ReqLogger.Info(err.Error())
 			clusterid = "openshift"
@@ -114,10 +114,10 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 
 		// Check if this ConfigMap already exists
 		cmFound := &corev1.ConfigMap{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
+		err = r.Client.Get(ctx, types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
 		if err != nil && errors.IsNotFound(err) {
 			r.ReqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
-			err = r.Client.Create(context.TODO(), configmap)
+			err = r.Client.Create(ctx, configmap)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
@@ -125,7 +125,7 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 			return reconcile.Result{}, err
 		} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(cmFound.GetAnnotations(), instance) {
 			r.ReqLogger.Info("Updating ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
-			err = r.Client.Update(context.TODO(), configmap)
+			err = r.Client.Update(ctx, configmap)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
@@ -154,17 +154,17 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 
 	// Check if this DaemonSet already exists
 	dsFound := &appsv1.DaemonSet{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: daemonSet.Name, Namespace: daemonSet.Namespace}, dsFound)
 	if err != nil && errors.IsNotFound(err) {
 		r.ReqLogger.Info("Creating a new DaemonSet", "DaemonSet.Namespace", daemonSet.Namespace, "DaemonSet.Name", daemonSet.Name)
-		err = r.Client.Create(context.TODO(), daemonSet)
+		err = r.Client.Create(ctx, daemonSet)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
 	} else if err != nil {
 		return reconcile.Result{}, err
 	} else if instance.CreationTimestamp.After(dsFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(dsFound.GetAnnotations(), instance) {
-		err = r.Client.Delete(context.TODO(), daemonSet)
+		err = r.Client.Delete(ctx, daemonSet)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
@@ -180,11 +180,11 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 	}
 
 	serviceFound := &corev1.Service{}
-	err = r.Client.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, serviceFound)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, serviceFound)
 
 	if err == nil {
 		r.ReqLogger.Info("Deleting the Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-		err = r.Client.Delete(context.TODO(), serviceFound)
+		err = r.Client.Delete(ctx, serviceFound)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
