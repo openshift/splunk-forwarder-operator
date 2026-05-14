@@ -29,6 +29,8 @@ spec:
     value: deploy_pko
   - name: skip-preflight-cert-check
     value: true
+  - name: image-expires-after
+    value: ""
   taskRunTemplate:
     serviceAccountName: build-pipeline-splunk-forwarder-operator-pko
   workspaces:
