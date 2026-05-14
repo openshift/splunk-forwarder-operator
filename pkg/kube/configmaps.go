@@ -12,7 +12,7 @@ import (
 
 // GenerateConfigMaps generates config maps based on the values in our CRD
 func GenerateConfigMaps(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName, clusterid string) []*corev1.ConfigMap {
-	ret := []*corev1.ConfigMap{}
+	ret := make([]*corev1.ConfigMap, 0, 2)
 
 	metadataCM := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
