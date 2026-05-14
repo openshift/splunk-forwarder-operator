@@ -30,6 +30,8 @@ spec:
     value: build/Dockerfile
   - name: path-context
     value: .
+  - name: image-expires-after
+    value: ""
   taskRunTemplate:
     serviceAccountName: build-pipeline-splunk-forwarder-operator
   workspaces:
