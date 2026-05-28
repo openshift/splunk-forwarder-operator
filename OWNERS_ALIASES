@@ -4,12 +4,12 @@
 # =============================================================================
 aliases:
   srep-functional-team-aurora:
-    - abyrne55
     - AlexSmithGH
+    - BATMAN-JD
     - dakotalongRH
     - eth1030
+    - geowa4
     - joshbranham
-    - luis-falcon
     - reedcort
   srep-functional-team-fedramp:
     - theautoroboto
@@ -73,7 +73,6 @@ aliases:
     - yiqinzhang
     - varunraokadaparthi
   srep-functional-leads:
-    - abyrne55
     - clcollins
     - bergmannf
     - theautoroboto
@@ -91,5 +90,4 @@ aliases:
     - maorfr
     - rogbas
   srep-architects:
-    - jharrington22
     - cblecker

@@ -172,10 +172,19 @@ docker-login:
 	mkdir -p ${CONTAINER_ENGINE_CONFIG_DIR}
 	@${CONTAINER_ENGINE} login -u="${REGISTRY_USER}" -p="${REGISTRY_TOKEN}" quay.io
 
+# Only lint new/changed code. In Prow CI, PULL_BASE_SHA points to the
+# base commit and is guaranteed to exist in the checkout (even shallow
+# clones). Locally, fall back to the default branch ref.
+ifdef PULL_BASE_SHA
+LINT_NEW_FROM_REV := $(PULL_BASE_SHA)
+else
+LINT_NEW_FROM_REV := $(shell git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/||')
+endif
+
 .PHONY: go-check
 go-check: ## Golang linting and other static analysis
 	${CONVENTION_DIR}/ensure.sh golangci-lint
-	${GOENV} GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c ${CONVENTION_DIR}/golangci.yml ./...
+	${GOENV} GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c ${CONVENTION_DIR}/golangci.yml $(if $(LINT_NEW_FROM_REV),--new-from-rev=$(LINT_NEW_FROM_REV)) ./...
 
 .PHONY: go-generate
 go-generate:
@@ -234,8 +243,28 @@ else
 	$(info Did not find 'config/default' - skipping kustomize manifest generation)
 endif
 
+.PHONY: sync-pko-crds
+sync-pko-crds:
+ifneq (,$(wildcard deploy_pko))
+	@if [ -d deploy/crds ]; then \
+		yq_yaml_flag=""; \
+		if $(YQ) --version 2>&1 | grep -qE "^yq [0-9]"; then \
+			yq_yaml_flag="-y"; \
+		fi; \
+		for crd in deploy/crds/*.yaml; do \
+			[ -f "$$crd" ] || continue; \
+			name=$$($(YQ) -r '.metadata.name' "$$crd"); \
+			$(YQ) $$yq_yaml_flag '.metadata.annotations["package-operator.run/phase"] = "crds" | .metadata.annotations["package-operator.run/collision-protection"] = "IfNoController"' \
+				"$$crd" > "deploy_pko/CustomResourceDefinition-$$name.yaml"; \
+			echo "Synced CRD $$name to deploy_pko/"; \
+		done; \
+	fi
+else
+	$(info deploy_pko/ not found - skipping PKO CRD sync)
+endif
+
 .PHONY: generate
-generate: op-generate go-generate openapi-generate manifests
+generate: op-generate go-generate openapi-generate manifests sync-pko-crds
 
 ifeq (${FIPS_ENABLED}, true)
 go-build: ensure-fips
@@ -379,6 +408,23 @@ validate: boilerplate-freeze-check generate-check validate-pko-fixtures
 # lint: Perform static analysis.
 .PHONY: lint
 lint: olm-deploy-yaml-validate go-check
+
+# rbac-wildcard-check: Detect wildcard RBAC permissions in deploy/ manifests.
+# Checks both inline (verbs: ["*"]) and multi-line (- '*' under verbs/resources:)
+# formats. Called by the pre-commit rbac-wildcard-check hook.
+# Currently warn-only (exits 0) to avoid breaking repos with pre-existing wildcards.
+# Will become blocking once existing violations are resolved across the fleet.
+.PHONY: rbac-wildcard-check
+rbac-wildcard-check:
+	@python3 -c "\
+import sys,glob;\
+violations=[(f,n,l.rstrip()) for f in glob.glob('deploy/*.yaml')+glob.glob('deploy/*.yml') \
+for lines in [list(enumerate(open(f),1))] \
+for i,(n,l) in enumerate(lines) \
+if l.strip().lstrip('- ').strip(chr(39)+chr(34))=='*' \
+and any(lines[j][1].strip() in ('verbs:','resources:') for j in range(max(0,i-5),i))];\
+[print('WARNING: wildcard RBAC found: '+v[0]+'|'+str(v[1])+'|'+v[2]) for v in violations];\
+sys.exit(0)"
 
 # test: "Local" unit and functional testing.
 .PHONY: test
