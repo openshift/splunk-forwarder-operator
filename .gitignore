@@ -87,3 +87,4 @@ saas-splunk-forwarder-operator-bundle/
 ### IDE ###
 .idea/
 
+.work/
