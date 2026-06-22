@@ -90,3 +90,4 @@ saas-splunk-forwarder-operator-bundle/
 # Claude Code configuration files
 CLAUDE.md
 .claude/
+.work/
