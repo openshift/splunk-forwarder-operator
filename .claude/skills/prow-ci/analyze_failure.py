@@ -40,22 +40,19 @@ def analyze_build_log(log_file):
 
     # Stream and process line-by-line to avoid memory pressure
     with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
-        for line in f:
-            line_stripped = line.strip()
-
+        for i, line in enumerate(f):
             # Count pattern matches
             for pattern_name, pattern_regex in patterns.items():
                 if pattern_regex.search(line):
                     analysis['patterns'][pattern_name] += 1
 
-            # Extract error lines (limit collection to avoid memory issues)
-            # Use independent if statements to allow capturing multiple categories per line
+            # Record line numbers only — never store raw log content to avoid PII/secret leakage
             if len(analysis['errors']) < 10 and re.search(r'\bERROR\b', line, re.IGNORECASE):
-                analysis['errors'].append(line_stripped)
+                analysis['errors'].append(i + 1)
             if len(analysis['failures']) < 10 and re.search(r'\bFAIL(ED)?\b', line, re.IGNORECASE):
-                analysis['failures'].append(line_stripped)
+                analysis['failures'].append(i + 1)
             if len(analysis['warnings']) < 5 and re.search(r'\bWARNING\b', line, re.IGNORECASE):
-                analysis['warnings'].append(line_stripped)
+                analysis['warnings'].append(i + 1)
 
     # Remove patterns with zero occurrences
     analysis['patterns'] = {k: v for k, v in analysis['patterns'].items() if v > 0}
@@ -119,9 +116,7 @@ def generate_analysis_report(artifacts_dir):
             summary_parts.append(f"  - {pattern}: {count} occurrences")
 
     if report['build_log'] and report['build_log']['errors']:
-        summary_parts.append(f"\nTop Errors ({len(report['build_log']['errors'])}):")
-        for err in report['build_log']['errors'][:3]:
-            summary_parts.append(f"  - {err[:150]}")
+        summary_parts.append(f"\nError lines: {report['build_log']['errors'][:3]}")
 
     report['summary'] = '\n'.join(summary_parts)
 
@@ -153,14 +148,12 @@ def format_markdown_report(report):
 
         if bl['errors']:
             lines.append("## Errors")
-            for err in bl['errors']:
-                lines.append(f"- {err}")
+            lines.append(f"- {len(bl['errors'])} error line(s) at lines: {bl['errors']}")
             lines.append("")
 
         if bl['failures']:
             lines.append("## Failures")
-            for fail in bl['failures'][:5]:
-                lines.append(f"- {fail}")
+            lines.append(f"- {len(bl['failures'])} failure line(s) at lines: {bl['failures'][:5]}")
             lines.append("")
 
     return '\n'.join(lines)

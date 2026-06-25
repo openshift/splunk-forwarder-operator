@@ -93,9 +93,16 @@ if [[ $PREK_EXIT -eq 0 ]]; then
   exit 0
 fi
 
+# Extract only prek-structured hook/error lines — never forward raw tool output
+# which could contain secrets, env vars, or internal paths.
+SANITIZED_OUTPUT=$(echo "$PREK_OUTPUT" | grep -E "^(hook |Failed|Passed|ERROR|error|warning|Warning|\[)" | head -30)
+if [[ -z "$SANITIZED_OUTPUT" ]]; then
+  SANITIZED_OUTPUT="prek reported failures — run 'prek run --all-files --config hack/prek.ci.toml' locally to see details."
+fi
+
 # Block stop and tell Claude what to fix
 jq -n \
   --arg reason "prek validation failed. Fix the issues below, then try again:
 
-$PREK_OUTPUT" \
+$SANITIZED_OUTPUT" \
   '{"decision": "block", "reason": $reason}'
