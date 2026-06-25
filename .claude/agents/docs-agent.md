@@ -30,9 +30,9 @@ Documentation maintenance and synchronization for this operator.
 
 Update docs when:
 - **Make targets added/removed**: Update `DEVELOPMENT.md` and `CLAUDE.md`
-- **API types changed**: Update `docs/design.md`
+- **API types changed**: Update `DEVELOPMENT.md` and `CLAUDE.md`
 - **Test framework changes**: Update `TESTING.md`
-- **New dependencies**: Update `docs/development.md`
+- **New dependencies**: Update `DEVELOPMENT.md`
 - **Pre-commit hooks changed**: Update `CONTRIBUTING.md`
 - **Claude Code hooks changed** (`.claude/settings.json`): Update `.claude/hooks/README.md`
 - **Build process changed**: Update `DEVELOPMENT.md` and `CLAUDE.md`
@@ -91,7 +91,7 @@ When `prek.toml`, `hack/prek.ci.toml`, or `.claude/settings.json` changes, sync:
 
 ### Dependencies
 When `go.mod` changes (major versions), sync:
-- `docs/development.md` prerequisites
+- `DEVELOPMENT.md` prerequisites
 - `README.md` badges/requirements
 
 ## Documentation Style
@@ -160,7 +160,7 @@ make <target>
 ## Escalation Conditions
 
 Escalate to human when:
-- Major architectural docs need rewriting (`docs/design.md`)
+- Major architectural docs need rewriting (`DEVELOPMENT.md`, `CONTRIBUTING.md`)
 - Conflicting information across multiple docs
 - Command examples fail validation
 - Documentation strategy needs rethinking

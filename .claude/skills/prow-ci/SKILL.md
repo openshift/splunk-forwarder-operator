@@ -211,7 +211,7 @@ Many Prow jobs can be reproduced with:
 make go-test
 
 # For linting (matches: pull-ci-...-lint)
-make go-check
+make lint
 # OR use prek for comprehensive linting
 prek run --all-files
 

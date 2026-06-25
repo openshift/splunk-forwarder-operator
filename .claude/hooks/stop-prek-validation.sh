@@ -23,19 +23,20 @@ set -uo pipefail
 # Ensure we're running from the git repository root
 # This handles cases where Claude Code's CWD is in a subdirectory (e.g., .claude/skills/)
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-if [[ -z "$REPO_ROOT" ]]; then
-  jq -n '{"decision": "block", "reason": "Not in a git repository. Cannot run prek validation."}'
-  exit 0
-fi
-cd "$REPO_ROOT" || exit 1
 
-# Check for jq dependency
+# Check for jq dependency before any jq call
 if ! command -v jq &> /dev/null; then
   cat <<'EOF'
 {"decision": "block", "reason": "jq is not installed — required for hook processing.\n\nInstall it:\n  brew install jq         # macOS\n  apt-get install jq      # Debian/Ubuntu\n  yum install jq          # RHEL/CentOS\n\nRetry the action once installed."}
 EOF
   exit 0
 fi
+
+if [[ -z "$REPO_ROOT" ]]; then
+  jq -n '{"decision": "block", "reason": "Not in a git repository. Cannot run prek validation."}'
+  exit 0
+fi
+cd "$REPO_ROOT" || exit 1
 
 HOOK_INPUT=$(cat)
 
@@ -77,14 +78,14 @@ fi
 
 # Run prek validation (using CI config to skip network-dependent hooks)
 # Validate changed files (staged + unstaged + untracked)
-CHANGED_FILES=$(git diff --name-only --diff-filter=d HEAD; git ls-files --others --exclude-standard)
+CHANGED_FILES=$(git diff -z --name-only --diff-filter=d HEAD; git ls-files -z --others --exclude-standard)
 if [[ -z "$CHANGED_FILES" ]]; then
   # No files changed, but we're here because git status showed changes
   # Fall back to --all-files to catch any edge cases
   PREK_OUTPUT=$(prek run --all-files --config hack/prek.ci.toml 2>&1)
 else
-  # Pass changed files explicitly to prek
-  PREK_OUTPUT=$(echo "$CHANGED_FILES" | xargs prek run --config hack/prek.ci.toml --files 2>&1)
+  # Pass changed files explicitly to prek via NUL-delimited list (handles spaces in filenames)
+  PREK_OUTPUT=$(printf '%s' "$CHANGED_FILES" | xargs -0 prek run --config hack/prek.ci.toml --files 2>&1)
 fi
 PREK_EXIT=$?
 

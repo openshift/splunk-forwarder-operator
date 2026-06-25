@@ -70,6 +70,9 @@ def download_from_gcs(gcs_path, local_path):
         ]
         subprocess.run(cmd, check=True, capture_output=True)
         return True
+    except FileNotFoundError:
+        print("Error: 'gcloud' binary not found. Install the Google Cloud SDK and ensure it is on your PATH.", file=sys.stderr)
+        return False
     except subprocess.CalledProcessError as e:
         print(f"Warning: Could not download {gcs_path}: {e.stderr.decode()}", file=sys.stderr)
         return False
@@ -84,7 +87,7 @@ def fetch_prowjob_json(gcs_base_path, output_dir):
         try:
             with open(local_path, 'r') as f:
                 return json.load(f)
-        except json.JSONDecodeError as e:
+        except (json.JSONDecodeError, OSError) as e:
             print(f"Error: Could not parse JSON from {local_path}: {e}", file=sys.stderr)
             return None
     return None

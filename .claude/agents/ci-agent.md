@@ -49,19 +49,19 @@ CI/CD validation and workflow integrity for this operator.
 
 **Parity validation:**
 ```bash
-# Check pre-commit uses same golangci-lint version as CI
-grep "rev:" .pre-commit-config.yaml | grep golangci-lint
+# Check prek uses same golangci-lint version as CI
+grep "rev" prek.toml | grep golangci-lint
 # Should match version in boilerplate pipeline
 
 # Check gitleaks version
-grep "rev:" .pre-commit-config.yaml | grep gitleaks
+grep "rev" prek.toml | grep gitleaks
 ```
 
 ### Running Full CI Locally
 
 ```bash
 # Lint (same as CI)
-make go-check
+make lint
 
 # Tests (same environment as CI)
 boilerplate/_lib/container-make go-test
@@ -70,7 +70,7 @@ boilerplate/_lib/container-make go-test
 make docker-build
 
 # Full validation
-prek run --all
+prek run --all-files --config hack/prek.ci.toml
 make go-test
 make go-build
 ```

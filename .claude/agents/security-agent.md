@@ -205,8 +205,8 @@ Escalate for review when:
 
 ## Integration Points
 
-- **Pre-commit**: gitleaks runs automatically
-- **CI**: Tekton runs gitleaks and gosec
+- **Pre-commit**: gitleaks runs automatically via prek
+- **CI**: Tekton runs gosec (via golangci-lint); gitleaks is local-only
 - **RBAC check**: Custom make target
 - **Manual**: Run before modifying security-critical code
 

@@ -47,15 +47,10 @@ regexes = [
 # Example: "commit:abc123def456..."
 commits = []
 
-# Stopwords that appear in code but aren't secrets
+# Stopwords scoped tightly to avoid suppressing real detections
 stopwords = [
-  "example",
-  "test",
-  "fake",
-  "dummy",
-  "placeholder",
-  "sample",
-  "mock",
+  "REDACTED",
+  "REPLACE_ME",
 ]
 
 # =============================================================================

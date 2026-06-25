@@ -29,6 +29,10 @@ Automated testing and test quality assurance for this operator.
 ```bash
 # Changed Go files
 CHANGED_FILES=$(git diff --name-only HEAD | grep "\.go$")
+if [ -z "${CHANGED_FILES}" ]; then
+  echo "No changed Go files; skipping targeted tests."
+  exit 0
+fi
 
 # Extract packages
 PACKAGES=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | tr '\n' ' ')
