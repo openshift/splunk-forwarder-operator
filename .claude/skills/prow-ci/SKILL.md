@@ -45,16 +45,16 @@ When invoked, this skill:
    - **Note**: Script is optimized to only download essential files. Optional artifacts (JUnit XML, per-target logs) are skipped as build-log.txt contains all needed information.
 
 2. **Analyzes failures** using `analyze_failure.py`:
-   - Parses build-log.txt for error patterns
-   - Detects common failure patterns (lint, build, timeout, OOM)
-   - Extracts error messages and stack traces
-   - Identifies compilation errors and test failures
+   - Matches build-log.txt lines against regex patterns for known failure types
+   - Detects pattern categories: lint, build, timeout, OOM, image pull, permission errors
+   - Records **line numbers only** — raw log content is never stored to avoid PII/secret leakage
+   - Does not extract error messages, stack traces, or log text
 
 3. **Generates report**:
    - Markdown format with failure summary
-   - Pattern detection (compilation errors, lint failures, timeouts)
-   - Top error messages and failures
-   - Actionable failure details
+   - Pattern hit counts per category (compilation errors, lint failures, timeouts, etc.)
+   - Line number references for errors, failures, and warnings (not the log text itself)
+   - Claude synthesizes the diagnosis by reading the raw log directly
 
 ## Usage Instructions
 
