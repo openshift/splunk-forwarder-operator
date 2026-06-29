@@ -150,6 +150,7 @@ HIGH_RISK_PATTERNS=(
   ".claude/settings.json"
   ".claude/hooks/*"
   ".claude/agents/*"
+  ".claude/skills/*"
 )
 
 for pattern in "${HIGH_RISK_PATTERNS[@]}"; do

@@ -24,7 +24,8 @@ set -uo pipefail
 # This handles cases where Claude Code's CWD is in a subdirectory (e.g., .claude/skills/)
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 
-# Check for jq dependency before any jq call
+# Check for jq dependency before any jq call.
+# Use cat+heredoc here (not jq) because jq isn't available yet.
 if ! command -v jq &> /dev/null; then
   cat <<'EOF'
 {"decision": "block", "reason": "jq is not installed — required for hook processing.\n\nInstall it:\n  brew install jq         # macOS\n  apt-get install jq      # Debian/Ubuntu\n  yum install jq          # RHEL/CentOS\n\nRetry the action once installed."}
@@ -77,15 +78,22 @@ Retry the action once installed so validation can run." \
 fi
 
 # Run prek validation (using CI config to skip network-dependent hooks)
-# Validate changed files (staged + unstaged + untracked)
-CHANGED_FILES=$(git diff -z --name-only --diff-filter=d HEAD; git ls-files -z --others --exclude-standard)
-if [[ -z "$CHANGED_FILES" ]]; then
+# Validate changed files (staged + unstaged + untracked).
+# Use a temp file to preserve NUL delimiters — bash variables cannot hold NUL
+# bytes, so storing NUL-delimited output in a variable silently breaks filenames
+# that contain spaces.
+CHANGED_FILES_TMP=$(mktemp)
+trap 'rm -f "$CHANGED_FILES_TMP"' EXIT
+git diff -z --name-only --diff-filter=d HEAD > "$CHANGED_FILES_TMP"
+git ls-files -z --others --exclude-standard >> "$CHANGED_FILES_TMP"
+
+if [[ ! -s "$CHANGED_FILES_TMP" ]]; then
   # No files changed, but we're here because git status showed changes
   # Fall back to --all-files to catch any edge cases
   PREK_OUTPUT=$(prek run --all-files --config hack/prek.ci.toml 2>&1)
 else
-  # Pass changed files explicitly to prek via NUL-delimited list (handles spaces in filenames)
-  PREK_OUTPUT=$(printf '%s' "$CHANGED_FILES" | xargs -0 prek run --config hack/prek.ci.toml --files 2>&1)
+  # Pass changed files explicitly to prek via NUL-delimited temp file
+  PREK_OUTPUT=$(xargs -0 -a "$CHANGED_FILES_TMP" prek run --config hack/prek.ci.toml --files 2>&1)
 fi
 PREK_EXIT=$?
 

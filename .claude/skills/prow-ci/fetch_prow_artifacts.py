@@ -58,6 +58,15 @@ def parse_prow_url(url):
     }
 
 
+def check_gcloud():
+    """Verify gcloud binary is available before attempting any downloads."""
+    if subprocess.run(['which', 'gcloud'], capture_output=True).returncode != 0:
+        print("Error: 'gcloud' binary not found. Install the Google Cloud SDK and ensure it is on your PATH.", file=sys.stderr)
+        print("  https://cloud.google.com/sdk/docs/install", file=sys.stderr)
+        return False
+    return True
+
+
 def download_from_gcs(gcs_path, local_path):
     """Download a file from GCS using gcloud storage cp."""
     try:
@@ -70,8 +79,8 @@ def download_from_gcs(gcs_path, local_path):
         ]
         subprocess.run(cmd, check=True, capture_output=True)
         return True
-    except FileNotFoundError:
-        print("Error: 'gcloud' binary not found. Install the Google Cloud SDK and ensure it is on your PATH.", file=sys.stderr)
+    except OSError as e:
+        print(f"Error: Filesystem error for {local_path}: {e}", file=sys.stderr)
         return False
     except subprocess.CalledProcessError as e:
         print(f"Warning: Could not download {gcs_path}: {e.stderr.decode()}", file=sys.stderr)
@@ -109,6 +118,10 @@ def main():
                         help='Output directory (default: .work/prow-artifacts)')
 
     args = parser.parse_args()
+
+    # Fail fast if gcloud is not on PATH
+    if not check_gcloud():
+        return 1
 
     # Parse URL
     try:

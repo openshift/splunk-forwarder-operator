@@ -32,26 +32,23 @@ paths = [
   '''zz_generated\..*\.go''',
 ]
 
-# Allow specific test values that look like secrets but aren't
+# Allow values that are clearly placeholders — anchored so only the exact
+# placeholder value (not substrings of real secrets) is suppressed.
 regexes = [
-  '''(?i)fake[_-]?token''',
-  '''(?i)test[_-]?secret''',
-  '''(?i)example[_-]?key''',
-  '''(?i)dummy[_-]?password''',
-  '''(?i)placeholder''',
-  '''AKIAIOSFODNN7EXAMPLE''',  # AWS example from docs
+  '''(?i)^fake[_-]?token$''',
+  '''(?i)^test[_-]?secret$''',
+  '''(?i)^example[_-]?key$''',
+  '''(?i)^dummy[_-]?password$''',
+  '''(?i)^placeholder$''',
+  '''^AKIAIOSFODNN7EXAMPLE$''',  # AWS example from docs
+  '''^REDACTED$''',
+  '''^REPLACE_ME$''',
 ]
 
 # Specific commit hashes that were already reviewed and accepted
 # Format: "commit:<hash>"
 # Example: "commit:abc123def456..."
 commits = []
-
-# Stopwords scoped tightly to avoid suppressing real detections
-stopwords = [
-  "REDACTED",
-  "REPLACE_ME",
-]
 
 # =============================================================================
 # CUSTOM RULES (this operator specific)

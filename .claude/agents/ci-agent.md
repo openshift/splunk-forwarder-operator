@@ -50,11 +50,11 @@ CI/CD validation and workflow integrity for this operator.
 **Parity validation:**
 ```bash
 # Check prek uses same golangci-lint version as CI
-grep "rev" prek.toml | grep golangci-lint
+grep "rev" hack/prek.ci.toml | grep golangci-lint
 # Should match version in boilerplate pipeline
 
 # Check gitleaks version
-grep "rev" prek.toml | grep gitleaks
+grep "rev" hack/prek.ci.toml | grep gitleaks
 ```
 
 ### Running Full CI Locally

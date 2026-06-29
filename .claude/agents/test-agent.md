@@ -36,6 +36,10 @@ fi
 
 # Extract packages
 PACKAGES=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | tr '\n' ' ')
+if [ -z "${PACKAGES}" ]; then
+  echo "No Go packages identified; skipping targeted tests."
+  exit 0
+fi
 
 # Run targeted tests
 for pkg in $PACKAGES; do

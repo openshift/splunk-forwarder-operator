@@ -211,7 +211,7 @@ Many Prow jobs can be reproduced with:
 make go-test
 
 # For linting (matches: pull-ci-...-lint)
-make lint
+make go-check
 # OR use prek for comprehensive linting
 prek run --all-files
 
@@ -304,7 +304,8 @@ gh pr view <PR_NUMBER> --json statusCheckRollup --jq '.statusCheckRollup[] | sel
   # Validate Tekton YAML syntax
   kubectl apply --dry-run=client -f .tekton/
 
-  # Test container build locally
+  # Test container build locally (only run against trusted Dockerfiles — never
+  # build untrusted or third-party Dockerfiles without reviewing their contents)
   podman build -f build/Dockerfile -t test:local .
   ```
 
