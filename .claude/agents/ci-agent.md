@@ -143,8 +143,8 @@ yamllint .tekton/*.yaml
 # Check pipeline references
 grep "pipelineRef:" .tekton/*.yaml
 
-# Compare pre-commit and CI tools
-diff <(grep "rev:" .pre-commit-config.yaml) <(echo "# CI versions from boilerplate")
+# Compare prek hook versions between dev and CI configs
+diff <(grep "rev" prek.toml) <(grep "rev" hack/prek.ci.toml)
 
 # Test container build (same as CI)
 make docker-build

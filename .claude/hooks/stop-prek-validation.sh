@@ -27,6 +27,9 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 # Check for jq dependency before any jq call.
 # Use cat+heredoc here (not jq) because jq isn't available yet.
 if ! command -v jq &> /dev/null; then
+  # exit 0 here: the Claude Code hook runner reads stdout for the JSON decision,
+  # not the exit code. The {"decision":"block"} on stdout is what prevents the
+  # stop; exit 0 just avoids a confusing non-zero exit alongside the block JSON.
   cat <<'EOF'
 {"decision": "block", "reason": "jq is not installed — required for hook processing.\n\nInstall it:\n  brew install jq         # macOS\n  apt-get install jq      # Debian/Ubuntu\n  yum install jq          # RHEL/CentOS\n\nRetry the action once installed."}
 EOF

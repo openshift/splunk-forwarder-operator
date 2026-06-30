@@ -24,6 +24,8 @@ def parse_prow_url(url):
         - job_name: Name of the Prow job
     """
     # Handle both gcsweb URLs and direct GCS URLs
+    if not url.startswith(('http://', 'https://')):
+        raise ValueError("URL must start with http:// or https://")
     if 'test-platform-results' not in url:
         raise ValueError("URL must contain 'test-platform-results'")
 

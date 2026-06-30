@@ -24,7 +24,7 @@ Documentation maintenance and synchronization for this operator.
 - `DEVELOPMENT.md`: Developer commands
 - `TESTING.md`: Testing guidelines
 - `CLAUDE.md`: AI agent guidance
-- `docs/*.md`: Design docs, testing guides
+- `TESTING.md`: Testing guidelines
 
 ## Update Triggers
 
@@ -182,7 +182,7 @@ find . -name "*.md" -not -path "./vendor/*" -not -path "./.git/*"
 grep '```bash' *.md | grep 'make ' | sed 's/.*make \([a-z-]*\).*/\1/' | sort -u
 
 # Check for dead links (manual review)
-grep -r '\[.*\](' *.md docs/*.md
+grep -r '\[.*\](' *.md
 ```
 
 ## Output Format

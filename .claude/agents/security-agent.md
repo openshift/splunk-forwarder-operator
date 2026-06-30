@@ -212,7 +212,7 @@ Escalate for review when:
 
 ## FIPS Compliance
 
-this operator requires FIPS 140-2 compliance:
+The splunk-forwarder-operator requires FIPS 140-2 compliance:
 - All crypto operations must use validated libraries
 - No weak algorithms (MD5, SHA1, DES)
 - TLS 1.2+ only

@@ -7,8 +7,8 @@ Thank you for your interest in contributing to the Splunk Forwarder Operator pro
 1. **Setup**: Install Go 1.25+, operator-sdk v1.21.0
 2. **Install hooks**: `prek install`
 3. **Build**: `make go-build`
-5. **Test**: `make go-test`
-6. **Lint**: `make go-check`
+4. **Test**: `make go-test`
+5. **Lint**: `make go-check`
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md) for detailed setup instructions.
 
@@ -16,7 +16,7 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) for detailed setup instructions.
 
 All contributions must pass:
 
-1. **Formatting & linting**: `prek run --all`
+1. **Formatting & linting**: `prek run --all-files`
 2. **Unit tests**: `make go-test`
 3. **Build verification**: `make go-build`
 4. **Security scan**: Automatic via prek (gitleaks)
@@ -33,7 +33,7 @@ git checkout -b feature/my-change
 # Add/update tests for your changes
 
 # Run validation locally
-prek run --all
+prek run --all-files
 make go-test
 
 # Commit with descriptive message
