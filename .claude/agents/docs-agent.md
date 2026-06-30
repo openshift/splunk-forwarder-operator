@@ -24,7 +24,6 @@ Documentation maintenance and synchronization for this operator.
 - `DEVELOPMENT.md`: Developer commands
 - `TESTING.md`: Testing guidelines
 - `CLAUDE.md`: AI agent guidance
-- `TESTING.md`: Testing guidelines
 
 ## Update Triggers
 

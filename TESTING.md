@@ -4,8 +4,8 @@ Testing guidelines for the Splunk Forwarder Operator.
 
 ## Framework
 
-- **Ginkgo v2**: BDD testing framework
-- **Gomega**: Matchers and assertions
+- **Standard Go testing**: Unit and controller tests use the standard `testing` package
+- **Ginkgo v2 / Gomega**: Used only in `test/e2e/` for end-to-end tests
 - **GoMock**: Interface mocking
 - **envtest**: Kubernetes API server for controller testing
 
@@ -15,17 +15,14 @@ Testing guidelines for the Splunk Forwarder Operator.
 # Run all tests
 make go-test
 
-# Run tests with Ginkgo runner
-ginkgo -r ./...
-
 # Run specific package
 go test ./controllers/splunkforwarder/
 
-# Verbose output
-ginkgo -v ./...
+# Run specific test by name
+go test -run TestReconcile ./controllers/splunkforwarder/
 
-# Run focused test
-ginkgo -focus="NetworkPolicy" ./controllers/splunkforwarder/
+# Verbose output
+go test -v ./...
 
 # Container-based (CI parity)
 boilerplate/_lib/container-make go-test
@@ -61,9 +58,9 @@ var _ = Describe("MyFeature", func() {
 ### Bootstrapping Tests
 
 ```bash
-cd pkg/newpackage
-ginkgo bootstrap              # Creates suite
-ginkgo generate myfile.go     # Creates test file
+# Standard Go test file alongside source
+touch pkg/newpackage/newpackage_test.go
+# Use `testing.T` in test functions; see existing *_test.go files for patterns
 ```
 
 ### Mocking Interfaces
@@ -193,17 +190,17 @@ go tool cover -html=coverage.out -o coverage.html
 ## Debugging Tests
 
 ```bash
-# Verbose Ginkgo output
-ginkgo -v ./...
+# Verbose output
+go test -v ./...
 
 # Print statements in tests
-fmt.Fprintf(GinkgoWriter, "Debug: %v\n", value)
+t.Logf("Debug: %v", value)
 
-# Skip flaky tests temporarily
-ginkgo -skip="FlakyTest" ./...
+# Run single test by name
+go test -v -run "TestMyFunction" ./pkg/kube/
 
-# Run single test
-ginkgo -focus="exact test name" ./...
+# Skip specific test
+go test -v -run "^(?!TestFlaky)" ./...
 ```
 
 ## CI Expectations

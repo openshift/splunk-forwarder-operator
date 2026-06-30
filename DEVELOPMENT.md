@@ -30,15 +30,15 @@ make docker-build             # Build container image
 
 ### Test
 ```bash
-make go-test                  # Run all unit tests
-go test ./controllers/splunkforwarder/...  # Test specific package
-ginkgo -r ./controllers/      # Run controller tests with Ginkgo
+make go-test                              # Run all unit tests
+go test ./controllers/splunkforwarder/... # Test specific package
+go test ./pkg/kube/...                    # Test kube utilities
 ```
 
 ### Lint
 ```bash
 make go-check                 # Full linting (golangci-lint)
-prek run --all                # Run all prek hooks
+prek run --all-files          # Run all prek hooks
 prek run golangci-lint        # Lint only
 ```
 
@@ -91,14 +91,14 @@ make go-test                  # Full test suite
 ## Targeted Testing
 
 ```bash
-# Run specific test
-ginkgo -focus="NetworkPolicy" ./controllers/splunkforwarder/
+# Run specific test by name
+go test -v -run TestReconcile ./controllers/splunkforwarder/
 
 # Run tests for one package
 go test -v ./controllers/splunkforwarder/
 
-# Skip slow tests during development
-ginkgo -skip="E2E" -r ./...
+# Run with race detector
+go test -race ./controllers/...
 ```
 
 ## Debugging
@@ -110,8 +110,8 @@ OSDK_FORCE_RUN_MODE="local" go run ./main.go --zap-log-level=debug
 # Print specific package logs
 go test -v ./pkg/... 2>&1 | grep "MyFunction"
 
-# Ginkgo verbose output
-ginkgo -v ./...
+# Verbose test output
+go test -v ./...
 ```
 
 ## Dependency Management
@@ -137,7 +137,7 @@ go mod verify
 - **API Types**: `api/v1alpha1/` - CRD definitions
 - **Controllers**: `controllers/{splunkforwarder,secret}/` - Reconciliation logic
 - **Business Logic**: `controllers/splunkforwarder/` - Resource management
-- **Tests**: `*_test.go` alongside source, `*_suite_test.go` for Ginkgo
+- **Tests**: `*_test.go` alongside source (standard Go testing); Ginkgo only in `test/e2e/`
 - **E2E**: `test/e2e/` - End-to-end tests
 
 ## CI Parity
@@ -148,7 +148,7 @@ Local prek hooks mirror Tekton CI checks:
 - **go-test** ↔ Unit test job
 - **gitleaks** ↔ Security scanning
 
-Run `prek run --all` before pushing to catch CI failures early.
+Run `prek run --all-files` before pushing to catch CI failures early.
 
 ## Boilerplate Integration
 

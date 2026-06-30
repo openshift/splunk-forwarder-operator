@@ -70,7 +70,7 @@ gh pr view <PR_NUMBER> --json statusCheckRollup --jq '.statusCheckRollup[] | sel
 
 Example Prow job URL:
 ```text
-https://prow.ci.openshift.org/view/gs/test-platform-results/pr-logs/pull/openshift_splunk_forwarder_operator/<PR_NUMBER>/pull-ci-openshift-splunk-forwarder-operator-master-lint/<BUILD_ID>
+https://prow.ci.openshift.org/view/gs/test-platform-results/pr-logs/pull/openshift_splunk-forwarder-operator/<PR_NUMBER>/pull-ci-openshift-splunk-forwarder-operator-master-lint/<BUILD_ID>
 ```
 
 ### Step 2: Fetch and Analyze
@@ -101,8 +101,7 @@ Output includes:
 Create a clear summary for the user with:
 - Root cause identification based on pattern counts and line references
 - Detected patterns (lint, build, timeout, etc.)
-- Actionable next steps (read the raw log at the referenced line numbers)
-- Actionable next steps to fix the issue
+- Actionable next steps: read the raw log at the referenced line numbers and propose a fix
 
 ### Example Workflow
 
@@ -114,7 +113,7 @@ gh pr checks <PR_NUMBER> | grep lint
 
 # 2. Fetch artifacts
 python3 .claude/skills/prow-ci/fetch_prow_artifacts.py \
-  "https://prow.ci.openshift.org/view/gs/test-platform-results/pr-logs/pull/openshift_splunk_forwarder_operator/<PR_NUMBER>/pull-ci-openshift-splunk-forwarder-operator-master-lint/<BUILD_ID>"
+  "https://prow.ci.openshift.org/view/gs/test-platform-results/pr-logs/pull/openshift_splunk-forwarder-operator/<PR_NUMBER>/pull-ci-openshift-splunk-forwarder-operator-master-lint/<BUILD_ID>"
 
 # 3. Analyze
 python3 .claude/skills/prow-ci/analyze_failure.py \
@@ -145,12 +144,12 @@ gh pr checks PR_NUMBER
 ### 2. Access Build Logs
 
 Prow logs are stored at:
-- **Pull request jobs**: `gs://test-platform-results/pr-logs/pull/openshift_splunk_forwarder_operator/[PR_NUMBER]/[JOB_NAME]/[JOB_ID]`
+- **Pull request jobs**: `gs://test-platform-results/pr-logs/pull/openshift_splunk-forwarder-operator/[PR_NUMBER]/[JOB_NAME]/[JOB_ID]`
 - **Periodic jobs**: `gs://test-platform-results/logs/[JOB_NAME]/[JOB_ID]`
 
 **Viewing logs via web**:
 ```text
-https://prow.ci.openshift.org/view/gs/test-platform-results/pr-logs/pull/openshift_splunk_forwarder_operator/[PR_NUMBER]/[JOB_NAME]/[JOB_ID]
+https://prow.ci.openshift.org/view/gs/test-platform-results/pr-logs/pull/openshift_splunk-forwarder-operator/[PR_NUMBER]/[JOB_NAME]/[JOB_ID]
 ```
 
 ### 3. Analyze Test Failures
@@ -278,7 +277,7 @@ gh pr view <PR_NUMBER> --json statusCheckRollup --jq '.statusCheckRollup[] | sel
 - Check both Prow AND Tekton - this repo uses both systems
 - Prow jobs: `pull-ci-openshift-splunk-forwarder-operator-master-*`
 - Tekton jobs: Usually show as "Tekton" or pipeline names in PR checks
-- Verify repo name format in Prow: `openshift_splunk_forwarder_operator` (underscore, not dash)
+- Verify repo name format in Prow: `openshift_splunk-forwarder-operator` (org uses underscore separator, repo name retains dashes)
 - Ensure PR has been opened and CI has run
 
 ### Logs show permission denied?

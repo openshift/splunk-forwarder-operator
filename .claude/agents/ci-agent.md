@@ -25,6 +25,8 @@ CI/CD validation and workflow integrity for this operator.
 - `splunk-forwarder-operator-push.yaml`: Main branch builds
 - `splunk-forwarder-operator-pko-pull-request.yaml`: PKO validation
 - `splunk-forwarder-operator-pko-push.yaml`: PKO deployment
+- `splunk-forwarder-operator-e2e-pull-request.yaml`: E2E test PR validation
+- `splunk-forwarder-operator-e2e-push.yaml`: E2E test main branch builds
 
 **Pipeline Stages:**
 1. Checkout code
@@ -234,7 +236,7 @@ Escalate to human when:
 - Boilerplate update breaks CI
 - New required check needs adding
 - Pipeline execution time >10 minutes
-- Conflux/Tekton infrastructure issues
+- Konflux/Tekton infrastructure issues
 
 ## Output Format
 

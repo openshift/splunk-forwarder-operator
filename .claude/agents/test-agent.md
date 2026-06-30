@@ -64,11 +64,11 @@ make go-test
 # Specific package
 go test -v ./controllers/splunkforwarder/
 
-# Focused test
-ginkgo -focus="NetworkPolicy" ./controllers/splunkforwarder/
+# Focused test by name
+go test -v -run TestReconcile ./controllers/splunkforwarder/
 
 # Verbose output
-ginkgo -v ./...
+go test -v ./...
 
 # Coverage
 go test -coverprofile=coverage.out ./...
@@ -98,8 +98,8 @@ boilerplate/_lib/container-make go-test
 # Run test multiple times to detect flakiness
 for i in {1..5}; do go test ./pkg/mypackage || break; done
 
-# Verbose Ginkgo output
-ginkgo -v -trace ./pkg/mypackage
+# Verbose output with test names
+go test -v ./pkg/mypackage
 
 # Race detector
 go test -race ./pkg/mypackage

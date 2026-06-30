@@ -9,6 +9,8 @@
 #   2. If installed, ensures git hooks are wired up (prek install)
 #   3. Provides helpful guidance if prek is missing
 #
+# -e (errexit) intentionally omitted: this hook must never block a session start.
+# All error paths exit 0 so Claude Code always starts even if prek is unavailable.
 set -uo pipefail
 
 # Ensure we're running from the git repository root

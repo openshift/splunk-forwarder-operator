@@ -144,7 +144,7 @@ Examples:
 
 ## Questions?
 
-- Check existing documentation in [docs/](./docs/)
+- Check existing documentation: [DEVELOPMENT.md](./DEVELOPMENT.md), [TESTING.md](./TESTING.md)
 - Review similar PRs for patterns
 - Ask in PR comments for clarification
 
