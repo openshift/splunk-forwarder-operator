@@ -2,11 +2,11 @@
 # https://github.com/gitleaks/gitleaks
 #
 # Purpose: Detect hardcoded secrets, credentials, and sensitive data
-# Integration: Runs in pre-commit hook and Tekton CI
+# Integration: Runs via prek and Tekton CI
 #
 # Usage:
 #   gitleaks detect --source . --verbose
-#   pre-commit run gitleaks
+#   prek run gitleaks
 #
 
 title = "gitleaks config for this operator"

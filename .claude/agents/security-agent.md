@@ -22,7 +22,7 @@ Security scanning and policy enforcement for this operator.
 
 #### 1. Secret Scanning
 ```bash
-# Gitleaks (runs in pre-commit)
+# Gitleaks (runs via prek)
 prek run gitleaks
 
 # Manual scan
@@ -116,7 +116,7 @@ grep -r "password\s*:=\s*\"" --include="*.go" .
 Files requiring extra scrutiny:
 - `deploy/*.yaml` (RBAC, NetworkPolicy)
 - `*_rbac.go` (authorization logic)
-- `controllers/splunkforwarder/*_secret.go` (secret handling)
+- `controllers/secret/secret_controller.go` (secret handling)
 - `.tekton/*.yaml` (CI/CD pipelines)
 - `build/Dockerfile` (container security)
 

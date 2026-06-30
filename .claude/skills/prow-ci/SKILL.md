@@ -93,16 +93,15 @@ python3 .claude/skills/prow-ci/analyze_failure.py .work/prow-artifacts/<build-id
 
 Output includes:
 - Job information (name, state, URL)
-- Detected failure patterns (lint errors, build failures, timeouts)
-- Top error messages from build log
-- Failure details extracted from log
+- Detected failure patterns with occurrence counts (lint errors, build failures, timeouts)
+- Line numbers where errors/failures/warnings appear (raw log text is never stored)
 
 ### Step 4: Present Findings
 
 Create a clear summary for the user with:
-- Root cause identification
+- Root cause identification based on pattern counts and line references
 - Detected patterns (lint, build, timeout, etc.)
-- Key error messages
+- Actionable next steps (read the raw log at the referenced line numbers)
 - Actionable next steps to fix the issue
 
 ### Example Workflow
@@ -301,13 +300,15 @@ gh pr view <PR_NUMBER> --json statusCheckRollup --jq '.statusCheckRollup[] | sel
   - Auth failures → Secret configuration in `splunk-forwarder-operator-tenant` namespace
 - Local validation:
   ```bash
-  # Validate Tekton YAML syntax
+  # Validate Tekton YAML syntax (safe — read-only, no execution)
   kubectl apply --dry-run=client -f .tekton/
 
-  # Test container build locally (only run against trusted Dockerfiles — never
-  # build untrusted or third-party Dockerfiles without reviewing their contents)
-  podman build -f build/Dockerfile -t test:local .
+  # Inspect Dockerfile without building (read-only)
+  cat build/Dockerfile
   ```
+  > **Note**: Do not run `podman build` or `docker build` without explicit human
+  > confirmation — building a Dockerfile executes arbitrary instructions and may
+  > trigger network access. Prefer `--dry-run` and inspection steps instead.
 
 ## Advanced: CI Search
 
@@ -356,4 +357,4 @@ This repository uses Codecov for coverage tracking:
 - Use with **test-agent** to compare local test results with CI
 - Use with **ci-agent** to validate CI configuration
 - Use with **lint-agent** when investigating lint failures in CI
-- Use with **security-agent** when investigating pre-commit hook failures
+- Use with **security-agent** when investigating prek hook failures
