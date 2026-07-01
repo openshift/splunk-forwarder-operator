@@ -15,6 +15,8 @@ spec:
     metadata:
       labels:
         name: splunk-forwarder-operator
+      annotations:
+        openshift.io/required-scc: restricted-v2
     spec:
       serviceAccountName: splunk-forwarder-operator
       affinity:
@@ -46,3 +48,4 @@ spec:
               fieldPath: metadata.name
         - name: OPERATOR_NAME
           value: splunk-forwarder-operator
+        terminationMessagePolicy: FallbackToLogsOnError
