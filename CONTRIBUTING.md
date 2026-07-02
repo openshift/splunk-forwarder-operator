@@ -76,13 +76,13 @@ When using AI coding agents (Claude Code, GitHub Copilot, Cursor, etc.):
 Follow existing patterns:
 - Standard Go formatting (`gofmt`)
 - golangci-lint rules in `boilerplate/openshift/golang-osd-operator/golangci.yml`
-- Ginkgo/Gomega for tests
+- Standard Go `testing` package for unit/controller tests; Ginkgo only in `test/e2e/`
 - GoMock for interface mocking
 
 ## Testing Requirements
 
 - **Unit tests required** for all new functionality
-- Use Ginkgo BDD style: `Describe`, `Context`, `It`
+- Use standard `testing.T` style (see existing `*_test.go` files for patterns)
 - Mock external dependencies with GoMock
 - Aim for meaningful test coverage, not just metrics
 

@@ -9,7 +9,6 @@
       "Bash(go test ./...)",
       "Bash(go fmt ./...)",
       "Bash(go mod tidy)",
-      "Bash(ginkgo -r ./...)",
       "Bash(prek run)",
       "Bash(prek run *)",
       "Bash(prek install)",

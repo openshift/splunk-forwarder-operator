@@ -84,7 +84,7 @@ prek run                      # Lint staged files
 
 **Full validation (pre-PR):**
 ```bash
-prek run --all                # All hooks (~15-30s)
+prek run --all-files          # All hooks (~15-30s)
 make go-test                  # Full test suite
 ```
 

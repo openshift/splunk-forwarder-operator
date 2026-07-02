@@ -33,27 +33,27 @@ boilerplate/_lib/container-make go-test
 ### Test Structure
 
 Each package with tests includes:
-- `*_suite_test.go`: Ginkgo test suite setup
-- `*_test.go`: Actual test cases
+- `*_test.go`: Test cases using the standard `testing` package
 
 **Example:**
 ```go
-package mypackage_test
+package mypackage
 
 import (
-    . "github.com/onsi/ginkgo/v2"
-    . "github.com/onsi/gomega"
+    "testing"
 )
 
-var _ = Describe("MyFeature", func() {
-    Context("when condition X", func() {
-        It("should do Y", func() {
-            result := MyFunction()
-            Expect(result).To(Equal(expected))
-        })
-    })
-})
+func TestMyFeature(t *testing.T) {
+    result := MyFunction()
+    if result != expected {
+        t.Errorf("got %v, want %v", result, expected)
+    }
+}
 ```
+
+> **Note**: Ginkgo/Gomega is only used in `test/e2e/` (end-to-end tests). Unit
+> and controller tests use the standard `testing` package — see existing
+> `*_test.go` files in `controllers/` and `pkg/` for patterns.
 
 ### Bootstrapping Tests
 

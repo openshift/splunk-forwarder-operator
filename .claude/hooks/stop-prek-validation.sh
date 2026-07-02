@@ -96,7 +96,7 @@ if [[ ! -s "$CHANGED_FILES_TMP" ]]; then
   PREK_OUTPUT=$(prek run --all-files --config hack/prek.ci.toml 2>&1)
 else
   # Pass changed files explicitly to prek via NUL-delimited temp file
-  PREK_OUTPUT=$(xargs -0 -a "$CHANGED_FILES_TMP" prek run --config hack/prek.ci.toml --files 2>&1)
+  PREK_OUTPUT=$(< "$CHANGED_FILES_TMP" xargs -0 prek run --config hack/prek.ci.toml --files 2>&1)
 fi
 PREK_EXIT=$?
 

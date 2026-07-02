@@ -111,8 +111,6 @@ def fetch_build_log(gcs_base_path, output_dir):
     return download_from_gcs(gcs_path, local_path)
 
 
-
-
 def main():
     parser = argparse.ArgumentParser(description='Fetch Prow CI job artifacts from GCS')
     parser.add_argument('url', help='Prow job URL (gcsweb or direct GCS)')
