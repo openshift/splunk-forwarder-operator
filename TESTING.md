@@ -1,0 +1,270 @@
+# Testing Guide
+
+Testing guidelines for the Splunk Forwarder Operator.
+
+## Framework
+
+- **Standard Go testing**: Unit and controller tests use the standard `testing` package
+- **Ginkgo v2 / Gomega**: Used only in `test/e2e/` for end-to-end tests
+- **GoMock**: Interface mocking
+- **envtest**: Kubernetes API server for controller testing
+
+## Quick Commands
+
+```bash
+# Run all tests
+make go-test
+
+# Run specific package
+go test ./controllers/splunkforwarder/
+
+# Run specific test by name
+go test -run TestReconcile ./controllers/splunkforwarder/
+
+# Verbose output
+go test -v ./...
+
+# Container-based (CI parity)
+boilerplate/_lib/container-make go-test
+```
+
+## Writing Tests
+
+### Test Structure
+
+Each package with tests includes:
+- `*_test.go`: Test cases using the standard `testing` package
+
+**Example:**
+```go
+package mypackage
+
+import (
+    "testing"
+)
+
+func TestMyFeature(t *testing.T) {
+    result := MyFunction()
+    if result != expected {
+        t.Errorf("got %v, want %v", result, expected)
+    }
+}
+```
+
+> **Note**: Ginkgo/Gomega is only used in `test/e2e/` (end-to-end tests). Unit
+> and controller tests use the standard `testing` package — see existing
+> `*_test.go` files in `controllers/` and `pkg/` for patterns.
+
+### Bootstrapping Tests
+
+```bash
+# Standard Go test file alongside source
+touch pkg/newpackage/newpackage_test.go
+# Use `testing.T` in test functions; see existing *_test.go files for patterns
+```
+
+### Mocking Interfaces
+
+Use GoMock for external dependencies:
+
+```go
+//go:generate mockgen -destination=mocks/mock_client.go -package=mocks sigs.k8s.io/controller-runtime/pkg/client Client
+```
+
+**Regenerate all mocks:**
+```bash
+boilerplate/_lib/container-make generate
+```
+
+**Why container-make?**
+- Ensures same mockgen version as CI
+- Prevents version drift in generated code
+
+## Test Organization
+
+### Unit Tests
+- Test individual functions and methods
+- Mock external dependencies (Kubernetes client, HTTP calls)
+- Fast execution (<1s per package)
+- Located alongside source code
+
+### Controller Tests
+- Test reconciliation logic
+- Use envtest for simulated Kubernetes API
+- Test custom resource lifecycle
+- Located in `controllers/*/`
+
+### E2E Tests
+- Full operator deployment
+- Real cluster interaction
+- Located in `test/e2e/`
+- Run in CI via Tekton
+
+## Agent-Driven Validation
+
+When AI agents modify code:
+
+**Minimal validation:**
+```bash
+# After changing controllers/splunkforwarder/
+go test ./controllers/splunkforwarder/
+```
+
+**Full validation before commit:**
+```bash
+make go-test
+```
+
+**If tests fail:**
+1. Read test output carefully
+2. Fix the underlying issue (don't skip tests)
+3. Rerun to confirm fix
+4. Regenerate mocks if interface changed: `boilerplate/_lib/container-make generate`
+
+## Common Patterns
+
+### Testing Controllers
+
+```go
+It("should reconcile resource", func() {
+    // Create custom resource
+    resource := &v1alpha1.CustomResource{...}
+    Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+
+    // Trigger reconciliation
+    _, err := reconciler.Reconcile(ctx, req)
+    Expect(err).NotTo(HaveOccurred())
+
+    // Verify reconciliation result
+    Expect(k8sClient.Get(ctx, resourceKey, resource)).To(Succeed())
+    Expect(resource.Status.Conditions).ToNot(BeEmpty())
+})
+```
+
+### Testing Error Conditions
+
+```go
+It("should return error when resource not found", func() {
+    _, err := reconciler.Reconcile(ctx, reqForNonExistent)
+    Expect(err).To(HaveOccurred())
+})
+```
+
+### Using Matchers
+
+```go
+// Equality
+Expect(result).To(Equal(expected))
+
+// Nil checks
+Expect(err).NotTo(HaveOccurred())
+Expect(obj).To(BeNil())
+
+// Collections
+Expect(slice).To(ContainElement("item"))
+Expect(slice).To(HaveLen(3))
+Expect(slice).To(BeEmpty())
+
+// Booleans
+Expect(condition).To(BeTrue())
+Expect(condition).To(BeFalse())
+
+// Eventually (async)
+Eventually(func() bool {
+    return checkCondition()
+}).Should(BeTrue())
+```
+
+## Coverage
+
+Generate coverage report:
+```bash
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
+```
+
+**Note**: Aim for meaningful coverage, not arbitrary percentages.
+- Test critical paths and error handling
+- Don't test generated code or trivial getters/setters
+
+## Debugging Tests
+
+```bash
+# Verbose output
+go test -v ./...
+
+# Print statements in tests
+t.Logf("Debug: %v", value)
+
+# Run single test by name
+go test -v -run "TestMyFunction" ./pkg/kube/
+
+# Skip specific test
+go test -v -run "^(?!TestFlaky)" ./...
+```
+
+## CI Expectations
+
+Tests run in Tekton pipeline with:
+- Fresh environment
+- No cached dependencies
+- Strict timeout limits
+
+**Local CI parity:**
+```bash
+boilerplate/_lib/container-make go-test
+```
+
+## Test Performance
+
+**Target timings:**
+- Unit tests: <5s per package
+- Controller tests: <15s per controller
+- Full suite: <2min
+
+**If tests are slow:**
+- Check for unnecessary sleeps
+- Use `Eventually` with shorter intervals
+- Mock external calls
+- Avoid creating unnecessary Kubernetes resources
+
+## Common Issues
+
+**Mock not found:**
+```bash
+# Regenerate mocks
+boilerplate/_lib/container-make generate
+```
+
+**envtest not installed:**
+```bash
+make setup-envtest
+```
+
+**Test passes locally, fails in CI:**
+```bash
+# Run in container environment
+boilerplate/_lib/container-make go-test
+
+# Check for:
+# - Time-dependent tests
+# - Environment-specific assumptions
+# - File path dependencies
+```
+
+**Flaky tests:**
+- Use `Eventually` instead of `Expect` for async operations
+- Avoid hardcoded delays
+- Ensure test isolation (clean up resources)
+
+## Prek Integration
+
+Tests do not run automatically in prek hooks (too slow for interactive use).
+Run manually before pushing: `make go-test`
+
+## Further Reading
+
+- [Ginkgo Documentation](https://onsi.github.io/ginkgo/)
+- [Gomega Matchers](https://onsi.github.io/gomega/)
+- [GoMock Guide](https://github.com/golang/mock)
+- [controller-runtime Testing](https://book.kubebuilder.io/reference/testing.html)

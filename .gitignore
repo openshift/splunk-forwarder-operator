@@ -87,6 +87,6 @@ saas-splunk-forwarder-operator-bundle/
 ### IDE ###
 .idea/
 
-# Claude Code configuration files
+# Claude Code scratch directory (not configuration files — .claude/ is tracked)
 CLAUDE.md
-.claude/
+.work/
