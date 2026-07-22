@@ -132,7 +132,7 @@ objects:
       supplementalGroups:
         type: RunAsAny
       users:
-      - system:serviceaccount:openshift-security:default
+      - system:serviceaccount:openshift-security:splunk-forwarder-operator
       volumes:
       - '*'
     - kind: ClusterRoleBinding
@@ -255,6 +255,11 @@ objects:
         name: splunk-forwarder-operator
         namespace: openshift-splunk-forwarder-operator
 
+    - apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: splunk-forwarder-operator
+        namespace: openshift-security
 
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRoleBinding

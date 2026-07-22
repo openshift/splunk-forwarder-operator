@@ -61,7 +61,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 						"kubernetes.io/os": "linux",
 					},
 
-					ServiceAccountName: "default",
+					ServiceAccountName: "splunk-forwarder-operator",
 					Tolerations: []corev1.Toleration{
 						{
 							Operator: corev1.TolerationOpExists,

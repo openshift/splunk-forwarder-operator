@@ -84,7 +84,7 @@ func GenerateDaemonSet(instance *sfv1alpha1.SplunkForwarder, useHECToken bool) *
 						"kubernetes.io/os": "linux",
 					},
 
-					ServiceAccountName: "default",
+					ServiceAccountName: "splunk-forwarder-operator",
 					Tolerations: []corev1.Toleration{
 						{
 							Operator: corev1.TolerationOpExists,
