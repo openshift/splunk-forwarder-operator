@@ -31,6 +31,6 @@ seccompProfiles:
 supplementalGroups:
   type: RunAsAny
 users:
-- system:serviceaccount:openshift-security:default
+- system:serviceaccount:openshift-security:splunk-forwarder-operator
 volumes:
 - '*'
