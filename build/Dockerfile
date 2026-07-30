@@ -3,7 +3,7 @@ COPY . /go/src/github.com/openshift/splunk-forwarder-operator
 WORKDIR /go/src/github.com/openshift/splunk-forwarder-operator
 RUN make go-build
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1784705586
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1785339117
 ENV OPERATOR_PATH=/go/src/github.com/openshift/splunk-forwarder-operator \
     OPERATOR_BIN=splunk-forwarder-operator
 
