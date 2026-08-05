@@ -1007,6 +1007,7 @@ objects:
         template:
           metadata: *id002
           spec:
+            serviceAccountName: splunk-forwarder-operator
             automountServiceAccountToken: false
             containers:
             - name: audit-exporter

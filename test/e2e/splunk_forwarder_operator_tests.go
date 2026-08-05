@@ -28,10 +28,10 @@ import (
 )
 
 var (
-	k8s            *openshift.Client
-	deploymentName = "splunk-forwarder-operator"
-	operatorName   = "splunk-forwarder-operator"
-	serviceNames   = []string{"splunk-forwarder-operator-metrics"}
+	k8s                           *openshift.Client
+	deploymentName                = "splunk-forwarder-operator"
+	operatorName                  = "splunk-forwarder-operator"
+	serviceNames                  = []string{"splunk-forwarder-operator-metrics"}
 	rolePrefix                    = "splunk-forwarder-operator"
 	testSplunkForwarder           = "osde2e-splunkforwarder-test-2"
 	dedicatedAdminSplunkForwarder = "osde2e-dedicated-admin-splunkforwarder-x"
@@ -624,5 +624,48 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 			return apierrors.IsNotFound(err)
 		}).WithTimeout(120*time.Second).WithPolling(5*time.Second).Should(BeTrue(),
 			"ConfigMaps should be deleted when CR is deleted")
+	})
+
+	ginkgo.It("DaemonSet uses correct ServiceAccount for SCC access", func(ctx context.Context) {
+		crName := "test-sa-config"
+
+		ginkgo.By("creating a SplunkForwarder CR")
+		sf := makeSplunkforwarderWithIndex(
+			crName,
+			operatorNamespace,
+			"/var/log/sa-test.log",
+			"sa_test",
+			"_json",
+		)
+		Expect(k8s.WithNamespace(operatorNamespace).Create(ctx, &sf)).To(Succeed())
+
+		defer func() {
+			Expect(k8s.WithNamespace(operatorNamespace).Delete(ctx, &sf)).To(Succeed())
+			Eventually(func() bool {
+				return apierrors.IsNotFound(k8s.Get(ctx, crName, operatorNamespace, &sf))
+			}).WithTimeout(60 * time.Second).Should(BeTrue())
+		}()
+
+		ginkgo.By("waiting for DaemonSet to be created")
+		dsName := crName + "-ds"
+		var ds appsv1.DaemonSet
+		Eventually(func() error {
+			return k8s.Get(ctx, dsName, operatorNamespace, &ds)
+		}).WithTimeout(60 * time.Second).Should(Succeed())
+
+		ginkgo.By("verifying serviceAccountName is set to splunk-forwarder-operator")
+		Expect(ds.Spec.Template.Spec.ServiceAccountName).To(Equal("splunk-forwarder-operator"),
+			"DaemonSet must use the splunk-forwarder-operator ServiceAccount for SCC access")
+
+		ginkgo.By("verifying tolerations include a wildcard Exists toleration")
+		foundExistsToleration := false
+		for _, t := range ds.Spec.Template.Spec.Tolerations {
+			if t.Operator == corev1.TolerationOpExists {
+				foundExistsToleration = true
+				break
+			}
+		}
+		Expect(foundExistsToleration).To(BeTrue(),
+			"DaemonSet must have an Exists toleration to schedule on tainted nodes")
 	})
 })
