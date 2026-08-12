@@ -14,8 +14,6 @@ allowPrivilegeEscalation: true
 allowPrivilegedContainer: true
 allowedCapabilities:
 - '*'
-allowedUnsafeSysctls:
-- '*'
 defaultAddCapabilities: null
 fsGroup:
   type: RunAsAny
@@ -27,7 +25,8 @@ runAsUser:
 seLinuxContext:
   type: RunAsAny
 seccompProfiles:
-- '*'
+- runtime/default
+- unconfined
 supplementalGroups:
   type: RunAsAny
 users:
