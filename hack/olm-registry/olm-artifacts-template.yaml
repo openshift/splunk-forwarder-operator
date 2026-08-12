@@ -63,23 +63,61 @@ objects:
         - ""
         resources:
         - pods
+        verbs:
+        - get
+        - delete
+      - apiGroups:
+        - ""
+        resources:
         - services
-        - endpoints
-        - persistentvolumeclaims
+        verbs:
+        - get
+        - list
+        - watch
+        - create
+        - delete
+      - apiGroups:
+        - ""
+        resources:
         - events
+        verbs:
+        - create
+        - patch
+      - apiGroups:
+        - ""
+        resources:
         - configmaps
+        verbs:
+        - get
+        - list
+        - watch
+        - create
+        - update
+        - delete
+      - apiGroups:
+        - ""
+        resources:
         - secrets
         verbs:
-        - '*'
+        - get
+        - list
+        - watch
+      - apiGroups:
+        - ""
+        resources:
+        - nodes
+        verbs:
+        - get
       - apiGroups:
         - apps
         resources:
-        - deployments
         - daemonsets
-        - replicasets
-        - statefulsets
         verbs:
-        - '*'
+        - get
+        - list
+        - watch
+        - create
+        - delete
       - apiGroups:
         - monitoring.coreos.com
         resources:
@@ -96,11 +134,27 @@ objects:
         verbs:
         - update
       - apiGroups:
+        - config.openshift.io
+        resources:
+        - infrastructures
+        verbs:
+        - get
+        - list
+        - watch
+      - apiGroups:
         - splunkforwarder.managed.openshift.io
         resources:
-        - '*'
+        - splunkforwarders
+        - splunkforwarders/status
+        - splunkforwarders/finalizers
         verbs:
-        - '*'
+        - get
+        - list
+        - watch
+        - create
+        - update
+        - patch
+        - delete
 
     - apiVersion: security.openshift.io/v1
       metadata:
@@ -114,8 +168,6 @@ objects:
       allowPrivilegedContainer: true
       allowedCapabilities:
       - '*'
-      allowedUnsafeSysctls:
-      - '*'
       defaultAddCapabilities: null
       fsGroup:
         type: RunAsAny
@@ -128,7 +180,8 @@ objects:
       seLinuxContext:
         type: RunAsAny
       seccompProfiles:
-      - '*'
+      - runtime/default
+      - unconfined
       supplementalGroups:
         type: RunAsAny
       users:
