@@ -1278,6 +1278,12 @@ objects:
               - group: discovery.k8s.io
                 resources: ['endpointslices']
               verbs: ['create','update']
+            # drop deletecollection from namespace-controller SA
+            - level: None
+              users:
+              - 'system:serviceaccount:kube-system:namespace-controller'
+              verbs:
+              - 'deletecollection'
             # forward resources we wish to monitor
             - level: Request
               resources:
