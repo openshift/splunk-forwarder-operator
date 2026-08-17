@@ -26,7 +26,6 @@ seLinuxContext:
   type: RunAsAny
 seccompProfiles:
 - runtime/default
-- unconfined
 supplementalGroups:
   type: RunAsAny
 users:
