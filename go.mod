@@ -87,7 +87,7 @@ require (
 require (
 	github.com/go-logr/logr v1.4.4
 	github.com/google/go-cmp v0.7.0
-	github.com/openshift/api v0.0.0-20260817181206-aa91c5e2b221
+	github.com/openshift/api v0.0.0-20260317095243-5c75e62da3e7
 	github.com/operator-framework/operator-lib v0.19.0
 	golang.org/x/net v0.58.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
