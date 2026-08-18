@@ -4,8 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -23,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	configv1 "github.com/openshift/api/config/v1"
 	opmetrics "github.com/openshift/operator-custom-metrics/pkg/metrics"
@@ -86,8 +89,7 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "f48c54da.managed.openshift.io",
@@ -111,8 +113,16 @@ func main() {
 		setupLog.Info("bypassing leader election due to local execution")
 	}
 
+	// Derive the metrics Service port from the configured bind address so the
+	// Service always targets the port the metrics server actually listens on.
+	servicePort, err := metricsPortFromAddr(metricsAddr)
+	if err != nil {
+		setupLog.Error(err, "invalid metrics-bind-address", "address", metricsAddr)
+		os.Exit(1)
+	}
+
 	// Add the Metrics Service
-	if err := addMetrics(ctx, mgr.GetClient(), mgr.GetConfig(), false); err != nil {
+	if err := addMetrics(ctx, mgr.GetClient(), mgr.GetConfig(), servicePort, false); err != nil {
 		log.Error(err, "Metrics service is not added.")
 		os.Exit(1)
 	}
@@ -153,10 +163,29 @@ func main() {
 	}
 }
 
+// metricsPortFromAddr extracts the TCP port from a metrics bind address such as
+// ":8383" or "0.0.0.0:8383" so the metrics Service can target the same port the
+// metrics server listens on. It falls back to the default metricsPort when the
+// address omits a port.
+func metricsPortFromAddr(addr string) (int32, error) {
+	_, portStr, err := net.SplitHostPort(addr)
+	if err != nil {
+		return 0, fmt.Errorf("could not parse metrics bind address %q: %w", addr, err)
+	}
+	if portStr == "" {
+		return metricsPort, nil
+	}
+	port, err := strconv.ParseInt(portStr, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("invalid metrics port in bind address %q: %w", addr, err)
+	}
+	return int32(port), nil
+}
+
 // addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
 // the Prometheus operator
-func addMetrics(ctx context.Context, cl client.Client, cfg *rest.Config, withServiceMonitor bool) error {
-	service, err := opmetrics.GenerateService(metricsPort, "http-metrics", config.OperatorName+"-metrics", config.OperatorNamespace, map[string]string{"name": config.OperatorName})
+func addMetrics(ctx context.Context, cl client.Client, cfg *rest.Config, port int32, withServiceMonitor bool) error {
+	service, err := opmetrics.GenerateService(port, "http-metrics", config.OperatorName+"-metrics", config.OperatorNamespace, map[string]string{"name": config.OperatorName})
 	if err != nil {
 		log.Info("Could not create metrics Service", "error", err.Error())
 		return err
