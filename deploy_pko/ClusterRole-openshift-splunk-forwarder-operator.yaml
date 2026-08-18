@@ -11,23 +11,55 @@ rules:
   - ""
   resources:
   - pods
+  verbs:
+  - get
+  - delete
+- apiGroups:
+  - ""
+  resources:
   - services
-  - endpoints
-  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+- apiGroups:
+  - ""
+  resources:
   - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
   - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
   - secrets
   verbs:
-  - '*'
+  - get
+  - list
+  - watch
 - apiGroups:
   - apps
   resources:
-  - deployments
   - daemonsets
-  - replicasets
-  - statefulsets
   verbs:
-  - '*'
+  - get
+  - list
+  - watch
+  - create
+  - delete
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -46,6 +78,14 @@ rules:
 - apiGroups:
   - splunkforwarder.managed.openshift.io
   resources:
-  - '*'
+  - splunkforwarders
+  - splunkforwarders/status
+  - splunkforwarders/finalizers
   verbs:
-  - '*'
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
