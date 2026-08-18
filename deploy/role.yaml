@@ -48,12 +48,6 @@ rules:
   - list
   - watch
 - apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - get
-- apiGroups:
   - apps
   resources:
   - daemonsets
@@ -78,14 +72,6 @@ rules:
   - deployments/finalizers
   verbs:
   - update
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - infrastructures
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - splunkforwarder.managed.openshift.io
   resources:
