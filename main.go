@@ -115,16 +115,20 @@ func main() {
 
 	// Derive the metrics Service port from the configured bind address so the
 	// Service always targets the port the metrics server actually listens on.
-	servicePort, err := metricsPortFromAddr(metricsAddr)
+	servicePort, metricsEnabled, err := metricsPortFromAddr(metricsAddr)
 	if err != nil {
 		setupLog.Error(err, "invalid metrics-bind-address", "address", metricsAddr)
 		os.Exit(1)
 	}
 
-	// Add the Metrics Service
-	if err := addMetrics(ctx, mgr.GetClient(), mgr.GetConfig(), servicePort, false); err != nil {
-		log.Error(err, "Metrics service is not added.")
-		os.Exit(1)
+	// Add the Metrics Service, unless metrics are disabled (BindAddress "0").
+	if metricsEnabled {
+		if err := addMetrics(ctx, mgr.GetClient(), mgr.GetConfig(), servicePort, false); err != nil {
+			log.Error(err, "Metrics service is not added.")
+			os.Exit(1)
+		}
+	} else {
+		setupLog.Info("metrics server disabled, skipping metrics Service creation")
 	}
 
 	// Add SplunkForwarder controller to manager
@@ -165,21 +169,31 @@ func main() {
 
 // metricsPortFromAddr extracts the TCP port from a metrics bind address such as
 // ":8383" or "0.0.0.0:8383" so the metrics Service can target the same port the
-// metrics server listens on. It falls back to the default metricsPort when the
-// address omits a port.
-func metricsPortFromAddr(addr string) (int32, error) {
+// metrics server listens on. It mirrors controller-runtime's metrics server
+// address semantics: a bind address of "0" disables the metrics server
+// (enabled=false, and no Service should be created), and an empty address is
+// resolved to metricsserver.DefaultBindAddress before the port is extracted.
+func metricsPortFromAddr(addr string) (port int32, enabled bool, err error) {
+	// "0" disables the metrics server in controller-runtime; no Service needed.
+	if addr == "0" {
+		return 0, false, nil
+	}
+	// An empty address resolves to the controller-runtime default.
+	if addr == "" {
+		addr = metricsserver.DefaultBindAddress
+	}
 	_, portStr, err := net.SplitHostPort(addr)
 	if err != nil {
-		return 0, fmt.Errorf("could not parse metrics bind address %q: %w", addr, err)
+		return 0, false, fmt.Errorf("could not parse metrics bind address %q: %w", addr, err)
 	}
 	if portStr == "" {
-		return metricsPort, nil
+		return metricsPort, true, nil
 	}
-	port, err := strconv.ParseInt(portStr, 10, 32)
+	parsed, err := strconv.ParseInt(portStr, 10, 32)
 	if err != nil {
-		return 0, fmt.Errorf("invalid metrics port in bind address %q: %w", addr, err)
+		return 0, false, fmt.Errorf("invalid metrics port in bind address %q: %w", addr, err)
 	}
-	return int32(port), nil
+	return int32(parsed), true, nil
 }
 
 // addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
