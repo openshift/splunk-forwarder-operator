@@ -103,6 +103,12 @@ objects:
         - list
         - watch
       - apiGroups:
+        - ""
+        resources:
+        - nodes
+        verbs:
+        - get
+      - apiGroups:
         - apps
         resources:
         - daemonsets
@@ -278,6 +284,12 @@ objects:
         - '*'
         verbs:
         - '*'
+      - apiGroups:
+        - ""
+        resources:
+        - nodes
+        verbs:
+        - get
       - apiGroups:
         - config.openshift.io
         resources:
