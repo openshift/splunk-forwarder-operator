@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -131,8 +132,17 @@ func TestAuditExporterSecurityContext(t *testing.T) {
 			if sc.ReadOnlyRootFilesystem == nil || !*sc.ReadOnlyRootFilesystem {
 				t.Error("audit-exporter must set readOnlyRootFilesystem=true")
 			}
-			if sc.Capabilities == nil || len(sc.Capabilities.Drop) == 0 {
-				t.Error("audit-exporter must drop capabilities")
+			foundDropAll := false
+			if sc.Capabilities != nil {
+				for _, cap := range sc.Capabilities.Drop {
+					if cap == corev1.Capability("ALL") {
+						foundDropAll = true
+						break
+					}
+				}
+			}
+			if !foundDropAll {
+				t.Error("audit-exporter must drop ALL capabilities")
 			}
 		})
 	}
@@ -164,11 +174,15 @@ func TestAuditExporterVolumeMounts(t *testing.T) {
 				}
 			}
 
-			if _, ok := mountPaths["/var/log/osd-audit"]; !ok {
+			if ro, ok := mountPaths["/var/log/osd-audit"]; !ok {
 				t.Error("missing writable mount /var/log/osd-audit")
+			} else if ro {
+				t.Error("/var/log/osd-audit must be writable (exporter output directory)")
 			}
-			if _, ok := mountPaths["/tmp"]; !ok {
+			if ro, ok := mountPaths["/tmp"]; !ok {
 				t.Error("missing /tmp mount (needed for readOnlyRootFilesystem)")
+			} else if ro {
+				t.Error("/tmp must be writable (scratch space for readOnlyRootFilesystem)")
 			}
 			if _, ok := mountPaths["/var/log"]; ok {
 				t.Error("audit-exporter must not mount the entire /var/log")
@@ -203,9 +217,9 @@ func TestAuditExporterHostPathVolumes(t *testing.T) {
 				}
 			}
 
-			for name, path := range hostPaths {
-				if path == "/var/log" || path == "/" {
-					t.Errorf("volume %q must not mount broad path %q", name, path)
+			for name := range hostPaths {
+				if _, allowed := expectedHostPaths[name]; !allowed {
+					t.Errorf("unexpected hostPath volume %q not in allow-list", name)
 				}
 			}
 		})
