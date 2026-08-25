@@ -830,16 +830,35 @@ objects:
                 image: quay.io/redhat-services-prod/splunk-audit-exporter-tenant/splunk-audit-exporter/splunk-audit-exporter@sha256:9ea4e347b1d7859cda0d2ce21dfcee8a78a0f8c89ac1b7a154e2dcfbba2179c1 # 0c9dd75
                 imagePullPolicy: Always
                 securityContext:
-                  privileged: true
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+                  privileged: false
+                  readOnlyRootFilesystem: true
                   runAsUser: 0
+                  seLinuxOptions:
+                    type: container_logwriter_t
                 volumeMounts:
                 - mountPath: /config
                   name: config
-                - mountPath: /var/log
-                  name: logs
+                  readOnly: true
+                - mountPath: /var/log/kube-apiserver
+                  name: kube-apiserver-logs
+                  readOnly: true
+                - mountPath: /var/log/openshift-apiserver
+                  name: openshift-apiserver-logs
+                  readOnly: true
+                - mountPath: /var/log/oauth-apiserver
+                  name: oauth-apiserver-logs
+                  readOnly: true
+                - mountPath: /var/log/osd-audit
+                  name: osd-audit-logs
                 - mountPath: /certs
                   name: tls-certs-secret
                   readOnly: true
+                - mountPath: /tmp
+                  name: tmp
               nodeSelector:
                 node-role.kubernetes.io/master: ''
               restartPolicy: Always
@@ -857,10 +876,24 @@ objects:
               - name: tls-certs-secret
                 secret:
                   secretName: audit-exporter-certs
-              - name: logs
+              - name: kube-apiserver-logs
                 hostPath:
-                  type: Directory
-                  path: /var/log
+                  path: /var/log/kube-apiserver
+                  type: DirectoryOrCreate
+              - name: openshift-apiserver-logs
+                hostPath:
+                  path: /var/log/openshift-apiserver
+                  type: DirectoryOrCreate
+              - name: oauth-apiserver-logs
+                hostPath:
+                  path: /var/log/oauth-apiserver
+                  type: DirectoryOrCreate
+              - name: osd-audit-logs
+                hostPath:
+                  path: /var/log/osd-audit
+                  type: DirectoryOrCreate
+              - name: tmp
+                emptyDir: {}
       - apiVersion: v1
         kind: Service
         metadata:

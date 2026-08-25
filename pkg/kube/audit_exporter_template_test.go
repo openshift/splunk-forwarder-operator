@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -111,6 +112,163 @@ func TestAuditExporterServiceAccountName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuditExporterSecurityContext(t *testing.T) {
+	for _, ds := range loadAuditExporterDaemonSets(t) {
+		t.Run(ds.name, func(t *testing.T) {
+			container := ds.ds.Spec.Template.Spec.Containers[0]
+			sc := container.SecurityContext
+
+			if sc == nil {
+				t.Fatal("audit-exporter container has no securityContext")
+			}
+			if sc.Privileged == nil || *sc.Privileged {
+				t.Error("audit-exporter must not be privileged")
+			}
+			if sc.AllowPrivilegeEscalation == nil || *sc.AllowPrivilegeEscalation {
+				t.Error("audit-exporter must set allowPrivilegeEscalation=false")
+			}
+			if sc.ReadOnlyRootFilesystem == nil || !*sc.ReadOnlyRootFilesystem {
+				t.Error("audit-exporter must set readOnlyRootFilesystem=true")
+			}
+			foundDropAll := false
+			if sc.Capabilities != nil {
+				for _, cap := range sc.Capabilities.Drop {
+					if cap == corev1.Capability("ALL") {
+						foundDropAll = true
+						break
+					}
+				}
+			}
+			if !foundDropAll {
+				t.Error("audit-exporter must drop ALL capabilities")
+			}
+		})
+	}
+}
+
+func TestAuditExporterVolumeMounts(t *testing.T) {
+	for _, ds := range loadAuditExporterDaemonSets(t) {
+		t.Run(ds.name, func(t *testing.T) {
+			container := ds.ds.Spec.Template.Spec.Containers[0]
+
+			mountPaths := map[string]bool{}
+			for _, vm := range container.VolumeMounts {
+				mountPaths[vm.MountPath] = vm.ReadOnly
+			}
+
+			readOnlyMounts := []string{
+				"/var/log/kube-apiserver",
+				"/var/log/openshift-apiserver",
+				"/var/log/oauth-apiserver",
+				"/config",
+				"/certs",
+			}
+			for _, m := range readOnlyMounts {
+				ro, ok := mountPaths[m]
+				if !ok {
+					t.Errorf("missing expected mount %s", m)
+				} else if !ro {
+					t.Errorf("mount %s should be readOnly", m)
+				}
+			}
+
+			if ro, ok := mountPaths["/var/log/osd-audit"]; !ok {
+				t.Error("missing writable mount /var/log/osd-audit")
+			} else if ro {
+				t.Error("/var/log/osd-audit must be writable (exporter output directory)")
+			}
+			if ro, ok := mountPaths["/tmp"]; !ok {
+				t.Error("missing /tmp mount (needed for readOnlyRootFilesystem)")
+			} else if ro {
+				t.Error("/tmp must be writable (scratch space for readOnlyRootFilesystem)")
+			}
+			if _, ok := mountPaths["/var/log"]; ok {
+				t.Error("audit-exporter must not mount the entire /var/log")
+			}
+		})
+	}
+}
+
+func TestAuditExporterHostPathVolumes(t *testing.T) {
+	expectedHostPaths := map[string]string{
+		"kube-apiserver-logs":      "/var/log/kube-apiserver",
+		"openshift-apiserver-logs": "/var/log/openshift-apiserver",
+		"oauth-apiserver-logs":     "/var/log/oauth-apiserver",
+		"osd-audit-logs":           "/var/log/osd-audit",
+	}
+
+	for _, ds := range loadAuditExporterDaemonSets(t) {
+		t.Run(ds.name, func(t *testing.T) {
+			hostPaths := map[string]string{}
+			for _, vol := range ds.ds.Spec.Template.Spec.Volumes {
+				if vol.HostPath != nil {
+					hostPaths[vol.Name] = vol.HostPath.Path
+				}
+			}
+
+			for name, wantPath := range expectedHostPaths {
+				gotPath, ok := hostPaths[name]
+				if !ok {
+					t.Errorf("missing hostPath volume %q", name)
+				} else if gotPath != wantPath {
+					t.Errorf("volume %q hostPath = %q, want %q", name, gotPath, wantPath)
+				}
+			}
+
+			for name := range hostPaths {
+				if _, allowed := expectedHostPaths[name]; !allowed {
+					t.Errorf("unexpected hostPath volume %q not in allow-list", name)
+				}
+			}
+		})
+	}
+}
+
+type auditExporterDS struct {
+	name string
+	ds   *appsv1.DaemonSet
+}
+
+func loadAuditExporterDaemonSets(t *testing.T) []auditExporterDS {
+	t.Helper()
+	templateParamRe := regexp.MustCompile(`\$\{\{[^}]+\}\}`)
+
+	templateFiles := []string{
+		"hack/olm-registry/olm-artifacts-template.yaml",
+		"hack/pko/clusterpackage.yaml",
+	}
+
+	results := make([]auditExporterDS, 0, len(templateFiles))
+	for _, templateFile := range templateFiles {
+		path := filepath.Join("..", "..", templateFile)
+		raw, err := os.ReadFile(path) // #nosec G304 -- path is a hardcoded test fixture
+		if err != nil {
+			t.Fatalf("failed to read template %s: %v", templateFile, err)
+		}
+
+		cleaned := templateParamRe.ReplaceAll(raw, []byte(`"__PLACEHOLDER__"`))
+
+		jsonBytes, err := k8syaml.ToJSON(cleaned)
+		if err != nil {
+			t.Fatalf("failed to convert YAML to JSON: %v", err)
+		}
+
+		var parsed any
+		if err := json.Unmarshal(jsonBytes, &parsed); err != nil {
+			t.Fatalf("failed to parse template: %v", err)
+		}
+
+		for _, ds := range findAuditExporterDaemonSets(t, parsed) {
+			results = append(results, auditExporterDS{name: templateFile, ds: ds})
+		}
+	}
+
+	if len(results) == 0 {
+		t.Fatal("no audit-exporter DaemonSets found in templates")
+	}
+	return results
 }
 
 func TestAuditExporterSCCUserMatch(t *testing.T) {
