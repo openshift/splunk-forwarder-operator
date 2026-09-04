@@ -55,9 +55,14 @@ spec:
                     filter:
                       description: Routing criteria regex for the filter to match
                         on.
+                      maxLength: 2048
+                      minLength: 1
                       type: string
                     name:
                       description: Name of the filter, will be prepended with "filter_".
+                      maxLength: 128
+                      minLength: 1
+                      pattern: ^[a-zA-Z0-9_]+$
                       type: string
                   required:
                   - filter
