@@ -3,6 +3,7 @@ package kube
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
@@ -37,6 +38,27 @@ func TestGenerateConfigMaps(t *testing.T) {
 					SourceType: "text",
 					WhiteList:  ".*log$",
 					BlackList:  ".*bak$",
+				},
+			},
+		},
+	}
+	var testInstanceWithFilters = &sfv1alpha1.SplunkForwarder{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       instanceName,
+			Namespace:  instanceNamespace,
+			Generation: 10,
+		},
+		Spec: sfv1alpha1.SplunkForwarderSpec{
+			SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
+				{
+					Path:  "/var/log/audit.log",
+					Index: "audit",
+				},
+			},
+			Filters: []sfv1alpha1.SplunkFilter{
+				{
+					Name:   "ignore_system_users",
+					Filter: `"user":{"username":"system:serviceaccount:[^"]+"}`,
 				},
 			},
 		},
@@ -126,6 +148,77 @@ TRUNCATE = %d
 				},
 			},
 		},
+		{
+			name: "Test Generate Config Maps with filters",
+			args: args{
+				instance:       testInstanceWithFilters,
+				namespacedName: types.NamespacedName{Namespace: instanceNamespace, Name: instanceName},
+				clusterid:      "test",
+			},
+			want: []*corev1.ConfigMap{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "osd-monitored-logs-metadata",
+						Namespace: instanceNamespace,
+						Labels: map[string]string{
+							"app": instanceName,
+						},
+						Annotations: map[string]string{
+							"genVersion": "10",
+						},
+					},
+					Data: map[string]string{
+						"local.meta": `
+[]
+access = read : [ * ], write : [ admin ]
+export = system
+`,
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "osd-monitored-logs-local",
+						Namespace: instanceNamespace,
+						Labels: map[string]string{
+							"app": instanceName,
+						},
+						Annotations: map[string]string{
+							"genVersion": "10",
+						},
+					},
+					Data: map[string]string{
+						"app.conf": `
+[install]
+state = enabled
+
+[package]
+check_for_updates = false
+
+[ui]
+is_visible = false
+is_manageable = false
+`,
+						"inputs.conf": `[monitor:///var/log/audit.log]
+sourcetype = _json
+index = audit
+_meta = clusterid::test
+disabled = false
+
+`,
+						"props.conf": fmt.Sprintf(`
+[_json]
+TRUNCATE = %d
+TRANSFORMS-null =filter_ignore_system_users `, MaxEventSize),
+						"transforms.conf": `[filter_ignore_system_users]
+DEST_KEY = queue
+FORMAT = nullQueue
+REGEX = "user":{"username":"system:serviceaccount:[^"]+"}
+
+`,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -133,6 +226,65 @@ TRUNCATE = %d
 				t.Errorf("GenerateConfigMaps() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestIsValidFilter(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter sfv1alpha1.SplunkFilter
+		want   bool
+	}{
+		{"valid filter", sfv1alpha1.SplunkFilter{Name: "test", Filter: `"user":"admin"`}, true},
+		{"empty name", sfv1alpha1.SplunkFilter{Name: "", Filter: "regex"}, false},
+		{"empty filter", sfv1alpha1.SplunkFilter{Name: "test", Filter: ""}, false},
+		{"newline in name", sfv1alpha1.SplunkFilter{Name: "test\ninjected", Filter: "regex"}, false},
+		{"newline in filter", sfv1alpha1.SplunkFilter{Name: "test", Filter: "regex\n[injected]\nDEST_KEY = _raw"}, false},
+		{"carriage return in filter", sfv1alpha1.SplunkFilter{Name: "test", Filter: "regex\rinjected"}, false},
+		{"filter exceeds max length", sfv1alpha1.SplunkFilter{Name: "test", Filter: strings.Repeat("a", maxFilterLength+1)}, false},
+		{"filter at max length", sfv1alpha1.SplunkFilter{Name: "test", Filter: strings.Repeat("a", maxFilterLength)}, true},
+		{"pcre lookahead", sfv1alpha1.SplunkFilter{Name: "sa_users", Filter: `"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)`}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isValidFilter(tt.filter); got != tt.want {
+				t.Errorf("isValidFilter() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateConfigMapsSkipsInvalidFilters(t *testing.T) {
+	instance := &sfv1alpha1.SplunkForwarder{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: instanceName, Namespace: instanceNamespace, Generation: 10,
+		},
+		Spec: sfv1alpha1.SplunkForwarderSpec{
+			SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
+				{Path: "/var/log/audit.log", Index: "audit"},
+			},
+			Filters: []sfv1alpha1.SplunkFilter{
+				{Name: "valid_filter", Filter: `"requestURI":"/livez"`},
+				{Name: "bad\nname", Filter: "regex"},
+				{Name: "newline_body", Filter: "regex\n[injected]"},
+			},
+		},
+	}
+	cms := GenerateConfigMaps(instance, types.NamespacedName{Namespace: instanceNamespace, Name: instanceName}, "test")
+	localCM := cms[1]
+	transforms := localCM.Data["transforms.conf"]
+	if !strings.Contains(transforms, "filter_valid_filter") {
+		t.Error("expected valid_filter in transforms.conf")
+	}
+	if strings.Contains(transforms, "bad") || strings.Contains(transforms, "injected") {
+		t.Error("invalid filters should be skipped")
+	}
+	props := localCM.Data["props.conf"]
+	if !strings.Contains(props, "TRANSFORMS-null") {
+		t.Error("expected TRANSFORMS-null in props.conf")
+	}
+	if strings.Contains(props, "bad") {
+		t.Error("invalid filter names should not appear in props.conf")
 	}
 }
 
