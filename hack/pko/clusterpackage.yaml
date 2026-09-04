@@ -1437,10 +1437,12 @@ objects:
                 - imagestreams
                 - imagestreamimports
               verbs: ['create','update']
-            # drop events.events.k8s.io
+            # drop events (both events.k8s.io and core v1)
             - level: None
               resources:
               - group: events.k8s.io
+                resources: ['events']
+              - group: ''
                 resources: ['events']
             # drop noisy namespace reads
             - level: None
