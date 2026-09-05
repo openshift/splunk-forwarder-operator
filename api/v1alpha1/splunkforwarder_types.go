@@ -95,8 +95,13 @@ type SplunkForwarderList struct {
 // SplunkFilter is the struct that configures Splunk Heavy Forwarder filters.
 type SplunkFilter struct {
 	// Name of the filter, will be prepended with "filter_".
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9_]+$`
 	Name string `json:"name"`
 	// Routing criteria regex for the filter to match on.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=2048
 	Filter string `json:"filter"`
 }
 

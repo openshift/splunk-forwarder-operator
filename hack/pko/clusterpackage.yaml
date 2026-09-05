@@ -810,7 +810,10 @@ objects:
           selector:
             matchLabels: *id001
           template:
-            metadata: *id002
+            metadata:
+              labels: *id001
+              annotations:
+                policy-revision: "2"
             spec:
               serviceAccountName: splunk-forwarder-operator
               automountServiceAccountToken: false

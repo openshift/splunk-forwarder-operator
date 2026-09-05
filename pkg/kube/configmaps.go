@@ -3,12 +3,28 @@ package kube
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+const maxFilterLength = 2048
+
+func isValidFilter(f sfv1alpha1.SplunkFilter) bool {
+	if f.Name == "" || f.Filter == "" {
+		return false
+	}
+	if len(f.Filter) > maxFilterLength {
+		return false
+	}
+	if strings.ContainsAny(f.Name, "\n\r") || strings.ContainsAny(f.Filter, "\n\r") {
+		return false
+	}
+	return true
+}
 
 // GenerateConfigMaps generates config maps based on the values in our CRD
 func GenerateConfigMaps(instance *sfv1alpha1.SplunkForwarder, namespacedName types.NamespacedName, clusterid string) []*corev1.ConfigMap {
@@ -72,6 +88,47 @@ export = system
 		inputsStr += "\n"
 	}
 
+	propsStr := fmt.Sprintf(`
+[_json]
+TRUNCATE = %d
+`, MaxEventSize)
+
+	localData := map[string]string{
+		"app.conf": `
+[install]
+state = enabled
+
+[package]
+check_for_updates = false
+
+[ui]
+is_visible = false
+is_manageable = false
+`,
+		"inputs.conf": inputsStr,
+	}
+
+	if len(instance.Spec.Filters) > 0 {
+		transformsStr := ""
+		transformsNull := ""
+		for _, filter := range instance.Spec.Filters {
+			if !isValidFilter(filter) {
+				continue
+			}
+			transformsStr += "[filter_" + filter.Name + "]\n"
+			transformsStr += "DEST_KEY = queue\n"
+			transformsStr += "FORMAT = nullQueue\n"
+			transformsStr += "REGEX = " + filter.Filter + "\n\n"
+			transformsNull += "filter_" + filter.Name + " "
+		}
+		if transformsStr != "" {
+			propsStr += "TRANSFORMS-null =" + transformsNull
+			localData["transforms.conf"] = transformsStr
+		}
+	}
+
+	localData["props.conf"] = propsStr
+
 	localCM := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "osd-monitored-logs-local",
@@ -83,24 +140,7 @@ export = system
 				"genVersion": strconv.FormatInt(instance.Generation, 10),
 			},
 		},
-		Data: map[string]string{
-			"app.conf": `
-[install]
-state = enabled
-
-[package]
-check_for_updates = false
-
-[ui]
-is_visible = false
-is_manageable = false
-`,
-			"inputs.conf": inputsStr,
-			"props.conf": fmt.Sprintf(`
-[_json]
-TRUNCATE = %d
-`, MaxEventSize),
-		},
+		Data: localData,
 	}
 
 	ret = append(ret, localCM)
@@ -175,16 +215,21 @@ TRUNCATE = %d
 `, MaxEventSize)
 
 	if len(instance.Spec.Filters) > 0 {
-		data["transforms.conf"] = ""
-
-		data["props.conf"] += "TRANSFORMS-null ="
-
+		transformsStr := ""
+		transformsNull := ""
 		for _, filter := range instance.Spec.Filters {
-			data["transforms.conf"] += "[filter_" + filter.Name + "]\n"
-			data["transforms.conf"] += "DEST_KEY = queue\n"
-			data["transforms.conf"] += "FORMAT = nullQueue\n"
-			data["transforms.conf"] += "REGEX = " + filter.Filter + "\n\n"
-			data["props.conf"] += "filter_" + filter.Name + " "
+			if !isValidFilter(filter) {
+				continue
+			}
+			transformsStr += "[filter_" + filter.Name + "]\n"
+			transformsStr += "DEST_KEY = queue\n"
+			transformsStr += "FORMAT = nullQueue\n"
+			transformsStr += "REGEX = " + filter.Filter + "\n\n"
+			transformsNull += "filter_" + filter.Name + " "
+		}
+		if transformsStr != "" {
+			data["transforms.conf"] = transformsStr
+			data["props.conf"] += "TRANSFORMS-null =" + transformsNull
 		}
 	}
 
