@@ -235,6 +235,17 @@ objects:
           image: quay.io/redhat-services-prod/openshift/splunk-forwarder-images
           imageDigest: sha256:74b6a7e80da95b5bde5d7aade76d306b383430fc9a73f0b650ffaddf87b9a784
           splunkLicenseAccepted: true
+          filters:
+          - name: ignore_serviceaccount_users
+            filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+          - name: ignore_system_node_users
+            filter: '"user":{"username":"system:node:[^"]+"'
+          - name: ignore_chatty_system_users
+            filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+          - name: ignore_well_known_oauth_endpoint
+            filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+          - name: ignore_livez_health_check
+            filter: '"requestURI":"/livez"'
           splunkInputs:
           - path: /host/var/log/pods/*_ip-*-*-*-*ec2internal-debug_*/container-*/*.log
             index: openshift_managed_debug_node
@@ -293,6 +304,17 @@ objects:
             image: quay.io/redhat-services-prod/openshift/splunk-forwarder-images
             imageDigest: sha256:74b6a7e80da95b5bde5d7aade76d306b383430fc9a73f0b650ffaddf87b9a784
             splunkLicenseAccepted: true
+            filters:
+              - name: ignore_serviceaccount_users
+                filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+              - name: ignore_system_node_users
+                filter: '"user":{"username":"system:node:[^"]+"'
+              - name: ignore_chatty_system_users
+                filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+              - name: ignore_well_known_oauth_endpoint
+                filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+              - name: ignore_livez_health_check
+                filter: '"requestURI":"/livez"'
             splunkInputs:
               - path: /host/var/log/hypershift-osd-audit/*/audit.log
                 index: openshift_managed_hypershift_audit_stage
@@ -455,6 +477,17 @@ objects:
             image: quay.io/redhat-services-prod/openshift/splunk-forwarder-images
             imageDigest: sha256:74b6a7e80da95b5bde5d7aade76d306b383430fc9a73f0b650ffaddf87b9a784
             splunkLicenseAccepted: true
+            filters:
+              - name: ignore_serviceaccount_users
+                filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+              - name: ignore_system_node_users
+                filter: '"user":{"username":"system:node:[^"]+"'
+              - name: ignore_chatty_system_users
+                filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+              - name: ignore_well_known_oauth_endpoint
+                filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+              - name: ignore_livez_health_check
+                filter: '"requestURI":"/livez"'
             splunkInputs:
               - path: /host/var/log/hypershift-osd-audit/*/audit.log
                 index: rh_osd_hypershift_audit_stage
@@ -714,6 +747,17 @@ objects:
           image: quay.io/redhat-services-prod/openshift/splunk-forwarder-images
           imageDigest: sha256:74b6a7e80da95b5bde5d7aade76d306b383430fc9a73f0b650ffaddf87b9a784
           splunkLicenseAccepted: true
+          filters:
+          - name: ignore_serviceaccount_users
+            filter: '"user":{"username":"(?:system:serviceaccount:(?!openshift-backplane-)[^"]+)'
+          - name: ignore_system_node_users
+            filter: '"user":{"username":"system:node:[^"]+"'
+          - name: ignore_chatty_system_users
+            filter: '"user":{"username":"system:(?:kube-(?:controller-manager|scheduler|apiserver-cert-syncer)|apiserver|aggregator)"'
+          - name: ignore_well_known_oauth_endpoint
+            filter: '"requestURI":"/.well-known/oauth-authorization-server"'
+          - name: ignore_livez_health_check
+            filter: '"requestURI":"/livez"'
           splunkInputs:
           - index: rh_osd_cluster_audit_stage
             path: /host/var/log/osd-audit/audit.log
