@@ -626,6 +626,83 @@ var _ = ginkgo.Describe("Splunk Forwarder Operator", ginkgo.Ordered, func() {
 			"ConfigMaps should be deleted when CR is deleted")
 	})
 
+	ginkgo.It("reconciles configmap when content is stale but genVersion matches", func(ctx context.Context) {
+		crName := "test-stale-cm-reconcile"
+
+		ginkgo.By("creating SplunkForwarder CR with filters")
+		sf := sfv1alpha1.SplunkForwarder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      crName,
+				Namespace: operatorNamespace,
+			},
+			Spec: sfv1alpha1.SplunkForwarderSpec{
+				SplunkLicenseAccepted: true,
+				Image:                 "quay.io/redhat-services-prod/openshift/splunk-forwarder-images",
+				ImageTag:              "latest",
+				ClusterID:             "stale-cm-test",
+				SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
+					{
+						Path:       "/var/log/audit.log",
+						Index:      "audit",
+						SourceType: "_json",
+					},
+				},
+				Filters: []sfv1alpha1.SplunkFilter{
+					{Name: "ignore_sa_users", Filter: `"user":{"username":"system:serviceaccount:[^"]+"}`},
+					{Name: "ignore_livez", Filter: `"requestURI":"/livez"`},
+				},
+			},
+		}
+		Expect(k8s.WithNamespace(operatorNamespace).Create(ctx, &sf)).To(Succeed())
+
+		defer func() {
+			k8s.WithNamespace(operatorNamespace).Delete(ctx, &sf)
+			time.Sleep(3 * time.Second)
+		}()
+
+		ginkgo.By("waiting for configmap to be created with transforms")
+		var localCM corev1.ConfigMap
+		Eventually(func() bool {
+			err := k8s.Get(ctx, "osd-monitored-logs-local", operatorNamespace, &localCM)
+			if err != nil {
+				return false
+			}
+			_, hasTransforms := localCM.Data["transforms.conf"]
+			return hasTransforms && strings.Contains(localCM.Data["props.conf"], "TRANSFORMS-null")
+		}).WithTimeout(60*time.Second).WithPolling(5*time.Second).Should(BeTrue(),
+			"configmap should contain transforms.conf and TRANSFORMS-null")
+
+		ginkgo.By("verifying transforms.conf has correct filter stanzas")
+		transforms := localCM.Data["transforms.conf"]
+		Expect(transforms).To(ContainSubstring("[filter_ignore_sa_users]"))
+		Expect(transforms).To(ContainSubstring("[filter_ignore_livez]"))
+		Expect(transforms).To(ContainSubstring("DEST_KEY = queue"))
+		Expect(transforms).To(ContainSubstring("FORMAT = nullQueue"))
+
+		ginkgo.By("simulating stale configmap by removing transforms (preserving genVersion)")
+		err := k8s.Get(ctx, "osd-monitored-logs-local", operatorNamespace, &localCM)
+		Expect(err).NotTo(HaveOccurred())
+		delete(localCM.Data, "transforms.conf")
+		localCM.Data["props.conf"] = "\n[_json]\nTRUNCATE = 102400\n"
+		Expect(k8s.Update(ctx, &localCM)).To(Succeed())
+
+		ginkgo.By("verifying reconciler detects content change and restores transforms")
+		Eventually(func() bool {
+			err := k8s.Get(ctx, "osd-monitored-logs-local", operatorNamespace, &localCM)
+			if err != nil {
+				return false
+			}
+			_, hasTransforms := localCM.Data["transforms.conf"]
+			return hasTransforms && strings.Contains(localCM.Data["props.conf"], "TRANSFORMS-null")
+		}).WithTimeout(90*time.Second).WithPolling(5*time.Second).Should(BeTrue(),
+			"reconciler should restore transforms.conf when content drifts")
+
+		ginkgo.By("verifying restored transforms has correct content")
+		Expect(localCM.Data["transforms.conf"]).To(ContainSubstring("[filter_ignore_sa_users]"))
+		Expect(localCM.Data["transforms.conf"]).To(ContainSubstring("[filter_ignore_livez]"))
+		Expect(localCM.Data["props.conf"]).To(ContainSubstring("TRANSFORMS-null"))
+	})
+
 	ginkgo.It("DaemonSet uses correct ServiceAccount for SCC access", func(ctx context.Context) {
 		crName := "test-sa-config"
 

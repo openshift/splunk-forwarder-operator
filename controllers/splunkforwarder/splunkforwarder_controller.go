@@ -2,6 +2,7 @@ package splunkforwarder
 
 import (
 	"context"
+	"reflect"
 	"strconv"
 
 	"github.com/go-logr/logr"
@@ -114,18 +115,20 @@ func (r *SplunkForwarderReconciler) Reconcile(ctx context.Context, request ctrl.
 
 		// Check if this ConfigMap already exists
 		cmFound := &corev1.ConfigMap{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
+		err = r.Client.Get(ctx, types.NamespacedName{Name: configmap.Name, Namespace: configmap.Namespace}, cmFound)
 		if err != nil && errors.IsNotFound(err) {
 			r.ReqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
-			err = r.Client.Create(context.TODO(), configmap)
+			err = r.Client.Create(ctx, configmap)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
 		} else if err != nil {
 			return reconcile.Result{}, err
-		} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(cmFound.GetAnnotations(), instance) {
+		} else if instance.CreationTimestamp.After(cmFound.CreationTimestamp.Time) || r.CheckGenerationVersionOlder(cmFound.GetAnnotations(), instance) || !reflect.DeepEqual(cmFound.Data, configmap.Data) {
 			r.ReqLogger.Info("Updating ConfigMap", "ConfigMap.Namespace", configmap.Namespace, "ConfigMap.Name", configmap.Name)
-			err = r.Client.Update(context.TODO(), configmap)
+			cmFound.Data = configmap.Data
+			cmFound.Annotations = configmap.Annotations
+			err = r.Client.Update(ctx, cmFound)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
