@@ -2,13 +2,16 @@ package splunkforwarder
 
 import (
 	"context"
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
+	"github.com/openshift/splunk-forwarder-operator/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -193,5 +196,102 @@ func TestReconcileSplunkForwarder_Reconcile(t *testing.T) {
 				t.Errorf("ReconcileSplunkForwarder.Reconcile() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestReconcileUpdatesStaleConfigMap(t *testing.T) {
+	if err := sfv1alpha1.AddToScheme(scheme.Scheme); err != nil {
+		t.Fatal(err)
+	}
+	if err := configv1.AddToScheme(scheme.Scheme); err != nil {
+		t.Fatal(err)
+	}
+
+	cr := &sfv1alpha1.SplunkForwarder{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "SplunkForwarder",
+			APIVersion: "splunkforwarder.managed.openshift.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       instanceName,
+			Namespace:  instanceNamespace,
+			Generation: 37,
+		},
+		Spec: sfv1alpha1.SplunkForwarderSpec{
+			SplunkLicenseAccepted: true,
+			Image:                 image,
+			ImageTag:              imageTag,
+			SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
+				{Path: "/var/log/audit.log", Index: "audit"},
+			},
+			Filters: []sfv1alpha1.SplunkFilter{
+				{Name: "ignore_sa", Filter: `"user":{"username":"system:serviceaccount:[^"]+"}`},
+			},
+		},
+	}
+
+	staleCM := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "osd-monitored-logs-local",
+			Namespace: instanceNamespace,
+			Annotations: map[string]string{
+				"genVersion": "37",
+			},
+			Labels: map[string]string{"app": instanceName},
+		},
+		Data: map[string]string{
+			"app.conf":    "old",
+			"inputs.conf": "old",
+			"props.conf":  fmt.Sprintf("\n[_json]\nTRUNCATE = %d\n", kube.MaxEventSize),
+		},
+	}
+
+	metaCM := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "osd-monitored-logs-metadata",
+			Namespace: instanceNamespace,
+			Annotations: map[string]string{
+				"genVersion": "37",
+			},
+			Labels: map[string]string{"app": instanceName},
+		},
+		Data: map[string]string{
+			"local.meta": "\n[]\naccess = read : [ * ], write : [ admin ]\nexport = system\n",
+		},
+	}
+
+	fakeClient := fakekubeclient.NewClientBuilder().
+		WithScheme(scheme.Scheme).
+		WithRuntimeObjects(cr, testSplunkForwarderSecret(), staleCM, metaCM).
+		Build()
+
+	r := &SplunkForwarderReconciler{
+		Client:    fakeClient,
+		Scheme:    scheme.Scheme,
+		ReqLogger: log.WithValues(),
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{Name: instanceName, Namespace: instanceNamespace},
+	}
+
+	result, err := r.Reconcile(context.TODO(), req)
+	if err != nil {
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if result == (reconcile.Result{}) {
+		t.Error("expected non-empty reconcile result after updating stale configmap")
+	}
+
+	updated := &corev1.ConfigMap{}
+	err = fakeClient.Get(context.TODO(), types.NamespacedName{Name: "osd-monitored-logs-local", Namespace: instanceNamespace}, updated)
+	if err != nil {
+		t.Fatalf("failed to get updated configmap: %v", err)
+	}
+	if _, ok := updated.Data["transforms.conf"]; !ok {
+		t.Error("expected transforms.conf in updated configmap")
+	}
+	if !strings.Contains(updated.Data["props.conf"], "TRANSFORMS-null") {
+		t.Error("expected TRANSFORMS-null in updated props.conf")
 	}
 }
