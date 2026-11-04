@@ -578,11 +578,11 @@ objects:
                 index: rh_osd_debug_node_stage
                 whiteList: \.log$
                 sourceType: openshift:debug
-              - path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+              - path: /host/var/log/pods/malware-scanning_logger-*/pod-printer/*.log
                 index: rh_osd_pod_creation
                 whiteList: \.log$
                 sourceType: openshift:debug
-              - path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+              - path: /host/var/log/pods/malware-scanning_logger-*/scan-printer/*.log
                 index: rh_osd_malware_scan
                 whiteList: \.log$
                 sourceType: openshift:debug
@@ -660,11 +660,11 @@ objects:
             sourceType: _json
             whiteList: \.log$
           - index: rh_osd_pod_creation
-            path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+            path: /host/var/log/pods/malware-scanning_logger-*/pod-printer/*.log
             sourceType: openshift:debug
             whiteList: \.log$
           - index: rh_osd_malware_scan
-            path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+            path: /host/var/log/pods/malware-scanning_logger-*/scan-printer/*.log
             sourceType: openshift:debug
             whiteList: \.log$
           - index: rh_osd_debug_node
@@ -764,11 +764,11 @@ objects:
             sourceType: _json
             whiteList: \.log$
           - index: rh_osd_pod_creation_stage
-            path: /host/var/log/pods/openshift-scanning_logger-*/pod-printer/*.log
+            path: /host/var/log/pods/malware-scanning_logger-*/pod-printer/*.log
             sourceType: openshift:debug
             whiteList: \.log$
           - index: rh_osd_malware_scan_stage
-            path: /host/var/log/pods/openshift-scanning_logger-*/scan-printer/*.log
+            path: /host/var/log/pods/malware-scanning_logger-*/scan-printer/*.log
             sourceType: openshift:debug
             whiteList: \.log$
           - index: rh_osd_debug_node_stage
