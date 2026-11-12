@@ -20,4 +20,4 @@ f_img=$1
 
 f_digest=$(discover_digest_for_image "$f_img")
 
-${SED?} -i "s,^\( *imageDigest:\).*$,\1 $f_digest," hack/olm-registry/olm-artifacts-template.yaml README.md
+${SED?} -i "s,^\( *imageDigest:\).*$,\1 $f_digest," hack/olm-registry/olm-artifacts-template.yaml README.md hack/pko/clusterpackage.yaml

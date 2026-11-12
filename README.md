@@ -1,6 +1,6 @@
 # splunk-forwarder-operator
 
-This operator manages [Splunk Universal Forwarder](https://docs.splunk.com/Documentation/Forwarder/latest/Forwarder/Abouttheuniversalforwarder). It deploys a daemonset which 
+This operator manages [Splunk Universal Forwarder](https://docs.splunk.com/Documentation/Forwarder/latest/Forwarder/Abouttheuniversalforwarder). It deploys a daemonset which
 deploys a pod on each node including the masters. It expects the service account
 for the namespace can deploy privileged pods. It also needs a secret that holds
 the forwarder auth.
@@ -35,7 +35,7 @@ metadata:
   name: example-splunkforwarder
 spec:
   image: dockerimageurl
-  imageDigest: sha256:74b6a7e80da95b5bde5d7aade76d306b383430fc9a73f0b650ffaddf87b9a784
+  imageDigest: sha256:4b883517936e9fdf3bb2ea73fb0dd41fa4cb12b12b7228b5d43e38781c87f96a
   splunkLicenseAccepted: true
   clusterID: optional-cluster-name
   splunkInputs:
@@ -52,11 +52,11 @@ spec:
 The `image` and `imageDigest` are for the splunk-forwarder image.
 (The CRD supports `imageTag`, but this is deprecated in favor of `imageDigest`.)
 
-To use the current version, `10.2.0-d749cb17ea65-73ea22f`, specify the following:
+To use the current version, `360a9c2`, specify the following:
 - For [splunk-forwarder-images](https://quay.io/repository/redhat-services-prod/openshift/splunk-forwarder-images):
   ```yaml
   image: quay.io/redhat-services-prod/openshift/splunk-forwarder-images
-  imageDigest: sha256:74b6a7e80da95b5bde5d7aade76d306b383430fc9a73f0b650ffaddf87b9a784
+  imageDigest: sha256:4b883517936e9fdf3bb2ea73fb0dd41fa4cb12b12b7228b5d43e38781c87f96a
   ```
 
 ## Upgrading Splunk Universal Forwarder

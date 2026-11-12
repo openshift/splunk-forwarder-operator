@@ -6,7 +6,7 @@ metadata:
   annotations:
     categories: A list of comma separated categories that your operator falls under.
     certified: "false"
-    description: Splunk Forwarder Operator for OpenShift. 
+    description: Splunk Forwarder Operator for OpenShift.
     containerImage: quay.io/app-sre/splunk-forwarder-operator:latest
     createdAt: "2019-10-23T17:34:33Z"
     support: Wesley Hearn

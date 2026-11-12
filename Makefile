@@ -10,10 +10,12 @@ boilerplate-update:
 
 SHELL := /usr/bin/env bash
 
-FORWARDER_IMAGE_TAG ?= 37d70ac
+FORWARDER_IMAGE_TAG ?= 360a9c2
 
-FORWARDER_NAME=splunk-forwarder
-FORWARDER_IMAGE_URI=$(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$(FORWARDER_NAME):$(FORWARDER_IMAGE_TAG)
+FORWARDER_IMAGE_REGISTRY ?= quay.io
+FORWARDER_IMAGE_REPOSITORY ?= redhat-services-prod/openshift
+FORWARDER_NAME=splunk-forwarder-images
+FORWARDER_IMAGE_URI=$(FORWARDER_IMAGE_REGISTRY)/$(FORWARDER_IMAGE_REPOSITORY)/$(FORWARDER_NAME):$(FORWARDER_IMAGE_TAG)
 
 
 ## Convenience targets for local dev. Duplicates are for consistent naming.
