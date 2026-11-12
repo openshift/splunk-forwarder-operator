@@ -38,4 +38,3 @@ ERRATA=$(curl -s -X POST ${CLAIR_SERVER}/packages -H application/json --data @-<
 
 echo -n "Vulnerabilties: "
 jq --exit-status '.Vulnerabilities, (.Vulnerabilities|length == 0)' <<< "$ERRATA"
-
