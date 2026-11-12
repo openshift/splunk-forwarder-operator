@@ -14,7 +14,13 @@ usage() {
 
 [[ $# -gt 1 ]] || [[ "$*" = "-h" ]] || [[ "$*" = "--help" ]] && usage
 
-commit_hash=$(git ls-remote ${SFI_GIT_URI} "refs/heads/${SFI_REF}" "refs/tags/${SFI_REF}" | awk -v ref="${SFI_REF}" '$2 == "refs/heads/"ref || $2 == "refs/tags/"ref {print $1; exit}')
+# Prefer the peeled commit for annotated tags (refs/tags/<ref>^{}); fall
+# back to the direct ref ID for branches and lightweight tags.
+commit_hash=$(git ls-remote ${SFI_GIT_URI} "refs/heads/${SFI_REF}" "refs/tags/${SFI_REF}" "refs/tags/${SFI_REF}^{}" | awk -v ref="${SFI_REF}" '
+  $2 == "refs/tags/"ref"^{}" { print $1; found=1; exit }
+  ($2 == "refs/heads/"ref || $2 == "refs/tags/"ref) { candidate=$1 }
+  END { if (!found) print candidate }
+')
 if [[ -z "${commit_hash}" ]]; then
     # Not an exact branch/tag match; assume SFI_REF is already a commit-ish.
     commit_hash=${SFI_REF}
