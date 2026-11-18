@@ -874,7 +874,7 @@ objects:
                   limits:
                     cpu: 100m
                     memory: 256Mi
-                image: quay.io/redhat-services-prod/splunk-audit-exporter-tenant/splunk-audit-exporter/splunk-audit-exporter@sha256:57c0834ef0841421c3beb9a11a718439039114ce700ee11d285dc083a2360a81 # bd2f659
+                image: quay.io/redhat-services-prod/splunk-audit-exporter-tenant/splunk-audit-exporter/splunk-audit-exporter@sha256:bebd24cf71be6aaf31a0f9bd39a6ea581c735d3e9d7ccc0909052378fcbb26bd # 91c5444
                 imagePullPolicy: Always
                 securityContext:
                   allowPrivilegeEscalation: false
