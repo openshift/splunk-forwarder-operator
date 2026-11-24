@@ -4,7 +4,7 @@ Thank you for your interest in contributing to the Splunk Forwarder Operator pro
 
 ## Quick Start
 
-1. **Setup**: Install Go 1.25+, operator-sdk v1.21.0
+1. **Setup**: Install Go 1.26+, operator-sdk v1.21.0
 2. **Install hooks**: `prek install`
 3. **Build**: `make go-build`
 4. **Test**: `make go-test`
