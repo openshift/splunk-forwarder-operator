@@ -67,7 +67,7 @@ make container-lint
 
 ## Project Structure
 
-- Built with Operator SDK v1.21.0+ and Go 1.23+
+- Built with Operator SDK v1.21.0+ and Go 1.26+
 - Uses OpenShift boilerplate for standardized build/test/deploy workflows
 - Includes E2E tests in `test/e2e/`
 - FIPS-compliant builds supported via `FIPS_ENABLED=true`
