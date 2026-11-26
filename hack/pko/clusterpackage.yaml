@@ -886,6 +886,7 @@ objects:
                   runAsUser: 0
                   seLinuxOptions:
                     type: container_logwriter_t
+                workingDir: /
                 volumeMounts:
                 - mountPath: /config
                   name: config
